@@ -63,7 +63,6 @@ export default function MilestoneTable() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
           <thead style={{ background: "#0f172a", color: "white" }}>
             <tr>
-              <th style={th}>Health</th>
               <th style={th}>% Complete</th>
               <th style={th}>Task</th>        {/* <-- show the real task name */}
               <th style={th}>Status</th>

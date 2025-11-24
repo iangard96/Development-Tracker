@@ -1,45 +1,56 @@
 # steps/serializers.py
 from rest_framework import serializers
-from .models import DevelopmentStep
-
-# Only these are ever writable
-WRITABLE_FIELDS = {"sequence", "name", "phase", "status", "start_date", "end_date"}
+from .models import DevelopmentStep, Project
 
 class DevelopmentStepSerializer(serializers.ModelSerializer):
-    # DO NOT declare duration_days as a model field here.
-    # We'll add it to the output manually in to_representation().
-
+    # (leave your working DevStep serializer as-is)
     class Meta:
         model = DevelopmentStep
-        fields = (
-            "id",
-            "sequence",
-            "name",
-            "phase",
-            "status",
-            "start_date",
-            "end_date",
-            # intentionally NOT listing duration_days here
-        )
-        read_only_fields = ("id",)  # duration_days is not even part of validated data
-
-    def to_representation(self, instance):
-        # serialize normal fields
-        data = super().to_representation(instance)
-        # append the DB-computed generated column strictly as read-only output
-        data["duration_days"] = getattr(instance, "duration_days", None)
-        return data
+        fields = ["id","name","phase","start_date","end_date","duration_days","status"]
+        read_only_fields = ["id","duration_days"]
 
     def update(self, instance, validated_data):
-        # strictly whitelist what we write so duration_days can never get included
-        allowed = {k: v for k, v in validated_data.items() if k in WRITABLE_FIELDS}
-        for k, v in allowed.items():
-            setattr(instance, k, v)
-        # write only those columns → prevents DEFAULT on duration_days
-        if allowed:
-            instance.save(update_fields=list(allowed.keys()))
+        DevelopmentStep.objects.filter(pk=instance.pk).update(**validated_data)
+        instance.refresh_from_db()
         return instance
 
+
+class ProjectSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+
+    # explicitly disallow nulls/blanks
+    project_name = serializers.CharField(required=False, allow_null=False, allow_blank=False)
+    legal_name   = serializers.CharField(required=False, allow_null=False, allow_blank=False)
+
+    class Meta:
+        model = Project
+        fields = [
+            "id",
+            "project_name",
+            "legal_name",
+            "project_type",
+            "project_details",
+            "offtake_structure",
+            "size_ac_mw",
+            "size_dc_mw",
+            "latitude",
+            "longitude",
+            "state",
+            "county",
+            "city",
+            "address",
+            "other",
+        ]
+        read_only_fields = ["id"]
+
     def create(self, validated_data):
-        allowed = {k: v for k, v in validated_data.items() if k in WRITABLE_FIELDS}
-        return DevelopmentStep.objects.create(**allowed)
+        # hard drop any stray id
+        validated_data.pop("id", None)
+
+        # fill defaults if missing
+        if not validated_data.get("project_name"):
+            validated_data["project_name"] = f"New Project"
+        if not validated_data.get("legal_name"):
+            validated_data["legal_name"] = f"New Legal Entity"
+
+        return super().create(validated_data)

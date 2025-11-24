@@ -1,25 +1,46 @@
-from datetime import date
+# steps/views.py
 from rest_framework import viewsets
-from .models import DevelopmentStep
-from .serializers import DevelopmentStepSerializer
+from rest_framework.response import Response
+from rest_framework import status
+from .models import DevelopmentStep, Project
+from .serializers import DevelopmentStepSerializer, ProjectSerializer
 
 class DevelopmentStepViewSet(viewsets.ModelViewSet):
-    queryset = DevelopmentStep.objects.all().order_by('sequence', 'id')
+    queryset = DevelopmentStep.objects.all().order_by("id")
     serializer_class = DevelopmentStepSerializer
 
-    def _apply_duration(self, instance: DevelopmentStep):
-        sd, ed = instance.start_date, instance.end_date
-        if isinstance(sd, date) and isinstance(ed, date):
-            instance.duration_days = (ed - sd).days
-        else:
-            instance.duration_days = None
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
 
-    def perform_update(self, serializer):
-        instance = serializer.save()
-        self._apply_duration(instance)
-        instance.save(update_fields=['duration_days'])
+        # Make a real mutable dict:
+        data = request.data
+        if hasattr(data, "dict"):          # QueryDict -> plain dict
+            data = data.dict()
+        else:
+            data = dict(data)             # already a dict-like
+
+        # Strip generated column if UI accidentally sends it
+        data.pop("duration_days", None)
+
+        # Only allow known DB fields
+        allowed = {
+            "name", "phase",
+            "start_date", "end_date", "status",
+        }
+        safe_data = {k: data[k] for k in data.keys() if k in allowed}
+
+        serializer = self.get_serializer(instance, data=safe_data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ProjectViewSet(viewsets.ModelViewSet):
+    queryset = Project.objects.all().order_by("id")
+    serializer_class = ProjectSerializer
 
     def perform_create(self, serializer):
-        instance = serializer.save()
-        self._apply_duration(instance)
-        instance.save(update_fields=['duration_days'])
+        # belt-and-suspenders: ensure id is not passed
+        serializer.validated_data.pop("id", None)
+        serializer.save()

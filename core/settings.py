@@ -1,20 +1,28 @@
-import os
+# core/settings.py
 from pathlib import Path
-from dotenv import load_dotenv
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only")
-DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
+# --- Basic ---
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key-change-me")
+DEBUG = True
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
+# --- Apps ---
 INSTALLED_APPS = [
-    "django.contrib.admin","django.contrib.auth","django.contrib.contenttypes",
-    "django.contrib.sessions","django.contrib.messages","django.contrib.staticfiles",
-    "rest_framework","corsheaders","steps",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework",
+    "corsheaders",
+    "steps",
 ]
 
+# --- Middleware ---
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -26,30 +34,15 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True  # dev only
+# --- URLs / WSGI ---
+ROOT_URLCONF = "core.urls"
+WSGI_APPLICATION = None  # using runserver only; set to "core.wsgi.application" for WSGI deploys
 
-REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 200
-}
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("PGDATABASE"),
-        "USER": os.getenv("PGUSER"),
-        "PASSWORD": os.getenv("PGPASSWORD"),
-        "HOST": os.getenv("PGHOST", "127.0.0.1"),
-        "PORT": os.getenv("PGPORT", "5434"),
-        "CONN_MAX_AGE": int(os.getenv("PG_CONN_MAX_AGE", "60")),
-        "OPTIONS": {"sslmode": os.getenv("PGSSLMODE", "prefer")},
-    }
-}
-
+# --- Templates ---
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],   # optional, fine if folder doesn't exist
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -61,22 +54,41 @@ TEMPLATES = [
         },
     },
 ]
-# Static files (CSS, JS, images)
-STATIC_URL = "/static/"
 
-# Optional:
-if DEBUG:
-    STATICFILES_DIRS = []               # extra folders during dev
-else:
-    STATIC_ROOT = BASE_DIR / "static"   # where collectstatic will put files in prod
-
-DEBUG = True
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
-
-DATABASES["default"]["OPTIONS"] = {
-    "sslmode": "disable",
-    "options": "-c search_path=public"
+# --- Database (matches your earlier dump) ---
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "HOST": os.getenv("PGHOST", "127.0.0.1"),
+        "PORT": os.getenv("PGPORT", "5434"),
+        "NAME": os.getenv("PGDATABASE", "postgres"),
+        "USER": os.getenv("PGUSER", "postgres"),
+        "PASSWORD": os.getenv("PGPASSWORD", "iangard96"),
+        "OPTIONS": {
+            "options": "-c search_path=app,public",
+            "sslmode": os.getenv("PGSSLMODE", "disable"),
+        },
+        "CONN_MAX_AGE": 60,
+    }
 }
 
-# core/settings.py
-ROOT_URLCONF = "core.urls"
+# --- Internationalization ---
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "America/Chicago"
+USE_I18N = True
+USE_TZ = True
+
+# --- Static ---
+STATIC_URL = "/static/"
+STATICFILES_DIRS = []
+
+# --- CORS / DRF ---
+CORS_ALLOW_ALL_ORIGINS = True
+
+REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 200,
+}
+
+# --- Defaults ---
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
