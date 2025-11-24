@@ -56,6 +56,7 @@ TEMPLATES = [
 ]
 
 # --- Database (matches your earlier dump) ---
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -71,6 +72,19 @@ DATABASES = {
         "CONN_MAX_AGE": 60,
     }
 }
+
+'''
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DT_DB_NAME", "postgres"),
+        "USER": os.getenv("DT_DB_USER", "postgres"),
+        "PASSWORD": os.getenv("DT_DB_PASSWORD", "iangard96"),
+        "HOST": os.getenv("DT_DB_HOST", "127.0.0.1"),
+        "PORT": os.getenv("DT_DB_PORT", "5434"),
+    }
+}
+'''
 
 # --- Internationalization ---
 LANGUAGE_CODE = "en-us"

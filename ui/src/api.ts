@@ -3,6 +3,8 @@ import type { DevStep, Project } from "./types";
 
 const API = "http://127.0.0.1:8010/api";
 
+//const API = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8010/api";
+
 /* ---------- helpers ---------- */
 
 async function jsonOrThrow(r: Response, context: string) {
