@@ -1,59 +1,43 @@
+// ui/src/Dashboard.tsx
 import { useEffect, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { fetchAllSteps } from "./api";
-
-type Step = {
-  id: number;
-  name: string;
-  phase?: string | number | null;
-};
-
-type ChartRow = { step: string; phaseNum: number };
-
-function toPhaseNumber(phase: Step["phase"]): number {
-  if (phase == null) return 0;
-  if (typeof phase === "number") return phase;
-  // try "Phase 3", "3", "phase 2", etc.
-  const m = String(phase).match(/\d+/);
-  return m ? parseInt(m[0], 10) : 0;
-}
+import DevTypeProgressRow from "./DevTypeProgressRow";
+import DevTypeSpendChart from "./DevTypeSpendChart";
+import DevTypeGanttChart from "./DevTypeGanttChart";
+import type { DevStep } from "./types";
 
 export default function Dashboard() {
-  const [data, setData] = useState<ChartRow[]>([]);
+  const [steps, setSteps] = useState<DevStep[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAllSteps()
-      .then((rows: Step[]) => {
-        const d = rows.map((r, i) => ({
-          step: r.name || `#${i + 1}`,
-          phaseNum: toPhaseNumber(r.phase),
-        }));
-        setData(d);
-      })
+      .then((rows: DevStep[]) => setSteps(rows))
       .catch((e) => setErr(String(e)));
   }, []);
 
-  if (err) return <div style={{ color: "crimson" }}>Error: {err}</div>;
-  if (!data.length) return <div>Loading…</div>;
+  if (err) {
+    return (
+      <div className="page-root" style={{ color: "crimson" }}>
+        Error: {err}
+      </div>
+    );
+  }
+
+  if (!steps) {
+    return <div className="page-root">Loading…</div>;
+  }
 
   return (
-    <div>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>Project Dashboard</h1>
-      <p style={{ marginBottom: 12, color: "#4b5563" }}>
-        Each bar corresponds to a development step; the bar height is that step’s <b>Phase</b> number.
-      </p>
+    <div className="page-root">
+      {/* 1. Top row: 3 circular gauges */}
+      <DevTypeProgressRow />
 
-      <div style={{ width: "100%", height: 420, border: "1px solid #e5e7eb", borderRadius: 12, padding: 12 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data}>
-            <XAxis dataKey="step" hide />
-            <YAxis allowDecimals={false} domain={[0, "dataMax + 1"]} label={{ value: "Phase", angle: -90, position: "insideLeft" }} />
-            <Tooltip />
-            <Bar dataKey="phaseNum" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      {/* 2. Gantt chart under the gauges */}
+      <DevTypeGanttChart steps={steps} />
+
+      {/* 3. Budget vs Actual spend under the Gantt */}
+      <DevTypeSpendChart steps={steps} />
     </div>
   );
 }

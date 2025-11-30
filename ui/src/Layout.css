@@ -1,0 +1,210 @@
+/* Reset-ish */
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+/* Shell: sidebar + main */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: #f9fafb;
+}
+
+/* ---------- Sidebar ---------- */
+
+.app-sidebar {
+  position: relative;
+  flex-shrink: 0;
+  background: #f9fafb;
+}
+
+/* Desktop width when open/closed */
+.app-sidebar-open {
+  width: 240px;
+  border-right: 1px solid #e5e7eb;
+}
+
+.app-sidebar-closed {
+  width: 56px;
+  border-right: 1px solid #e5e7eb;
+}
+
+/* Mobile behavior: slide-in drawer */
+.app-sidebar-mobile {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  width: 260px;
+  border-right: 1px solid #e5e7eb;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  transform: translateX(-100%);
+  transition: transform 0.2s ease-out;
+}
+
+.app-sidebar-mobile.app-sidebar-open {
+  transform: translateX(0);
+}
+
+.app-sidebar-mobile.app-sidebar-closed {
+  transform: translateX(-100%);
+}
+
+.app-sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px 12px;
+}
+
+/* Backdrop when drawer is open on mobile */
+.app-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  z-index: 30;
+}
+
+/* Sidebar header */
+.app-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.app-sidebar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Collapse button (desktop) */
+.app-sidebar-collapse-btn {
+  border: none;
+  border-radius: 9999px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e5e7eb;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.app-sidebar-collapse-btn:hover {
+  background: #d1d5db;
+}
+
+/* Nav links */
+.app-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.app-nav-link {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 9999px;
+  font-size: 14px;
+  color: #111827;
+  text-decoration: none;
+}
+
+.app-nav-link:hover {
+  background: #e5e7eb;
+}
+
+.app-nav-link-active {
+  background: #e0e7ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* When sidebar is collapsed on desktop, hide link labels
+   but keep a pill for hover target (you can adjust this). */
+@media (min-width: 900px) {
+  .app-sidebar-closed .app-sidebar-inner {
+    align-items: center;
+  }
+
+  .app-sidebar-closed .app-sidebar-title {
+    display: none;
+  }
+
+  .app-sidebar-closed .app-nav-link {
+    width: 40px;
+    text-indent: -9999px;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* ---------- Main area ---------- */
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* so children can shrink */
+}
+
+.app-main-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app-main-menu-btn {
+  border: none;
+  border-radius: 9999px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e5e7eb;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.app-main-menu-btn:hover {
+  background: #d1d5db;
+}
+
+.app-main-header-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Content area: where App.tsx, Dashboard, Summary render */
+.app-main-content {
+  flex: 1;
+  padding: 16px;
+  min-width: 0;
+}
+
+/* Let big stuff (tables, charts) scroll horizontally inside itself */
+.app-main-content > * {
+  min-width: 0;
+}
+
+/* Slightly tighter padding on very small screens */
+@media (max-width: 640px) {
+  .app-main-content {
+    padding: 12px;
+  }
+}

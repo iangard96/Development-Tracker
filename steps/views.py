@@ -25,7 +25,7 @@ class DevelopmentStepViewSet(viewsets.ModelViewSet):
         # Only allow known DB fields
         allowed = {
             "name", "phase",
-            "start_date", "end_date", "status",
+            "start_date", "end_date", "status","development_type","planned_spend","actual_spend"
         }
         safe_data = {k: data[k] for k in data.keys() if k in allowed}
 

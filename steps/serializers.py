@@ -6,7 +6,7 @@ class DevelopmentStepSerializer(serializers.ModelSerializer):
     # (leave your working DevStep serializer as-is)
     class Meta:
         model = DevelopmentStep
-        fields = ["id","name","phase","start_date","end_date","duration_days","status"]
+        fields = ["id","name","phase","start_date","end_date","duration_days","status", "development_type", "planned_spend", "actual_spend"]
         read_only_fields = ["id","duration_days"]
 
     def update(self, instance, validated_data):

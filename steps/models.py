@@ -9,6 +9,9 @@ class DevelopmentStep(models.Model):
     end_date = models.DateField(db_column='end_date', blank=True, null=True)
     duration_days = models.IntegerField(db_column='duration_days', blank=True, null=True)
     status = models.CharField(db_column='status', max_length=100, blank=True, null=True)
+    development_type = models.CharField(db_column='dev_type',max_length=32,blank=True,null=True)
+    planned_spend = models.DecimalField(db_column='planned_spend',max_digits=12,decimal_places=2,blank=True,null=True)
+    actual_spend = models.DecimalField(db_column='actual_spend',max_digits=12,decimal_places=2,blank=True,null=True)
 
     class Meta:
         managed = False

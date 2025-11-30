@@ -1,6 +1,8 @@
 // ui/src/types.ts
 export type StepStatus = "" | "Not Started" | "In Progress" | "Completed";
 
+export type DevType = "" | "Interconnection" | "Permitting" | "Due Diligence";
+
 export interface DevStep {
   id: number;
   name: string;
@@ -9,6 +11,9 @@ export interface DevStep {
   end_date: string | null;
   duration_days: number | null;
   status: StepStatus | null;
+  development_type: DevType | null;
+  planned_spend: number | null;
+  actual_spend: number | null;
 };
 
 // ui/src/types.ts

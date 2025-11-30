@@ -1,132 +1,27 @@
-/* App shell */
-.app-shell {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  min-height: 100vh;
-  background: #fafafa;
-}
-
-/* Sidebar */
-.sidebar {
-  background: #ffffff;
-  border-right: 1px solid #e5e7eb;
-  overflow-y: auto;
-  transition: width 160ms ease, min-width 160ms ease;
-  width: 260px;
-  min-width: 260px;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-}
-.sidebar.closed { display: none; }
-
-/* Collapsed state */
-.sidebar.collapsed {
-  width: 60px;
-  min-width: 60px;
-}
-.sidebar.collapsed .nav-label {
-  opacity: 0;
-  visibility: hidden;
-  width: 0;
-  display: inline-block;
-  transform: translateX(-6px);
-}
-
-/* Carrot / collapse button */
-.collapse-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 28px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  margin: 10px;
-  background: #fff;
-  cursor: pointer;
-}
-.caret { display: inline-block; transition: transform 160ms ease; font-size: 16px; }
-.caret.left  { transform: rotate(180deg); }
-.caret.right { transform: rotate(0deg); }
-
-/* Content area */
-.content {
-  position: relative;
-  padding: 16px 24px;
-}
-
-/* Optional small hamburger for narrow screens */
-.nav-toggle {
-  display: none;
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  border: 1px solid #ddd;
-  background: #fff;
-  border-radius: 6px;
-  padding: 6px 8px;
-}
-@media (max-width: 900px) {
-  .app-shell { grid-template-columns: 1fr; }
-  .nav-toggle { display: inline-block; }
-}
-
-/* Sidebar contents */
-.nav { padding: 12px; }
-.nav-title {
-  font-weight: 700;
-  font-size: 14px;
-  color: #111827;
-  margin-bottom: 8px;
-  opacity: 0.8;
-  letter-spacing: .3px;
-}
-
-.nav-section { margin-bottom: 6px; }
-
-.nav-section-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  background: transparent;
-  border: 0;
-  color: #0f172a;
-  font-weight: 600;
-  padding: 8px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.nav-section-btn:hover { background: #f5f6f8; }
-
-/* tiny chevron */
-.chev {
-  display: inline-block;
-  width: 0.5rem; height: 0.5rem;
-  border-right: 2px solid #6b7280;
-  border-bottom: 2px solid #6b7280;
-  transform: rotate(-45deg);
-  margin-top: -1px;
-}
-.chev.down { transform: rotate(45deg); }
-
-.nav-list {
-  list-style: none;
-  padding: 4px 4px 8px 22px;
+/* Global body reset */
+body {
   margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: #f9fafb;
 }
 
-.nav-link {
-  display: block;
-  padding: 8px 10px;
-  border-radius: 8px;
-  color: #374151;
-  text-decoration: none;
+/* Ensure the root fills viewport height */
+#root {
+  min-height: 100vh;
 }
-.nav-link:hover { background: #eef2ff; }
-.nav-link.active {
-  background: #e0e7ff;
-  color: #1d4ed8;
-  font-weight: 600;
+
+/* Shared page layout for all main tabs */
+.page-root {
+  width: 100%;
+  /* IMPORTANT: no max-width, no centering here */
+  margin: 0;
+  padding: 24px 24px 32px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .page-root {
+    padding: 16px;
+  }
 }

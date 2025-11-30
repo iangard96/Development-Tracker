@@ -1,22 +1,19 @@
 // ui/src/api.ts
-import type { DevStep, Project } from "./types";
+import type { DevStep, Project, DevType } from "./types";
 
 const API = "http://127.0.0.1:8010/api";
-
-//const API = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8010/api";
+// const API = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8010/api";
 
 /* ---------- helpers ---------- */
 
 async function jsonOrThrow(r: Response, context: string) {
   if (r.ok) {
-    // Try JSON, fall back to text
     try {
       return await r.json();
     } catch {
       return null as any;
     }
   }
-  // Surface server error body to help debugging
   let detail = "";
   try {
     detail = await r.text();
@@ -27,20 +24,19 @@ async function jsonOrThrow(r: Response, context: string) {
 /**
  * Normalize unknown date-ish input into:
  * - string "YYYY-MM-DD"  (valid date)
- * - null                (explicit clear: null or "")
- * - undefined           (invalid / unparseable -> omit field)
+ * - null                 (explicit clear: null or "")
+ * - undefined            (invalid / unparseable -> omit field)
  */
 function toISODateOrUndefinedOrNull(v: unknown): string | null | undefined {
   if (v === undefined) return undefined;
   if (v === null || v === "") return null;
 
   if (typeof v === "string") {
-    // If already "YYYY-MM-DD", keep it (avoid timezone shifts)
     if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
   }
 
   const d = new Date(String(v));
-  if (isNaN(+d)) return undefined; // <-- key change: omit invalid instead of null
+  if (isNaN(+d)) return undefined;
 
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -76,6 +72,32 @@ export async function updateStepStatus(
   return jsonOrThrow(r, "patch failed");
 }
 
+/** PATCH development_type only */
+export async function updateStepDevType(
+  id: number,
+  development_type: DevType | ""
+): Promise<DevStep> {
+  const r = await fetch(`${API}/development-steps/${id}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ development_type: development_type || null }),
+  });
+  return jsonOrThrow(r, "patch failed");
+}
+
+/** PATCH planned_spend / actual_spend */
+export async function updateStepSpend(
+  id: number,
+  payload: { planned_spend?: number | null; actual_spend?: number | null }
+): Promise<DevStep> {
+  const r = await fetch(`${API}/development-steps/${id}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return jsonOrThrow(r, "patch failed");
+}
+
 /** PATCH start/end dates (never include duration_days) */
 export async function updateStepDates(
   id: number,
@@ -87,7 +109,6 @@ export async function updateStepDates(
   if (sd !== undefined) body.start_date = sd;
   if (ed !== undefined) body.end_date = ed;
 
-  // If nothing to update, avoid empty PATCH (can crash fragile backends)
   if (Object.keys(body).length === 0) {
     const r0 = await fetch(`${API}/development-steps/${id}/`);
     return jsonOrThrow(r0, "steps fetch failed");
@@ -109,12 +130,12 @@ export async function fetchProjects(): Promise<Project[]> {
   return normalizeResults<Project>(data);
 }
 
-export async function createProject(payload: Partial<Project>): Promise<Project> {
-  // clone + strip id no matter what
+export async function createProject(
+  payload: Partial<Project>
+): Promise<Project> {
   const cleaned: any = { ...payload };
   delete cleaned.id;
 
-  // force non-null required fields
   if (!cleaned.project_name || cleaned.project_name === null) {
     cleaned.project_name = `New Project ${Date.now()}`;
   }
