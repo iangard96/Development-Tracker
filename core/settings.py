@@ -7,7 +7,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --- Basic ---
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key-change-me")
 DEBUG = True
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "[::1]",
+    ".ngrok-free.dev",  # allow any *.ngrok-free.dev tunnel host
+    ".loca.lt",  # allow any *.loca.lt tunnel host
+]
 
 # --- Apps ---
 INSTALLED_APPS = [
@@ -43,7 +49,7 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [BASE_DIR / "templates"],
-        "APP_DIRS": True,
+        "APP_DIRS": False,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -102,6 +108,10 @@ CORS_ALLOW_ALL_ORIGINS = True
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 200,
+    # Force JSON responses; avoids needing the browsable API template when hitting the API via tunnel/browser
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ],
 }
 
 # --- Defaults ---

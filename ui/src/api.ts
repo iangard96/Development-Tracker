@@ -1,7 +1,9 @@
 // ui/src/api.ts
-import type { DevStep, Project, DevType } from "./types";
+import type { DevStep, Project, DevType, ProjectContact } from "./types";
 
-const API = "http://127.0.0.1:8010/api";
+const API =
+  import.meta.env.VITE_API_URL ??
+  "http://127.0.0.1:8010/api";
 // const API = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8010/api";
 
 /* ---------- helpers ---------- */
@@ -11,6 +13,7 @@ async function jsonOrThrow(r: Response, context: string) {
     try {
       return await r.json();
     } catch {
+      // no JSON body
       return null as any;
     }
   }
@@ -18,7 +21,9 @@ async function jsonOrThrow(r: Response, context: string) {
   try {
     detail = await r.text();
   } catch {}
-  throw new Error(`${context}: ${r.status} ${detail}`);
+  const errorMsg = `${context}: ${r.status} ${detail}`;
+  console.error(errorMsg);
+  throw new Error(errorMsg);
 }
 
 /**
@@ -52,9 +57,19 @@ function normalizeResults<T>(data: any): T[] {
 
 /* ---------- Development Steps ---------- */
 
-/** GET all steps (handles DRF pagination or plain array) */
+/** GET all steps (global; probably only for testing now) */
 export async function fetchAllSteps(): Promise<DevStep[]> {
   const r = await fetch(`${API}/development-steps/`);
+  const data = await jsonOrThrow(r, "steps fetch failed");
+  return normalizeResults<DevStep>(data);
+}
+
+/** GET steps for a specific project */
+export async function fetchStepsForProject(
+  projectId: number,
+): Promise<DevStep[]> {
+  // adjust param name ("project" vs "project_id") to match your DRF view
+  const r = await fetch(`${API}/development-steps/?project=${projectId}`);
   const data = await jsonOrThrow(r, "steps fetch failed");
   return normalizeResults<DevStep>(data);
 }
@@ -62,7 +77,7 @@ export async function fetchAllSteps(): Promise<DevStep[]> {
 /** PATCH status only */
 export async function updateStepStatus(
   id: number,
-  status: "Not Started" | "In Progress" | "Completed"
+  status: "Not Started" | "In Progress" | "Completed" | "Not Applicable",
 ): Promise<DevStep> {
   const r = await fetch(`${API}/development-steps/${id}/`, {
     method: "PATCH",
@@ -75,7 +90,7 @@ export async function updateStepStatus(
 /** PATCH development_type only */
 export async function updateStepDevType(
   id: number,
-  development_type: DevType | ""
+  development_type: DevType | "",
 ): Promise<DevStep> {
   const r = await fetch(`${API}/development-steps/${id}/`, {
     method: "PATCH",
@@ -88,7 +103,7 @@ export async function updateStepDevType(
 /** PATCH planned_spend / actual_spend */
 export async function updateStepSpend(
   id: number,
-  payload: { planned_spend?: number | null; actual_spend?: number | null }
+  payload: { planned_spend?: number | null; actual_spend?: number | null },
 ): Promise<DevStep> {
   const r = await fetch(`${API}/development-steps/${id}/`, {
     method: "PATCH",
@@ -101,7 +116,7 @@ export async function updateStepSpend(
 /** PATCH start/end dates (never include duration_days) */
 export async function updateStepDates(
   id: number,
-  payload: { start_date?: string | null; end_date?: string | null }
+  payload: { start_date?: string | null; end_date?: string | null },
 ): Promise<DevStep> {
   const body: Record<string, unknown> = {};
   const sd = toISODateOrUndefinedOrNull(payload.start_date);
@@ -109,6 +124,7 @@ export async function updateStepDates(
   if (sd !== undefined) body.start_date = sd;
   if (ed !== undefined) body.end_date = ed;
 
+  // If nothing valid to patch, just refetch the row
   if (Object.keys(body).length === 0) {
     const r0 = await fetch(`${API}/development-steps/${id}/`);
     return jsonOrThrow(r0, "steps fetch failed");
@@ -122,25 +138,85 @@ export async function updateStepDates(
   return jsonOrThrow(r, "patch failed");
 }
 
+/** PATCH arbitrary metadata fields on a development step */
+export async function updateStepMeta(
+  id: number,
+  payload: Partial<DevStep> & Record<string, any>,
+): Promise<DevStep> {
+  const r = await fetch(`${API}/development-steps/${id}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return jsonOrThrow(r, "patch failed");
+}
+
+/* ---------- Project Contacts ---------- */
+
+export async function createProjectContact(
+  payload: Partial<ProjectContact>,
+): Promise<ProjectContact> {
+  const body = { ...payload };
+  const r = await fetch(`${API}/project-contacts/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return jsonOrThrow(r, "contact create failed");
+}
+
+export async function fetchProjectContacts(projectId: number): Promise<ProjectContact[]> {
+  const r = await fetch(`${API}/project-contacts/?project_id=${projectId}`);
+  const data = await jsonOrThrow(r, "contacts fetch failed");
+  return normalizeResults<ProjectContact>(data);
+}
+
+export async function updateProjectContact(
+  id: number,
+  payload: Partial<ProjectContact>,
+): Promise<ProjectContact> {
+  const r = await fetch(`${API}/project-contacts/${id}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return jsonOrThrow(r, "contact update failed");
+}
+
 /* ---------- Projects ---------- */
 
+/** GET all projects */
 export async function fetchProjects(): Promise<Project[]> {
   const r = await fetch(`${API}/projects/`);
   const data = await jsonOrThrow(r, "projects fetch failed");
   return normalizeResults<Project>(data);
 }
 
+/** GET one project by id */
+export async function fetchProject(id: number): Promise<Project> {
+  const r = await fetch(`${API}/projects/${id}/`);
+  return jsonOrThrow(r, "project fetch failed");
+}
+
+/** CREATE a project */
 export async function createProject(
-  payload: Partial<Project>
+  payload: Partial<Project>,
 ): Promise<Project> {
   const cleaned: any = { ...payload };
   delete cleaned.id;
 
+  // Get all projects to determine the next sequential number
   if (!cleaned.project_name || cleaned.project_name === null) {
-    cleaned.project_name = `New Project ${Date.now()}`;
-  }
-  if (!cleaned.legal_name || cleaned.legal_name === null) {
-    cleaned.legal_name = `New Legal Entity ${Date.now()}`;
+    try {
+      const allProjects = await fetchProjects();
+      const nextNum = allProjects.length + 1;
+      cleaned.project_name = `New Project ${nextNum}`;
+      cleaned.legal_name = `New Legal Entity ${nextNum}`;
+    } catch {
+      // Fallback if fetch fails
+      cleaned.project_name = `New Project ${Date.now()}`;
+      cleaned.legal_name = `New Legal Entity ${Date.now()}`;
+    }
   }
 
   const r = await fetch(`${API}/projects/`, {
@@ -152,9 +228,10 @@ export async function createProject(
   return jsonOrThrow(r, "project create failed");
 }
 
+/** PATCH a project */
 export async function updateProject(
   id: number,
-  payload: Partial<Project>
+  payload: Partial<Project>,
 ): Promise<Project> {
   const r = await fetch(`${API}/projects/${id}/`, {
     method: "PATCH",
@@ -164,6 +241,7 @@ export async function updateProject(
   return jsonOrThrow(r, "project update failed");
 }
 
+/** DELETE a project */
 export async function deleteProject(id: number): Promise<void> {
   const r = await fetch(`${API}/projects/${id}/`, { method: "DELETE" });
   await jsonOrThrow(r, "project delete failed");

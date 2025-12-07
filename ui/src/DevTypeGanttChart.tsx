@@ -1,5 +1,5 @@
 // ui/src/DevTypeGanttChart.tsx
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -18,7 +18,7 @@ type GanttRow = {
   label: string;
   devType: DevType;
   startOffset: number; // days from global min date
-  duration: number;    // days
+  duration: number; // days
 };
 
 const DEV_TYPE_ORDER: DevType[] = [
@@ -27,9 +27,9 @@ const DEV_TYPE_ORDER: DevType[] = [
   "Permitting",
 ];
 
-// Colors per dev type (tweak to taste)
+// Colors per dev type
 const DEV_TYPE_COLORS: Record<string, string> = {
-  Interconnection: "#0f766e", // teal-ish
+  Interconnection: "#0f766e",
   "Due Diligence": "#1d4ed8",
   Permitting: "#4C1D95",
 };
@@ -48,11 +48,12 @@ type Props = {
 };
 
 export default function DevTypeGanttChart({ steps }: Props) {
+  const [expanded, setExpanded] = useState(false);
+
   const { rows, minDay, maxDay } = useMemo(() => {
-    // Sort in global flow: same logic as your table (sequence then id)
     const sorted = [...steps].sort(
       (a: any, b: any) =>
-        (a.sequence ?? 0) - (b.sequence ?? 0) || a.id - b.id
+        (a.sequence ?? 0) - (b.sequence ?? 0) || a.id - b.id,
     );
 
     type Parsed = {
@@ -81,16 +82,15 @@ export default function DevTypeGanttChart({ steps }: Props) {
 
     const minDay = parsed.reduce(
       (m, p) => Math.min(m, p.startDay),
-      parsed[0].startDay
+      parsed[0].startDay,
     );
     const maxDay = parsed.reduce(
       (m, p) => Math.max(m, p.endDay),
-      parsed[0].endDay
+      parsed[0].endDay,
     );
 
     const rows: GanttRow[] = [];
 
-    // Respect overall flow, but group visually by dev type
     DEV_TYPE_ORDER.forEach((dt) => {
       parsed
         .filter((p) => p.devType === dt)
@@ -126,8 +126,23 @@ export default function DevTypeGanttChart({ steps }: Props) {
     );
   }
 
+  const visibleRows = expanded ? rows : rows.slice(0, 3);
   const totalSpan = Math.max(1, maxDay - minDay + 1);
-  const chartHeight = Math.max(rows.length * 26 + 80, 260);
+  const rowHeight = expanded ? 34 : 26;
+  const basePadding = expanded ? 120 : 80;
+  const minHeight = expanded ? 360 : 260;
+  const chartHeight = Math.max(visibleRows.length * rowHeight + basePadding, minHeight);
+  const legendItems = useMemo(
+    () =>
+      DEV_TYPE_ORDER.filter((dt) =>
+        visibleRows.some((r) => r.devType === dt),
+      ).map((dt) => ({
+        type: "square",
+        color: DEV_TYPE_COLORS[dt] ?? "#6b7280",
+        value: dt,
+      })),
+    [visibleRows],
+  );
 
   const formatTick = (offset: any) => {
     const n = Number(offset);
@@ -136,20 +151,17 @@ export default function DevTypeGanttChart({ steps }: Props) {
   };
 
   const tooltipFormatter = (value: any, _name: any, props: any) => {
-    const row = rows.find((r) => r.label === props.payload.label);
+    const row = visibleRows.find((r) => r.label === props.payload.label);
     if (!row) return value;
 
     const start = new Date((minDay + row.startOffset) * ONE_DAY_MS);
     const end = new Date(
-      (minDay + row.startOffset + row.duration) * ONE_DAY_MS
+      (minDay + row.startOffset + row.duration) * ONE_DAY_MS,
     );
     const fmt = (d: Date) =>
       `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
 
-    return [
-      `${fmt(start)} → ${fmt(end)}`,
-      "Duration",
-    ];
+    return [`${fmt(start)} - ${fmt(end)}`, "Duration"];
   };
 
   return (
@@ -162,49 +174,75 @@ export default function DevTypeGanttChart({ steps }: Props) {
         border: "1px solid #e5e7eb",
       }}
     >
-      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
-        Development Timeline by Type
-      </h2>
-      <p style={{ marginBottom: 12, color: "#4b5563", fontSize: 14 }}>
-        Tasks are grouped by development type and ordered by the overall
-        step sequence. Bars span from each task’s start date to end date.
-      </p>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
+        <div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
+            Development Timeline by Type
+          </h2>
+          <p style={{ marginBottom: 12, color: "#4b5563", fontSize: 14 }}>
+            Tasks are grouped by development type and ordered by the overall
+            step sequence. Bars span from each task's start date to end date.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          style={{
+            border: "1px solid #d1d5db",
+            background: "#ffffff",
+            color: "#111827",
+            borderRadius: 8,
+            padding: "6px 10px",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+            minWidth: 90,
+            marginTop: 2,
+          }}
+          title={expanded ? "Minimize chart" : "Maximize chart"}
+        >
+          {expanded ? "Minimize" : "Maximize"}
+        </button>
+      </div>
+      {!expanded && rows.length > visibleRows.length && (
+        <div style={{ marginBottom: 10, color: "#6b7280", fontSize: 13 }}>
+          Showing {visibleRows.length} of {rows.length} activities. Maximize to
+          see everything.
+        </div>
+      )}
 
       <div style={{ width: "100%", height: chartHeight }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={rows}
+            data={visibleRows}
             layout="vertical"
             margin={{ top: 10, right: 24, left: 120, bottom: 24 }}
           >
-            {/* X axis: days from minDay */}
             <XAxis
               type="number"
               domain={[0, totalSpan]}
               tickFormatter={formatTick}
             />
-            {/* Y axis: task labels */}
             <YAxis
               type="category"
               dataKey="label"
               width={180}
               tick={{ fontSize: 12 }}
             />
-
-            {/* Fake offset bar (transparent) to shift real bar to start date */}
             <Bar
               dataKey="startOffset"
               stackId="gantt"
               fill="rgba(0,0,0,0)"
               isAnimationActive={false}
             />
-
-            {/* Actual duration bar */}
-            <Bar
-              dataKey="duration"
-              stackId="gantt"
-              isAnimationActive={false}
-            >
+            <Bar dataKey="duration" stackId="gantt" isAnimationActive={false}>
               <LabelList
                 dataKey="label"
                 position="insideLeft"
@@ -215,7 +253,7 @@ export default function DevTypeGanttChart({ steps }: Props) {
                 }}
                 formatter={(v: string) => v.split(": ")[1] ?? v}
               />
-              {rows.map((row, i) => (
+              {visibleRows.map((row, i) => (
                 <Cell
                   key={row.id ?? i}
                   fill={DEV_TYPE_COLORS[row.devType] ?? "#6b7280"}
@@ -224,15 +262,45 @@ export default function DevTypeGanttChart({ steps }: Props) {
               ))}
             </Bar>
 
-            <Tooltip
-              formatter={tooltipFormatter}
-              labelFormatter={() => ""}
-            />
+            <Tooltip formatter={tooltipFormatter} labelFormatter={() => ""} />
             <Legend
               verticalAlign="bottom"
               align="center"
-              formatter={(value: any) =>
-                value === "duration" ? "Task duration" : value
+              content={() =>
+                legendItems.length ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 14,
+                      justifyContent: "center",
+                      alignItems: "center",
+                      fontSize: 12,
+                      paddingTop: 8,
+                    }}
+                  >
+                    {legendItems.map((item) => (
+                      <span
+                        key={item.value}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 12,
+                            height: 12,
+                            background: item.color,
+                            borderRadius: 2,
+                            display: "inline-block",
+                          }}
+                        />
+                        <span>{item.value}</span>
+                      </span>
+                    ))}
+                  </div>
+                ) : null
               }
             />
           </BarChart>

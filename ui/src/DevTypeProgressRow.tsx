@@ -1,7 +1,6 @@
 // ui/src/DevTypeProgressRow.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { PieChart, Pie, Cell } from "recharts";
-import { fetchAllSteps } from "./api";
 import type { DevStep, DevType } from "./types";
 
 const DEV_TYPES: { key: DevType; label: string }[] = [
@@ -15,57 +14,23 @@ type GaugeRow = {
   pct: number; // 0–100
 };
 
-export default function DevTypeProgressRow() {
-  const [steps, setSteps] = useState<DevStep[] | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchAllSteps()
-      .then((rows) => setSteps(rows))
-      .catch((e) => setErr(String(e)));
-  }, []);
-
+export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
   const gauges = useMemo<GaugeRow[]>(() => {
-    if (!steps) return [];
-
     return DEV_TYPES.map(({ key, label }) => {
-      const group = steps.filter(
-        (s) => (s as any).development_type === key
-      );
+      const group = steps.filter((s) => s.development_type === key);
 
       if (!group.length) {
         return { devTypeLabel: label, pct: 0 };
       }
 
       const completed = group.filter(
-        (s: any) => (s.status ?? "") === "Completed"
+        (s) => (s.status ?? "") === "Completed",
       ).length;
 
       const pct = Math.round((completed / group.length) * 100);
       return { devTypeLabel: label, pct };
     });
   }, [steps]);
-
-  if (err) {
-    return (
-      <div
-        style={{
-          marginBottom: 24,
-          color: "crimson",
-        }}
-      >
-        Error loading dev type progress: {err}
-      </div>
-    );
-  }
-
-  if (!steps || !gauges.length) {
-    return (
-      <div style={{ marginBottom: 24 }}>
-        Loading development type progress…
-      </div>
-    );
-  }
 
   return (
     <div style={{ marginBottom: 24 }}>

@@ -72,7 +72,9 @@ export default function DevTypeSpendChart({ steps }: Props) {
   }, [steps]);
 
   const maxAbsDelta =
-    rows.reduce((m, r) => Math.max(m, Math.abs(r.delta)), 0) || 1;
+    rows.reduce((m, r) => Math.max(m, Math.abs(r.delta)), 0) || 1000;
+  // Symmetric domain: [-maxAbsDelta, maxAbsDelta] with 0 centered
+  const deltaDomain = [-maxAbsDelta, maxAbsDelta];
 
   const maxSpend =
     rows.reduce((m, r) => Math.max(m, r.planned, r.actual), 0) || 0;
@@ -102,6 +104,9 @@ export default function DevTypeSpendChart({ steps }: Props) {
       index = 0,
     } = props;
 
+    // Guard against NaN values
+    if (isNaN(x) || isNaN(y) || isNaN(width) || isNaN(height)) return null;
+
     const label = (value ?? "") as string;
     const delta = rows[index]?.delta ?? 0;
 
@@ -112,6 +117,8 @@ export default function DevTypeSpendChart({ steps }: Props) {
     const right = width >= 0 ? x + width : x;
     const centerX = left + barWidth / 2;
     const centerY = y + height / 2 + 4;
+    
+    if (isNaN(centerX) || isNaN(centerY)) return null;
 
     const isUnder = delta > 0;
     const outsideColor = isUnder ? "#15803D" : "#DC2626"; // muted green / red
@@ -134,6 +141,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
     // Too small: place just outside, away from the axis
     if (isUnder) {
       const textX = right + 8;
+      if (isNaN(textX)) return null;
       return (
         <text
           x={textX}
@@ -147,6 +155,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
       );
     } else {
       const textX = left - 8;
+      if (isNaN(textX)) return null;
       return (
         <text
           x={textX}
@@ -163,12 +172,23 @@ export default function DevTypeSpendChart({ steps }: Props) {
 
   const SpendLabel = (props: any) => {
     const { x = 0, y = 0, width = 0, height = 0, value } = props;
-    if (value == null) return null;
+    
+    // Guard against null, undefined, or NaN values
+    if (value == null || isNaN(value)) return null;
+    
+    const numValue = Number(value);
+    if (isNaN(numValue) || numValue === 0) return null;
 
     const barWidth = Number(width);
+    if (isNaN(barWidth)) return null;
+    
     const centerX = x + barWidth / 2;
     const centerY = y + height / 2 + 4;
-    const label = `$${Number(value).toLocaleString()}`;
+    
+    // Verify centerX and centerY are valid numbers
+    if (isNaN(centerX) || isNaN(centerY)) return null;
+    
+    const label = `$${numValue.toLocaleString()}`;
 
     const MIN_INSIDE_WIDTH = 60;
 
@@ -187,6 +207,8 @@ export default function DevTypeSpendChart({ steps }: Props) {
     }
 
     const textX = x + barWidth + 6;
+    if (isNaN(textX)) return null;
+    
     return (
       <text
         x={textX}
@@ -253,9 +275,9 @@ export default function DevTypeSpendChart({ steps }: Props) {
             >
               <XAxis
                 type="number"
-                domain={[-maxAbsDelta, maxAbsDelta]}
+                domain={deltaDomain}
                 tickFormatter={(v) =>
-                  `$${Math.abs(Number(v)).toLocaleString()}`
+                  v === 0 ? "$0" : `$${Math.abs(Number(v)).toLocaleString()}`
                 }
               />
               <YAxis
@@ -289,10 +311,10 @@ export default function DevTypeSpendChart({ steps }: Props) {
                   <Cell
                     key={i}
                     fill={
-                      row.delta < -0.5
-                        ? "#DC2626" // muted red – over budget
-                        : row.delta > 0.5
-                        ? "#15803D" // muted green – under budget
+                      row.delta > 0.5
+                        ? "#15803D" // muted green – under budget (right/positive)
+                        : row.delta < -0.5
+                        ? "#DC2626" // muted red – over budget (left/negative)
                         : "#9ca3af" // ~on budget
                     }
                   />

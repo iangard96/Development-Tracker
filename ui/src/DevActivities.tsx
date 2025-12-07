@@ -1,0 +1,1063 @@
+// ui/src/DevActivities.tsx
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { DevStep, DevType } from "./types";
+import {
+  fetchStepsForProject,
+  updateStepDates,
+  updateStepStatus,
+  updateStepDevType,
+  updateStepSpend,
+  updateStepMeta,
+  createProjectContact,
+  fetchProjectContacts,
+} from "./api";
+import { useProject } from "./ProjectContext";
+
+const th: React.CSSProperties = {
+  textAlign: "left",
+  paddingTop: 10,
+  paddingBottom: 10,
+  paddingLeft: 12,
+  paddingRight: 12,
+  fontWeight: 600,
+  fontSize: 12,
+  color: "#6b7280",
+  position: "sticky",
+  top: 0,
+  background: "#f9fafb",
+  zIndex: 3,
+};
+const td: React.CSSProperties = {
+  paddingTop: 10,
+  paddingBottom: 10,
+  paddingLeft: 12,
+  paddingRight: 12,
+  verticalAlign: "middle",
+  fontSize: 13,
+};
+const stickyActivity: React.CSSProperties = {
+  position: "sticky",
+  left: 0,
+  top: 0,
+  background: "#ffffff",
+  zIndex: 4,
+};
+const requirementTh: React.CSSProperties = {
+  ...th,
+  width: 240,
+  minWidth: 240,
+};
+const requirementTd: React.CSSProperties = {
+  ...td,
+  width: 240,
+  minWidth: 240,
+  verticalAlign: "top",
+};
+const requirementList: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 6,
+  alignItems: "flex-start",
+  justifyContent: "center",
+  width: "100%",
+};
+const requirementLabel: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  fontSize: 12,
+  lineHeight: 1.2,
+};
+const requirementCheckbox: React.CSSProperties = {
+  margin: 0,
+};
+
+/** Convert whatever we have to what <input type="date"> expects (YYYY-MM-DD). */
+function normalizeForDateInput(value?: string | null): string {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value; // already ISO
+  const d = new Date(value);
+  if (isNaN(+d)) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Keep the native title in sync so long text is visible on hover. */
+function syncTitle(e: React.ChangeEvent<HTMLInputElement>) {
+  e.currentTarget.title = e.currentTarget.value;
+}
+
+/** Small reusable date cell that PATCHes one field and returns the fresh row. */
+function DateCell({
+  id,
+  field,
+  value,
+  onSaved,
+}: {
+  id: number;
+  field: "start_date" | "end_date";
+  value: string | null | undefined;
+  onSaved: (fresh: DevStep) => void;
+}) {
+  async function onBlur(e: React.FocusEvent<HTMLInputElement>) {
+    const iso = e.currentTarget.value || null; // "YYYY-MM-DD" or null
+    try {
+      const fresh = await updateStepDates(id, { [field]: iso });
+      onSaved(fresh);
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to update date.\n${err?.message ?? ""}`);
+    }
+  }
+
+  return (
+    <input
+      type="date"
+      defaultValue={normalizeForDateInput(value)}
+      onBlur={onBlur}
+      style={{
+        padding: "6px 10px",
+        border: "1px solid #e5e7eb",
+        borderRadius: 5,
+        fontSize: 13,
+        background: "white",
+        color: "#1f2937",
+      }}
+    />
+  );
+}
+
+/** Status dropdown cell */
+const STATUS_OPTIONS = ["", "Not Started", "In Progress", "Completed", "Not Applicable"] as const;
+type StepStatus = (typeof STATUS_OPTIONS)[number];
+
+function StatusCell({
+  step,
+  onSaved,
+}: {
+  step: DevStep;
+  onSaved: (fresh: DevStep) => void;
+}) {
+  async function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const next = e.target.value as StepStatus;
+    try {
+      const fresh = await updateStepStatus(step.id, next);
+      onSaved(fresh);
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to update status.\n${err?.message ?? ""}`);
+    }
+  }
+
+  return (
+    <select
+      value={(step.status as StepStatus) ?? ""}
+      onChange={onChange}
+      style={{
+        padding: "6px 10px",
+        border: "1px solid #e5e7eb",
+        borderRadius: 5,
+        background: "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+        backgroundSize: "10px",
+        paddingRight: 24,
+        fontSize: 13,
+        color: "#1f2937",
+        cursor: "pointer",
+        appearance: "none" as any,
+      }}
+    >
+      {STATUS_OPTIONS.map((opt) => (
+        <option key={opt} value={opt}>
+          {opt === "" ? "—" : opt}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** Dev Type dropdown cell */
+const DEV_TYPE_OPTIONS: DevType[] = [
+  "",
+  "Interconnection",
+  "Permitting",
+  "Due Diligence",
+];
+
+function DevTypeCell({
+  step,
+  onSaved,
+}: {
+  step: DevStep;
+  onSaved: (fresh: DevStep) => void;
+}) {
+  async function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const next = (e.target.value || "") as DevType | "";
+    try {
+      const fresh = await updateStepDevType(step.id, next);
+      onSaved(fresh);
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to update development type.\n${err?.message ?? ""}`);
+    }
+  }
+
+  return (
+    <select
+      value={step.development_type ?? ""}
+      onChange={onChange}
+      style={{
+        padding: "6px 10px",
+        border: "1px solid #e5e7eb",
+        borderRadius: 5,
+        background: "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+        backgroundSize: "10px",
+        paddingRight: 24,
+        fontSize: 13,
+        color: "#1f2937",
+        cursor: "pointer",
+        appearance: "none" as any,
+      }}
+    >
+      {DEV_TYPE_OPTIONS.map((opt) => (
+        <option key={opt} value={opt}>
+          {opt === "" ? "—" : opt}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** Purpose / related activity: point to another task within same dev type */
+function RelatedActivityCell({
+  step,
+  peers,
+  onSaved,
+  onJumpToId,
+}: {
+  step: DevStep;
+  peers: DevStep[];
+  onSaved: (fresh: DevStep) => void;
+  onJumpToId: (id: number) => void;
+}) {
+  const options = useMemo(() => {
+    const currentType = step.development_type ?? "";
+    return peers
+      .filter(
+        (p) =>
+          p.id !== step.id &&
+          (p.development_type ?? "") === currentType,
+      )
+      .map((p, idx) => {
+        const seq = (p as any).sequence ?? idx + 1;
+        return { value: String(p.id), label: `#${seq} — ${p.name}` };
+      });
+  }, [peers, step]);
+
+  async function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const raw = e.target.value;
+    const nextId = raw === "" ? null : Number(raw);
+    if (nextId) {
+      onJumpToId(nextId);
+    }
+    // reset to placeholder so selection doesn't persist
+    e.currentTarget.value = "";
+    try {
+      // do not persist selection; clear any stored value
+      await updateStepMeta(step.id, { purpose_related_activity: null });
+      onSaved({ ...step, purpose_related_activity: null });
+    } catch (err) {
+      console.warn("Failed to clear related activity", err);
+    }
+  }
+
+  const typeLabel = step.development_type
+    ? `${step.development_type} Related Activities`
+    : "Related Activities";
+
+  return (
+    <select
+      value=""
+      onChange={onChange}
+      style={{
+        padding: "6px 10px",
+        border: "1px solid #e5e7eb",
+        borderRadius: 5,
+        background:
+          "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+        backgroundSize: "10px",
+        paddingRight: 24,
+        fontSize: 13,
+        color: "#1f2937",
+        cursor: "pointer",
+        appearance: "none" as any,
+        minWidth: 220,
+      }}
+    >
+      <option value="">{typeLabel}</option>
+      {options.map((opt) => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function ResponsiblePartyCell({
+  step,
+  onSaved,
+}: {
+  step: DevStep;
+  onSaved: (fresh: DevStep) => void;
+}) {
+  async function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const raw = e.target.value;
+    const nextVal = raw === "" ? null : raw;
+    const prevVal = (step as any).responsible_party ?? null;
+
+    // Optimistically update the row so selection sticks
+    onSaved({ ...(step as any), responsible_party: nextVal } as DevStep);
+
+    try {
+      const fresh = await updateStepMeta(step.id, { responsible_party: nextVal });
+      onSaved(fresh);
+    } catch (err: any) {
+      console.error(err);
+      // revert on failure
+      onSaved({ ...(step as any), responsible_party: prevVal } as DevStep);
+      alert(`Failed to update responsible party.\n${err?.message ?? ""}`);
+    }
+  }
+
+  return (
+    <select
+      value={(step as any).responsible_party ?? ""}
+      onChange={onChange}
+      style={{
+        padding: "6px 10px",
+        border: "1px solid #e5e7eb",
+        borderRadius: 5,
+        background: "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+        backgroundSize: "10px",
+        paddingRight: 24,
+        fontSize: 13,
+        color: "#1f2937",
+        cursor: "pointer",
+        appearance: "none" as any,
+      }}
+    >
+      <option value="">Select</option>
+      <option value="Internal">Internal</option>
+      <option value="3rd Party Contracted">3rd Party Contracted</option>
+    </select>
+  );
+}
+
+/** Spend cell with deferred save (type freely, save on blur) */
+function SpendCell({
+  id,
+  field,
+  value,
+  spendEdits,
+  onEdit,
+  onSaved,
+}: {
+  id: number;
+  field: "planned_spend" | "actual_spend";
+  value: number | null | undefined;
+  spendEdits: Record<number, { planned: string; actual: string }>;
+  onEdit: (id: number, field: "planned" | "actual", val: string) => void;
+  onSaved: (fresh: DevStep) => void;
+}) {
+  const key = field === "planned_spend" ? "planned" : "actual";
+  // Show locally edited value if present, otherwise show the prop value
+  const displayValue =
+    spendEdits[id]?.[key] !== undefined && spendEdits[id][key] !== ""
+      ? spendEdits[id][key]
+      : value !== null && value !== undefined
+        ? String(value)
+        : "";
+
+  async function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
+    const raw = e.currentTarget.value;
+
+    try {
+      const num = raw === "" ? null : Number(raw);
+      const v = num !== null ? Math.round(num * 100) / 100 : null;
+
+      const fresh = await updateStepSpend(id, {
+        [field]: v,
+      });
+      // Update parent state first with fresh data
+      onSaved(fresh);
+      // Clear local edit state - component will now show fresh prop value
+      onEdit(id, key, "");
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to update ${key} spend.\n${err?.message ?? ""}`);
+    }
+  }
+
+  return (
+    <input
+      type="number"
+      min={0}
+      step="any"
+      value={displayValue}
+      onChange={(e) => onEdit(id, key, e.target.value)}
+      onBlur={handleBlur}
+      style={{
+        width: "100%",
+        padding: "8px 12px",
+        borderRadius: 5,
+        border: "1px solid #d1d5db",
+        fontSize: 14,
+        fontWeight: 500,
+        background: "white",
+        color: "#111827",
+        boxSizing: "border-box",
+        textAlign: "right",
+      }}
+    />
+  );
+}
+
+export default function DevActivities() {
+  const { projectId, project } = useProject();
+  const [rows, setRows] = useState<DevStep[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [devTypeFilter, setDevTypeFilter] = useState<DevType | "ALL">("ALL");
+  // Local state for spend inputs so we can type freely
+  const [spendEdits, setSpendEdits] = useState<
+    Record<number, { planned: string; actual: string }>
+  >({});
+  const rowRefs = useRef<Record<number, HTMLTableRowElement | null>>({});
+  const tableContainerRef = useRef<HTMLDivElement | null>(null);
+  const [highlighted, setHighlighted] = useState<Set<number>>(new Set());
+  const [contactsMeta, setContactsMeta] = useState<
+    { id: number; organization: string; name: string }
+  >([]);
+  const [contactOrgs, setContactOrgs] = useState<string[]>([]);
+
+  const applyFresh = (fresh: DevStep) =>
+    setRows((cur) =>
+      cur
+        ? cur.map((x) => (x.id === fresh.id ? { ...x, ...fresh } : x))
+        : cur,
+    );
+
+  async function maybeCreateContact(opts: {
+    organization: string | null | undefined;
+    name?: string | null;
+    responsibility?: string | null;
+  }) {
+    if (!projectId) return;
+    const orgRaw = (opts.organization || "").trim();
+    const nameRaw = (opts.name || "").trim();
+    const orgNorm = orgRaw.toLowerCase();
+    const nameNorm = nameRaw.toLowerCase();
+    const responsibility = opts.responsibility ?? "Unspecified";
+    if (!orgNorm) return;
+
+    const existing = contactsMeta.find((c) => {
+      const cOrg = c.organization.trim().toLowerCase();
+      const cName = c.name.trim().toLowerCase();
+      if (nameNorm) {
+        return cOrg === orgNorm && cName === nameNorm;
+      }
+      return cOrg === orgNorm && cName === "";
+    });
+    if (existing) return;
+
+    try {
+      const created = await createProjectContact({
+        project: Number(projectId),
+        organization: orgRaw || null,
+        name: nameRaw || "",
+        responsibility,
+      });
+      setContactsMeta((prev) => [
+        ...prev,
+        { id: created.id, organization: orgRaw || "", name: nameRaw },
+      ]);
+      setContactOrgs((prev) =>
+        Array.from(
+          new Set([
+            ...prev,
+            ...(orgRaw ? [orgRaw] : []),
+          ]),
+        ),
+      );
+    } catch (err) {
+      console.warn("Contact create failed", err);
+    }
+  }
+
+  useEffect(() => {
+    if (!projectId) {
+      setRows(null);
+      setErr(null);
+      return;
+    }
+
+    setRows(null);
+    setErr(null);
+    fetchStepsForProject(projectId)
+      .then(setRows)
+      .catch((e) => setErr(String(e)));
+
+    fetchProjectContacts(projectId)
+      .then((data) => {
+        const mapped = data.map((c) => ({
+          id: c.id,
+          organization: (c.organization ?? "").trim(),
+          name: (c.name ?? "").trim(),
+        }));
+        setContactsMeta(mapped);
+        setContactOrgs(
+          Array.from(
+            new Set(
+              mapped
+                .map((c) => c.organization)
+                .filter((n) => n.length > 0),
+            ),
+          ),
+        );
+      })
+      .catch((e) => console.warn("Failed to load contacts", e));
+  }, [projectId]);
+
+  if (!projectId) {
+    return (
+      <div style={{ padding: 16, color: "#6b7280", fontSize: 14 }}>
+        Select a project from the Project Summary to edit its development activities.
+      </div>
+    );
+  }
+
+  const filtered = useMemo(() => {
+    if (!rows) return [];
+    const base = [...rows].sort(
+      (a: any, b: any) =>
+        (a.sequence ?? 0) - (b.sequence ?? 0) || a.id - b.id,
+    );
+    if (devTypeFilter === "ALL") return base;
+    return base.filter((r) => (r.development_type ?? "") === devTypeFilter);
+  }, [rows, devTypeFilter]);
+
+  if (err)
+    return <div style={{ color: "red", padding: 16 }}>Error: {err}</div>;
+  if (!rows) return <div style={{ padding: 16 }}>Loading…</div>;
+
+  const jumpToId = (id: number) => {
+    const target = filtered.find((p) => p.id === id);
+    if (target) {
+      const el = rowRefs.current[target.id];
+      const container = tableContainerRef.current;
+      if (el && container) {
+        const containerRect = container.getBoundingClientRect();
+        const rowRect = el.getBoundingClientRect();
+        const offset = rowRect.top - containerRect.top;
+        // Center the row within the scrollable area
+        const targetScroll =
+          container.scrollTop +
+          offset -
+          (container.clientHeight / 2 - rowRect.height / 2);
+        container.scrollTo({
+          top: Math.max(0, targetScroll),
+          behavior: "smooth",
+    });
+  }
+
+      setHighlighted((prev) => {
+        const next = new Set(prev);
+        next.add(target.id);
+        return next;
+      });
+      window.setTimeout(() => {
+        setHighlighted((prev) => {
+          const next = new Set(prev);
+          next.delete(target.id);
+          return next;
+        });
+      }, 2200);
+    }
+  };
+
+  return (
+    <div className="page-root">
+      {project && (
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111827", margin: "0 0 32px" }}>
+          {project.project_name}
+        </h1>
+      )}
+      <h2 style={{ fontSize: 16, fontWeight: 500, color: "#374151", margin: "0 0 20px" }}>
+        Development Activities
+      </h2>
+
+      {/* Dev Type filter */}
+      <div
+        style={{
+          marginBottom: 16,
+          display: "flex",
+          gap: 12,
+          alignItems: "center",
+        }}
+      >
+        <label style={{ fontSize: 13 }}>
+          <span style={{ marginRight: 8 }}>Development Type:</span>
+          <select
+            value={devTypeFilter}
+            onChange={(e) =>
+              setDevTypeFilter(e.target.value as DevType | "ALL")
+            }
+            style={{
+              padding: "6px 10px",
+              borderRadius: 5,
+              border: "1px solid #e5e7eb",
+              fontSize: 13,
+              background: "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+              backgroundSize: "10px",
+              paddingRight: 24,
+              color: "#1f2937",
+              cursor: "pointer",
+              appearance: "none" as any,
+            }}
+          >
+            <option value="ALL">All</option>
+            {DEV_TYPE_OPTIONS.filter((x) => x !== "").map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div
+        style={{
+          overflow: "auto",
+          maxHeight: "70vh",
+          border: "1px solid #e5e7eb",
+          borderRadius: 8,
+          background: "linear-gradient(#f9fafb 0 52px, #ffffff 52px)",
+          boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)",
+          position: "relative",
+        }}
+        ref={tableContainerRef}
+      >
+        <table
+          style={{ width: "100%", fontSize: 14, borderCollapse: "collapse" }}
+        >
+          <thead style={{ background: "#f9fafb" }}>
+            <tr>
+              <th style={{ ...th, display: "none" }}>#</th>
+              <th style={th}>Status</th>
+              <th style={th}>Phase</th>
+              <th style={{ ...th, ...stickyActivity }}>Activity</th>
+              <th style={th}>Dev Type</th>
+              <th style={{ ...th, minWidth: "140px" }}>Planned Spend ($)</th>
+              <th style={{ ...th, minWidth: "140px" }}>Actual Spend ($)</th>
+              <th style={th}>Start Date</th>
+              <th style={th}>End Date</th>
+              <th style={th}>Duration (Days)</th>
+              <th style={th}>Purpose / Related Activity</th>
+              <th style={th}>Agency</th>
+              <th style={th}>Responsible Party</th>
+              <th style={th}>Responsible Individual</th>
+              <th style={th}>Process</th>
+              <th style={th}>Link</th>
+              <th style={{ ...th, ...requirementTh }}>Requirement</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((r, i) => (
+              <tr
+                key={r.id}
+                ref={(el) => {
+                  rowRefs.current[r.id] = el;
+                }}
+                style={{
+                  borderTop: "1px solid #e5e7eb",
+                  background: highlighted.has(r.id) ? "#e0f2fe" : undefined,
+                  transition: "background 0.3s ease",
+                }}
+              >
+                <td style={{ ...td, display: "none" }}>{(r as any).sequence ?? i + 1}</td>
+
+                {/* Status */}
+                <td style={td}>
+                  <StatusCell
+                    step={r}
+                    onSaved={(fresh) =>
+                      setRows((cur) =>
+                        cur
+                          ? cur.map((x) =>
+                              x.id === r.id ? { ...x, ...fresh } : x,
+                            )
+                          : cur,
+                      )
+                    }
+                  />
+                </td>
+
+                {/* Phase */}
+                <td style={td}>{(r as any).phase ?? ""}</td>
+
+                {/* Activity / Tasks */}
+                <td style={{ ...td, ...stickyActivity }}>{r.name}</td>
+
+                {/* Dev Type */}
+                <td style={td}>
+                  <DevTypeCell
+                    step={r}
+                    onSaved={(fresh) =>
+                      setRows((cur) =>
+                        cur
+                          ? cur.map((x) =>
+                              x.id === r.id ? { ...x, ...fresh } : x,
+                            )
+                          : cur,
+                      )
+                    }
+                  />
+                </td>
+
+                {/* Planned Spend */}
+                <td style={{ ...td, minWidth: "140px" }}>
+                  <SpendCell
+                    id={r.id}
+                    field="planned_spend"
+                    value={r.planned_spend}
+                    spendEdits={spendEdits}
+                    onEdit={(id, field, val) => {
+                      setSpendEdits((prev) => ({
+                        ...prev,
+                        [id]: {
+                          ...prev[id],
+                          [field]: val,
+                        },
+                      }));
+                    }}
+                    onSaved={(fresh) =>
+                      setRows((cur) =>
+                        cur
+                          ? cur.map((x) =>
+                              x.id === r.id ? { ...x, ...fresh } : x,
+                            )
+                          : cur,
+                      )
+                    }
+                  />
+                </td>
+
+                {/* Actual Spend */}
+                <td style={{ ...td, minWidth: "140px" }}>
+                  <SpendCell
+                    id={r.id}
+                    field="actual_spend"
+                    value={r.actual_spend}
+                    spendEdits={spendEdits}
+                    onEdit={(id, field, val) => {
+                      setSpendEdits((prev) => ({
+                        ...prev,
+                        [id]: {
+                          ...prev[id],
+                          [field]: val,
+                        },
+                      }));
+                    }}
+                    onSaved={(fresh) =>
+                      setRows((cur) =>
+                        cur
+                          ? cur.map((x) =>
+                              x.id === r.id ? { ...x, ...fresh } : x,
+                            )
+                          : cur,
+                      )
+                    }
+                  />
+                </td>
+
+                {/* Start Date */}
+                <td style={td}>
+                  <DateCell
+                    id={r.id}
+                    field="start_date"
+                    value={(r as any).start_date}
+                    onSaved={(fresh) =>
+                      setRows((cur) =>
+                        cur
+                          ? cur.map((x) =>
+                              x.id === r.id ? { ...x, ...fresh } : x,
+                            )
+                          : cur,
+                      )
+                    }
+                  />
+                </td>
+
+                {/* End Date */}
+                <td style={td}>
+                  <DateCell
+                    id={r.id}
+                    field="end_date"
+                    value={(r as any).end_date}
+                    onSaved={(fresh) =>
+                      setRows((cur) =>
+                        cur
+                          ? cur.map((x) =>
+                              x.id === r.id ? { ...x, ...fresh } : x,
+                            )
+                          : cur,
+                      )
+                    }
+                  />
+                </td>
+
+                <td style={td}>{(r as any).duration_days ?? ""}</td>
+
+                <td style={td}>
+                  <RelatedActivityCell
+                    step={r}
+                    peers={filtered}
+                    onSaved={(fresh) =>
+                      setRows((cur) =>
+                        cur
+                          ? cur.map((x) =>
+                              x.id === r.id ? { ...x, ...fresh } : x,
+                            )
+                          : cur,
+                      )
+                    }
+                    onJumpToId={jumpToId}
+                  />
+                </td>
+                <td style={td}>
+                  <input
+                    type="text"
+                    defaultValue={(r as any).agency ?? ""}
+                    placeholder="Agency / Org"
+                    title={(r as any).agency ?? ""}
+                    list="agency-options"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.title = e.currentTarget.value;
+                    }}
+                    onChange={syncTitle}
+                    onBlur={async (e) => {
+                      const val = e.currentTarget.value.trim();
+                      const current = (r as any).agency ?? "";
+                      if (val === current) return;
+                      try {
+                        const fresh = await updateStepMeta(r.id, {
+                          agency: val || null,
+                        });
+                        applyFresh(fresh);
+                        if (val && projectId) {
+                          await maybeCreateContact({
+                            organization: val,
+                            name: null,
+                          });
+                        }
+                      } catch (err: any) {
+                        console.error(err);
+                        alert(`Failed to update agency.\n${err?.message ?? ""}`);
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      minWidth: 160,
+                      padding: "6px 10px",
+                      borderRadius: 5,
+                      border: "1px solid #e5e7eb",
+                      fontSize: 13,
+                      boxSizing: "border-box",
+                    }}
+                    size={28}
+                  />
+                </td>
+                <td style={td}>
+                  <ResponsiblePartyCell
+                    step={r}
+                    onSaved={applyFresh}
+                  />
+                </td>
+                <td style={td}>
+                  <input
+                    type="text"
+                    defaultValue={(r as any).responsible_individual ?? ""}
+                    placeholder="Name"
+                    title={(r as any).responsible_individual ?? ""}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.title = e.currentTarget.value;
+                    }}
+                    onChange={syncTitle}
+                    onBlur={async (e) => {
+                      const val = e.currentTarget.value.trim();
+                      const current = (r as any).responsible_individual ?? "";
+                      if (val === current) return;
+                      const agencyVal = (r as any).agency ?? "";
+                      try {
+                        const fresh = await updateStepMeta(r.id, {
+                          responsible_individual: val || null,
+                        });
+                        applyFresh(fresh);
+                        // Create contact only if new org+name combo
+                        if (val && projectId) {
+                          await maybeCreateContact({
+                            organization: agencyVal || undefined,
+                            name: val,
+                          });
+                        }
+                      } catch (err: any) {
+                        console.error(err);
+                        alert(`Failed to update responsible individual.\n${err?.message ?? ""}`);
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      minWidth: 160,
+                      padding: "6px 10px",
+                      borderRadius: 5,
+                      border: "1px solid #e5e7eb",
+                      fontSize: 13,
+                      boxSizing: "border-box",
+                    }}
+                    size={28}
+                  />
+                </td>
+                <td style={td}>
+                  <input
+                    type="text"
+                    defaultValue={(r as any).process ?? ""}
+                    placeholder="Process"
+                    title={(r as any).process ?? ""}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.title = e.currentTarget.value;
+                    }}
+                    onChange={syncTitle}
+                    onBlur={async (e) => {
+                      const val = e.currentTarget.value.trim();
+                      const current = (r as any).process ?? "";
+                      if (val === current) return;
+                      try {
+                        const fresh = await updateStepMeta(r.id, {
+                          process: val || null,
+                        });
+                        applyFresh(fresh);
+                      } catch (err: any) {
+                        console.error(err);
+                        alert(`Failed to update process.\n${err?.message ?? ""}`);
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      minWidth: 180,
+                      padding: "6px 10px",
+                      borderRadius: 5,
+                      border: "1px solid #e5e7eb",
+                      fontSize: 13,
+                      boxSizing: "border-box",
+                    }}
+                    size={32}
+                  />
+                </td>
+                <td style={td}>
+                  <input
+                    type="text"
+                    defaultValue={(r as any).link ?? ""}
+                    placeholder="Link"
+                    title={(r as any).link ?? ""}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.title = e.currentTarget.value;
+                    }}
+                    onChange={syncTitle}
+                    onBlur={async (e) => {
+                      const val = e.currentTarget.value.trim();
+                      const current = (r as any).link ?? "";
+                      if (val === current) return;
+                      try {
+                        const fresh = await updateStepMeta(r.id, {
+                          link: val || null,
+                        });
+                        applyFresh(fresh);
+                      } catch (err: any) {
+                        console.error(err);
+                        alert(`Failed to update link.\n${err?.message ?? ""}`);
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      minWidth: 160,
+                      padding: "6px 10px",
+                      borderRadius: 5,
+                      border: "1px solid " + "#e5e7eb",
+                      fontSize: 13,
+                      boxSizing: "border-box",
+                    }}
+                    size={28}
+                  />
+                  {((r as any).link as string | undefined) ? (
+                    <div style={{ marginTop: 6 }}>
+                      <a href={(r as any).link as string} target="_blank" rel="noreferrer">
+                        Open link
+                      </a>
+                    </div>
+                  ) : null}
+                </td>
+                <td style={requirementTd}>
+                  <div style={requirementList}>
+                    {["Engineering", "Permitting/Compliance", "Financing"].map((opt) => {
+                      const requirementVal = (r as any).requirement ?? "";
+                      const selected = new Set(
+                        requirementVal
+                          .split(",")
+                          .map((s: string) => s.trim())
+                          .filter(Boolean),
+                      );
+                      const checked = selected.has(opt);
+                      return (
+                        <label key={opt} style={requirementLabel}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            style={requirementCheckbox}
+                            onChange={async (e) => {
+                              const next = new Set(selected);
+                              if (e.target.checked) {
+                                next.add(opt);
+                              } else {
+                                next.delete(opt);
+                              }
+                              const nextVal = Array.from(next).join(", ");
+                              try {
+                                const fresh = await updateStepMeta(r.id, { requirement: nextVal || null });
+                                applyFresh(fresh);
+                              } catch (err: any) {
+                                console.error(err);
+                                alert(`Failed to update requirement.\n${err?.message ?? ""}`);
+                              }
+                            }}
+                          />
+                          <span>{opt}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {/* agency suggestions */}
+      <datalist id="agency-options">
+        {contactOrgs.map((org) => (
+          <option key={org} value={org} />
+        ))}
+      </datalist>
+    </div>
+  );
+}

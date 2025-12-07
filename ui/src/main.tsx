@@ -1,28 +1,70 @@
-import React from "react";
+// ui/src/main.tsx
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
-import Layout from "./Layout";
-import MilestoneTable from "./MilestoneTable";
+import { ProjectProvider } from "./ProjectContext";
+import NavBar from "./NavBar";
 import Dashboard from "./Dashboard";
 import ProjectSummary from "./ProjectSummary";
-import App from "./App";
+import DevActivities from "./DevActivities";
 import ProjectContacts from "./ProjectContacts";
 import "./index.css";
+import "./Layout.css";
+
+function AppShell() {
+  const [collapsed, setCollapsed] = useState(false);
+
+  // Auto-collapse on small screens
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setCollapsed(true);
+      } else {
+        setCollapsed(false);
+      }
+    };
+
+    // Check on mount
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return (
+    <div className="app-shell">
+      <div className={`app-sidebar ${collapsed ? "app-sidebar-collapsed" : "app-sidebar-open"}`}>
+        <div className="app-sidebar-inner">
+          <NavBar collapsed={collapsed} setCollapsed={setCollapsed} />
+        </div>
+      </div>
+      <div className="app-main">
+        <Routes>
+          {/* Home → Project Summary */}
+          <Route path="/" element={<Navigate to="/project_summary" replace />} />
+          
+          {/* Project Summary - no project context wrapper needed, uses context from provider */}
+          <Route path="/project_summary" element={<ProjectSummary />} />
+          
+          {/* All project-scoped pages with context */}
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/development" element={<DevActivities />} />
+          <Route path="/project_contacts" element={<ProjectContacts />} />
+          
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/project_summary" replace />} />
+        </Routes>
+      </div>
+    </div>
+  );
+}
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <Layout>
-        <Routes>
-          {/* default → /dashboard */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/development" element={<App />} />
-          <Route path="/project_summary" element={<ProjectSummary />} />
-          <Route path="/project_contacts" element={<ProjectContacts />} />
-        </Routes>
-      </Layout>
+      <ProjectProvider>
+        <AppShell />
+      </ProjectProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

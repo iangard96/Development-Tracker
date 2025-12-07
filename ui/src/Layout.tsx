@@ -1,132 +1,171 @@
 // ui/src/Layout.tsx
-import React, { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { Outlet, NavLink, useParams, Navigate } from "react-router-dom";
+import { useState } from "react";
+import { ProjectProvider, useProject } from "./ProjectContext";
 import "./Layout.css";
 
-type LayoutProps = {
-  children?: React.ReactNode;
-};
+function LayoutInner() {
+  const [navCollapsed, setNavCollapsed] = useState(false);
+  const { project, isLoading, error } = useProject();
 
-export default function Layout({ children }: LayoutProps) {
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== "undefined" ? window.innerWidth < 900 : false
+  if (isLoading) return <div className="page-root">Loading project…</div>;
+  if (error) return <div className="page-root">Error: {error}</div>;
+  if (!project) return <div className="page-root">Project not found.</div>;
+
+  return (
+    <div
+      className="page-root"
+      style={{ display: "flex", flexDirection: "column", gap: 16 }}
+    >
+      {/* Project name at the top of every page in this project */}
+      <header
+        style={{
+          borderBottom: "1px solid #e5e7eb",
+          paddingBottom: 8,
+          marginBottom: 8,
+        }}
+      >
+        <h1 style={{ fontSize: 28, fontWeight: 700 }}>
+          {project.project_name}
+        </h1>
+        <p style={{ fontSize: 14, color: "#6b7280" }}>
+          {project.legal_name}
+        </p>
+      </header>
+
+      {/* Tabs for this project */}
+      <nav
+        style={{
+          display: "flex",
+          gap: 16,
+          borderBottom: "1px solid #e5e7eb",
+          paddingBottom: 8,
+          marginBottom: 8,
+          alignItems: "center",
+        }}
+      >
+        {/* Collapse toggle button - visible on smaller screens */}
+        <button
+          onClick={() => setNavCollapsed(!navCollapsed)}
+          className="nav-collapse-btn"
+          title={navCollapsed ? "Expand nav" : "Collapse nav"}
+        >
+          {navCollapsed ? "◀" : "▶"}
+        </button>
+
+        {/* Tab links container */}
+        <div
+          style={{
+            display: "flex",
+            gap: 16,
+            alignItems: "center",
+            width: navCollapsed ? "auto" : "100%",
+            flexWrap: navCollapsed ? "nowrap" : "wrap",
+          }}
+        >
+          {/* Full tab names - hidden when collapsed */}
+          {!navCollapsed && (
+            <>
+              <NavLink
+                to="dashboard"
+                style={({ isActive }) => ({
+                  fontSize: 14,
+                  textDecoration: isActive ? "underline" : "none",
+                  fontWeight: isActive ? 600 : 400,
+                })}
+              >
+                Dashboard
+              </NavLink>
+              <NavLink
+                to="activities"
+                style={({ isActive }) => ({
+                  fontSize: 14,
+                  textDecoration: isActive ? "underline" : "none",
+                  fontWeight: isActive ? 600 : 400,
+                })}
+              >
+                Development Activities
+              </NavLink>
+              <NavLink
+                to="contacts"
+                style={({ isActive }) => ({
+                  fontSize: 14,
+                  textDecoration: isActive ? "underline" : "none",
+                  fontWeight: isActive ? 600 : 400,
+                })}
+              >
+                Project Contacts
+              </NavLink>
+            </>
+          )}
+
+          {/* Collapsed nav - show dots for each tab */}
+          {navCollapsed && (
+            <>
+              <NavLink
+                to="dashboard"
+                style={({ isActive }) => ({
+                  display: "flex",
+                  gap: 2,
+                  textDecoration: "none",
+                  opacity: isActive ? 1 : 0.5,
+                  fontSize: 10,
+                })}
+                title="Dashboard"
+              >
+                •••
+              </NavLink>
+              <NavLink
+                to="activities"
+                style={({ isActive }) => ({
+                  display: "flex",
+                  gap: 2,
+                  textDecoration: "none",
+                  opacity: isActive ? 1 : 0.5,
+                  fontSize: 10,
+                })}
+                title="Development Activities"
+              >
+                •••
+              </NavLink>
+              <NavLink
+                to="contacts"
+                style={({ isActive }) => ({
+                  display: "flex",
+                  gap: 2,
+                  textDecoration: "none",
+                  opacity: isActive ? 1 : 0.5,
+                  fontSize: 10,
+                })}
+                title="Project Contacts"
+              >
+                •••
+              </NavLink>
+            </>
+          )}
+        </div>
+      </nav>
+
+      <main style={{ marginTop: 8 }}>
+        <Outlet />
+      </main>
+    </div>
   );
-  const [sidebarOpen, setSidebarOpen] = useState(
-    typeof window !== "undefined" ? window.innerWidth >= 900 : true
-  );
+}
 
-  useEffect(() => {
-    function handleResize() {
-      const mobile = window.innerWidth < 900;
-      setIsMobile(mobile);
-      setSidebarOpen(!mobile); // open on desktop, closed on mobile
-    }
+export default function Layout() {
+  const params = useParams();
+  const rawId = params.projectId;
+  const projectId = rawId ? Number(rawId) : NaN;
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  function toggleSidebar() {
-    setSidebarOpen((v) => !v);
-  }
-
-  // Close drawer after navigating on mobile
-  function handleNavClick() {
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
+  // If there is no valid :projectId in the URL, go back to /
+  if (!rawId || Number.isNaN(projectId) || projectId <= 0) {
+    return <Navigate to="/" replace />;
   }
 
   return (
-    <div className="app-shell">
-      {/* Sidebar */}
-      <aside
-        className={
-          "app-sidebar" +
-          (isMobile ? " app-sidebar-mobile" : "") +
-          (sidebarOpen ? " app-sidebar-open" : " app-sidebar-closed")
-        }
-      >
-        <div className="app-sidebar-inner">
-          <div className="app-sidebar-header">
-            {!isMobile && (
-              <button
-                className="app-sidebar-collapse-btn"
-                onClick={toggleSidebar}
-                aria-label="Toggle navigation"
-              >
-                {sidebarOpen ? "←" : "→"}
-              </button>
-            )}
-            <span className="app-sidebar-title">Project</span>
-          </div>
-
-          <nav className="app-sidebar-nav">
-            {/* 1. Project Summary */}
-            <NavLink
-              to="/project_summary"
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                "app-nav-link" + (isActive ? " app-nav-link-active" : "")
-              }
-            >
-              Project Summary
-            </NavLink>
-
-            {/* 2. Project Dashboard */}
-            <NavLink
-              to="/dashboard"
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                "app-nav-link" + (isActive ? " app-nav-link-active" : "")
-              }
-            >
-              Project Dashboard
-            </NavLink>
-
-            {/* 3. Development Activities */}
-            <NavLink
-              to="/development"
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                "app-nav-link" + (isActive ? " app-nav-link-active" : "")
-              }
-            >
-              Development Activities
-            </NavLink>
-
-            {/* 4. Project Contacts */}
-            <NavLink
-              to="/project_contacts"
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                "app-nav-link" + (isActive ? " app-nav-link-active" : "")
-              }
-            >
-              Project Contacts
-            </NavLink>
-          </nav>
-        </div>
-      </aside>
-
-      {/* Main area */}
-      <div className="app-main">
-        <header className="app-main-header">
-          {isMobile && (
-            <button
-              className="app-main-menu-btn"
-              onClick={toggleSidebar}
-              aria-label="Toggle navigation"
-            >
-              ☰
-            </button>
-          )}
-          <h1 className="app-main-header-title">Development Tracker</h1>
-        </header>
-
-        <main className="app-main-content">{children}</main>
-      </div>
-    </div>
+    <ProjectProvider projectId={projectId}>
+      <LayoutInner />
+    </ProjectProvider>
   );
 }

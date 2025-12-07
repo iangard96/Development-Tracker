@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "../../../../Downloads/TRSyL6QfSF6Usi-kH2heSA_fed8e0ef0d5b4700b07d269c2d15f0f1_Intro-to-Java-OOP_HW-1/Intro to Java & OOP_HW 1/SimpleGame"
+		},
+		{
+			"path": "../.."
+		}
+	],
+	"settings": {
+		"java.project.sourcePaths": [
+			"src"
+		],
+		"java.project.outputPath": "bin",
+		"java.project.referencedLibraries": [
+			"lib/**/*.jar"
+		],
+		"java.compile.nullAnalysis.mode": "automatic",
+		"java.codeGeneration.useBlocks": true,
+		"java.codeGeneration.generateComments": true,
+		"java.format.enabled": true
+	}
+}

@@ -125,6 +125,83 @@ CREATE INDEX steps_project_project_name_f4c28730_like ON app.steps_project USING
 
 
 --
+-- DevTracker table for development steps
+--
+
+CREATE TABLE IF NOT EXISTS "app"."DevTracker" (
+    id SERIAL PRIMARY KEY,
+    "Development Steps" TEXT,
+    phase INTEGER,
+    start_date DATE,
+    end_date DATE,
+    duration_days INTEGER,
+    status VARCHAR(100),
+    dev_type VARCHAR(32),
+    planned_spend NUMERIC(12, 2),
+    actual_spend NUMERIC(12, 2),
+    project_id INTEGER REFERENCES app.steps_project(id) ON DELETE CASCADE
+);
+
+
+--
+-- Seed template development steps (project_id IS NULL for templates)
+--
+
+INSERT INTO "app"."DevTracker" 
+("Development Steps", phase, dev_type, project_id) 
+VALUES
+('Site Assessment', 1, 'development', NULL),
+('Environmental Review', 2, 'development', NULL),
+('Permitting & Licensing', 3, 'permitting', NULL),
+('Engineering Design', 4, 'development', NULL),
+('Equipment Procurement', 5, 'procurement', NULL),
+('Construction', 6, 'construction', NULL),
+('Grid Interconnection', 7, 'interconnection', NULL),
+('Final Inspection', 8, 'development', NULL),
+('Commissioning', 9, 'operations', NULL),
+('Commercial Operation', 10, 'operations', NULL);
+
+
+--
+-- Seed development steps for existing projects (1, 9, 10)
+--
+
+INSERT INTO "app"."DevTracker" 
+("Development Steps", phase, dev_type, status, start_date, end_date, planned_spend, project_id) 
+VALUES
+('Site Assessment', 1, 'development', 'In Progress', '2025-01-15', '2025-02-15', 50000.00, 1),
+('Environmental Review', 2, 'development', 'Completed', '2025-02-01', '2025-03-15', 75000.00, 1),
+('Permitting & Licensing', 3, 'permitting', 'In Progress', '2025-03-01', '2025-05-30', 120000.00, 1),
+('Engineering Design', 4, 'development', 'Planned', '2025-04-01', '2025-06-30', 250000.00, 1),
+('Equipment Procurement', 5, 'procurement', 'Planned', '2025-05-15', '2025-08-15', 1500000.00, 1),
+('Construction', 6, 'construction', 'Planned', '2025-07-01', '2025-12-31', 2000000.00, 1),
+('Grid Interconnection', 7, 'interconnection', 'Planned', '2025-11-01', '2026-01-31', 300000.00, 1),
+('Final Inspection', 8, 'development', 'Planned', '2025-12-15', '2026-02-28', 100000.00, 1),
+('Commissioning', 9, 'operations', 'Planned', '2026-01-15', '2026-02-15', 200000.00, 1),
+('Commercial Operation', 10, 'operations', 'Planned', '2026-03-01', NULL, 0.00, 1),
+('Site Assessment', 1, 'development', 'Completed', '2024-06-01', '2024-07-15', 45000.00, 9),
+('Environmental Review', 2, 'development', 'Completed', '2024-07-15', '2024-09-01', 80000.00, 9),
+('Permitting & Licensing', 3, 'permitting', 'In Progress', '2024-08-01', '2025-02-28', 150000.00, 9),
+('Engineering Design', 4, 'development', 'In Progress', '2024-10-01', '2025-01-31', 280000.00, 9),
+('Equipment Procurement', 5, 'procurement', 'Planned', '2025-01-01', '2025-04-30', 1800000.00, 9),
+('Construction', 6, 'construction', 'Planned', '2025-03-01', '2025-10-31', 2200000.00, 9),
+('Grid Interconnection', 7, 'interconnection', 'Planned', '2025-09-01', '2025-11-30', 350000.00, 9),
+('Final Inspection', 8, 'development', 'Planned', '2025-10-15', '2025-12-31', 120000.00, 9),
+('Commissioning', 9, 'operations', 'Planned', '2025-11-15', '2025-12-15', 250000.00, 9),
+('Commercial Operation', 10, 'operations', 'Planned', '2026-01-01', NULL, 0.00, 9),
+('Site Assessment', 1, 'development', 'Completed', '2025-02-01', '2025-03-15', 55000.00, 10),
+('Environmental Review', 2, 'development', 'In Progress', '2025-03-15', '2025-05-01', 85000.00, 10),
+('Permitting & Licensing', 3, 'permitting', 'Planned', '2025-04-01', '2025-08-31', 135000.00, 10),
+('Engineering Design', 4, 'development', 'Planned', '2025-05-01', '2025-07-31', 265000.00, 10),
+('Equipment Procurement', 5, 'procurement', 'Planned', '2025-06-15', '2025-09-30', 1650000.00, 10),
+('Construction', 6, 'construction', 'Planned', '2025-08-01', '2026-02-28', 2100000.00, 10),
+('Grid Interconnection', 7, 'interconnection', 'Planned', '2026-01-01', '2026-03-31', 320000.00, 10),
+('Final Inspection', 8, 'development', 'Planned', '2026-02-15', '2026-04-30', 110000.00, 10),
+('Commissioning', 9, 'operations', 'Planned', '2026-03-01', '2026-04-01', 220000.00, 10),
+('Commercial Operation', 10, 'operations', 'Planned', '2026-04-15', NULL, 0.00, 10);
+
+
+--
 -- PostgreSQL database dump complete
 --
 

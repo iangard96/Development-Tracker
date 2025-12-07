@@ -1,6 +1,6 @@
 // ui/src/NavBar.tsx
 import React from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 const linkStyle: React.CSSProperties = {
   display: "block",
@@ -10,64 +10,68 @@ const linkStyle: React.CSSProperties = {
   textDecoration: "none",
 };
 
-export default function NavBar({ collapsed = false }: { collapsed?: boolean }) {
-  const { pathname } = useLocation();
+export default function NavBar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) {
+  const navItems = [
+    { to: "/project_summary", label: "Project Summary", title: "Project Summary" },
+    { to: "/dashboard", label: "Project Dashboard", title: "Project Dashboard" },
+    { to: "/development", label: "Development Activities", title: "Development Activities" },
+    { to: "/project_contacts", label: "Project Contacts", title: "Project Contacts" },
+  ];
 
   return (
     <nav className="nav">
-      <div className="nav-title">{collapsed ? "" : "Project"}</div>
-
-      {/* Development section */}
-      <div className="nav-section" style={{ marginBottom: 10 }}>
-        <NavLink
-          to="/development"
-          className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-          style={({ isActive }) => ({
-            ...linkStyle,
-            color: isActive ? "#1d4ed8" : "#111827",
-            background: isActive ? "#e0e7ff" : "transparent",
+      <div className="nav-title-container" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="nav-collapse-btn"
+          style={{
+            background: "#f3f4f6",
+            border: "1px solid #e5e7eb",
+            cursor: "pointer",
+            padding: "4px 8px",
             display: "flex",
             alignItems: "center",
-            gap: 10,
-          })}
+            fontSize: 14,
+            color: "#4b5563",
+            borderRadius: 4,
+            minWidth: 32,
+            justifyContent: "center",
+          }}
+          title={collapsed ? "Expand nav" : "Collapse nav"}
         >
-          <span className="nav-label">Development Activities</span>
-        </NavLink>
+          {collapsed ? ">" : "<"}
+        </button>
+        <div className="nav-title">{collapsed ? "" : "PROJECT"}</div>
       </div>
 
-      {/* Dashboard section */}
-      <div className="nav-section" style={{ marginBottom: 10 }}>
-        <NavLink
-          to="/dashboard"
-          className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-          style={({ isActive }) => ({
-            ...linkStyle,
-            color: isActive ? "#1d4ed8" : "#111827",
-            background: isActive ? "#e0e7ff" : "transparent",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-          })}
-        >
-          <span className="nav-label">Project Dashboard</span>
-        </NavLink>
-      </div>
-      <div className="nav-section" style={{ marginBottom: 10 }}>
-        <NavLink
-          to="/project_summary"
-          className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-          style={({ isActive }) => ({
-            ...linkStyle,
-            color: isActive ? "#1d4ed8" : "#111827",
-            background: isActive ? "#e0e7ff" : "transparent",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-          })}
-        >
-          <span className="nav-label">Project Summary</span>
-        </NavLink>
-      </div>
+      {navItems.map((item) => (
+        <div className="nav-section" style={{ marginBottom: 10 }} key={item.to}>
+          <NavLink
+            to={item.to}
+            className={({ isActive }) => {
+              const activeClass = isActive ? " active" : "";
+              const collapsedClass = collapsed ? " collapsed" : "";
+              return `nav-link${activeClass}${collapsedClass}`;
+            }}
+            style={({ isActive }) => ({
+              ...linkStyle,
+              color: isActive ? "#1d4ed8" : "#111827",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              justifyContent: collapsed ? "center" : "flex-start",
+            })}
+            title={item.title}
+            aria-label={item.title}
+          >
+            {collapsed ? (
+              <span className="nav-dot" aria-hidden="true"></span>
+            ) : (
+              <span className="nav-label">{item.label}</span>
+            )}
+          </NavLink>
+        </div>
+      ))}
     </nav>
   );
 }

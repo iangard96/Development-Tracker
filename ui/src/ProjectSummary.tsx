@@ -1,287 +1,449 @@
-// ui/src/ProjectSummary.tsx
+// ui/src/ProjectSummaryPage.tsx
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Project } from "./types";
-import { fetchProjects, createProject, updateProject, deleteProject } from "./api";
+import { fetchProjects, createProject, deleteProject, updateProject } from "./api";
+import { useProject } from "./ProjectContext";
 
-const PT_OPTIONS = [
-  { v: "GM", label: "Ground-Mount" },
-  { v: "RT", label: "Rooftop" },
-  { v: "OT", label: "Other" },
-] as const;
+const PROJECT_TYPE_OPTIONS = ["", "GM", "RT", "OT"];
+const PROJECT_DETAILS_OPTIONS = ["", "GM_FIXED", "GM_TRACK", "BALLASTED", "ROOFTOP"];
+const OFFTAKE_STRUCTURE_OPTIONS = ["", "FTM_UTIL", "FTM_DIST", "BTM"];
+const STATE_OPTIONS = ["", "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"];
 
-const PD_OPTIONS = [
-  { v: "GM_FIXED", label: "gm-fixed" },
-  { v: "GM_TRACK", label: "gm-tracking" },
-  { v: "BALLASTED", label: "ballasted" },
-  { v: "ROOFTOP", label: "rooftop" },
-] as const;
-
-const OF_OPTIONS = [
-  { v: "FTM_UTIL", label: "FTM-Utility" },
-  { v: "FTM_DIST", label: "FTM-Distributed" },
-  { v: "BTM", label: "BTM" },
-] as const;
-
-// Normalize DRF list responses: [] OR { results: [] }
-function asArray<T>(data: any): T[] {
-  if (Array.isArray(data)) return data as T[];
-  if (data && Array.isArray(data.results)) return data.results as T[];
-  return [];
-}
-
-function displayName(name: string | null | undefined, kind: "project" | "legal") {
-  if (!name) return "";
-  const projectRe = /^New Project \d+$/;
-  const legalRe   = /^New Legal Entity \d+$/;
-
-  if (kind === "project" && projectRe.test(name)) return "New Project";
-  if (kind === "legal" && legalRe.test(name)) return "New Legal Entity";
-  return name;
-}
-
-export default function ProjectSummary() {
-  const [rows, setRows] = useState<Project[]>([]);
+export default function ProjectSummaryPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
   const [err, setErr] = useState<string | null>(null);
-  const [saving, setSaving] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { selectProject } = useProject();
 
   useEffect(() => {
-    (async () => {
-      try {
-        const data = await fetchProjects();
-        setRows(asArray<Project>(data));
-      } catch (e: any) {
-        setErr(e?.message ?? String(e));
-      } finally {
-        setLoading(false);
-      }
-    })();
+    setLoading(true);
+    fetchProjects()
+      .then((rows) => setProjects(rows))
+      .catch((e) => setErr(String(e)))
+      .finally(() => setLoading(false));
   }, []);
 
-  async function addRow() {
+  async function handleNewProject() {
     try {
-      const stamp = Date.now(); // ✅ ensure uniqueness for any UNIQUE constraints
-      const created = await createProject({
-        project_name: `New Project ${stamp}`,
-        legal_name: `New Legal Entity ${stamp}`,
-
-        // ✅ optional: set coded defaults so row matches DB enum style
-        project_type: "RT",
-        project_details: "GM_FIXED",
-        offtake_structure: "FTM_UTIL",
-        size_ac_mw: 5.0,
-      });
-      setRows((r) => [created, ...r]);
-    } catch (e) {
-      console.error(e);
-      alert("Failed to create project.");
+      const fresh = await createProject({});
+      
+      // Bootstrap development steps for the new project
+      try {
+        const bootstrapRes = await fetch(`http://127.0.0.1:8010/api/projects/${fresh.id}/bootstrap_steps/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!bootstrapRes.ok) {
+          console.warn("Bootstrap steps failed, but project was created");
+        }
+      } catch (e) {
+        console.warn("Could not bootstrap steps:", e);
+      }
+      
+      setProjects((prev) => [...prev, fresh]);
+    } catch (e: any) {
+      alert(`Failed to create project.\n${e?.message ?? ""}`);
     }
   }
 
-  async function onEdit(id: number, patch: Partial<Project>) {
-    const prev = rows;
-    const next = rows.map((r) => (r.id === id ? { ...r, ...patch } : r));
-    setRows(next);
-    setSaving(id);
+  function handleSelectProject(projectId: number) {
+    selectProject(projectId);
+    navigate("/dashboard");
+  }
+
+  async function handleDeleteProject(projectId: number) {
+    if (!confirm("Are you sure you want to delete this project?")) return;
     try {
-      await updateProject(id, patch);
-    } catch (e) {
-      console.error(e);
-      setRows(prev);
-      alert("Failed to save change.");
-    } finally {
-      setSaving(null);
+      await deleteProject(projectId);
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+    } catch (e: any) {
+      alert(`Failed to delete project.\n${e?.message ?? ""}`);
     }
   }
 
-  async function removeRow(id: number) {
-    if (!confirm("Delete this project?")) return;
-    const prev = rows;
-    setRows(prev.filter((r) => r.id !== id));
+  async function handleUpdateProjectName(projectId: number, newName: string) {
+    if (!newName.trim()) {
+      alert("Project name cannot be empty");
+      return;
+    }
     try {
-      await deleteProject(id);
-    } catch (e) {
-      console.error(e);
-      alert("Delete failed.");
-      setRows(prev);
+      const updated = await updateProject(projectId, { project_name: newName });
+      setProjects((prev) =>
+        prev.map((p) => (p.id === projectId ? updated : p))
+      );
+    } catch (e: any) {
+      alert(`Failed to update project name.\n${e?.message ?? ""}`);
     }
   }
 
-  if (loading) return <div style={{ padding: 16 }}>Loading…</div>;
-  if (err) return <div style={{ color: "crimson", padding: 16 }}>Error: {err}</div>;
+  async function handleUpdateProject(
+    projectId: number,
+    updates: Partial<Project>
+  ) {
+    try {
+      const updated = await updateProject(projectId, updates);
+      setProjects((prev) =>
+        prev.map((p) => (p.id === projectId ? updated : p))
+      );
+    } catch (e: any) {
+      alert(`Failed to update project.\n${e?.message ?? ""}`);
+    }
+  }
+
+  const canDeleteProjects = projects.length > 1;
+
+  if (err) return <div className="page-root">Error: {err}</div>;
+  if (loading) return <div className="page-root">Loading projects…</div>;
 
   return (
-    <div style={{ padding: 16 }}>
-      <h1 style={{ marginBottom: 12 }}>Project Summary</h1>
+    <div className="page-root">
+      <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111827", margin: "0 0 32px" }}>
+        Project Summary
+      </h1>
 
       <button
-        onClick={addRow}
-        style={{ marginBottom: 12, padding: "6px 10px", borderRadius: 8, border: "1px solid #ddd" }}
+        type="button"
+        onClick={handleNewProject}
+        style={{
+          marginBottom: 16,
+          borderRadius: 5,
+          border: "1px solid #d1d5db",
+          padding: "6px 12px",
+          fontSize: 13,
+          fontWeight: 500,
+          background: "#ffffff",
+          color: "#374151",
+          cursor: "pointer",
+          transition: "all 0.15s ease",
+        }}
+        onMouseOver={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = "#f3f4f6";
+          (e.currentTarget as HTMLButtonElement).style.borderColor = "#9ca3af";
+        }}
+        onMouseOut={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = "#ffffff";
+          (e.currentTarget as HTMLButtonElement).style.borderColor = "#d1d5db";
+        }}
       >
         + Add Project
       </button>
 
-      <div style={{ overflowX: "auto", border: "1px solid #e5e7eb", borderRadius: 12 }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-          <thead style={{ background: "#f8fafc" }}>
+      <div
+        style={{
+          border: "1px solid #e5e7eb",
+          borderRadius: 8,
+          overflowX: "auto",
+          overflowY: "visible",
+          background: "#ffffff",
+          boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)",
+        }}
+      >
+        <table
+          style={{
+            borderCollapse: "collapse",
+            fontSize: 13,
+            width: "max-content",
+          }}
+        >
+          <thead style={{ background: "#f9fafb" }}>
             <tr>
-              <Th>Project Name</Th>
-              <Th>Legal Name</Th>
-              <Th>Project Type</Th>
-              <Th>Project Details</Th>
-              <Th>Offtake Structure</Th>
-              <Th>AC (MW)</Th>
-              <Th>DC (MW)</Th>
-              <Th>Lat</Th>
-              <Th>Lon</Th>
-              <Th>State</Th>
-              <Th>County</Th>
-              <Th>City</Th>
-              <Th>Address</Th>
-              <Th>Other</Th>
-              <Th></Th>
+              <th style={th}>Project Name</th>
+              <th style={th}>Legal Name</th>
+              <th style={th}>Project Type</th>
+              <th style={th}>Project Details</th>
+              <th style={th}>Offtake Structure</th>
+              <th style={th}>AC (MW)</th>
+              <th style={th}>DC (MW)</th>
+              <th style={th}>Lat</th>
+              <th style={th}>Lon</th>
+              <th style={th}>State</th>
+              <th style={th}>County</th>
+              <th style={th}>City</th>
+              <th style={th}>Address</th>
+              <th style={th}>Other</th>
+              <th style={{ ...th, position: "sticky", right: 0, background: "#f9fafb", borderLeft: "1px solid #e5e7eb" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} style={{ borderTop: "1px solid #e5e7eb" }}>
-                <Td>
+            {projects.map((p, idx) => (
+              <tr key={p.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                {/* Project Name */}
+                <td style={td}>
                   <input
-                    value={r.project_name, "project"}
-                    onChange={(e) => onEdit(r.id, { project_name: e.target.value })}
+                    type="text"
+                    defaultValue={p.project_name}
+                    onBlur={(e) => {
+                      const newName = e.currentTarget.value;
+                      if (newName && newName !== p.project_name) {
+                        handleUpdateProjectName(p.id, newName);
+                      }
+                    }}
+                    style={inputStyle}
                   />
-                </Td>
-                <Td>
+                </td>
+                {/* Legal Name */}
+                <td style={td}>
                   <input
-                    value={r.legal_name, "legal"}
-                    onChange={(e) => onEdit(r.id, { legal_name: e.target.value })}
+                    type="text"
+                    defaultValue={p.legal_name}
+                    onBlur={(e) => {
+                      const newVal = e.currentTarget.value;
+                      if (newVal && newVal !== p.legal_name) {
+                        handleUpdateProject(p.id, { legal_name: newVal });
+                      }
+                    }}
+                    style={inputStyle}
                   />
-                </Td>
-
-                <Td>
+                </td>
+                {/* Type - Dropdown */}
+                <td style={td}>
                   <select
-                    value={r.project_type ?? ""}
-                    onChange={(e) =>
-                      onEdit(r.id, { project_type: (e.target.value || null) as Project["project_type"] })
-                    }
+                    defaultValue={p.project_type || ""}
+                    onChange={(e) => {
+                      const newVal = e.target.value || null;
+                      if (newVal !== p.project_type) {
+                        handleUpdateProject(p.id, { project_type: newVal });
+                      }
+                    }}
+                    style={selectStyle}
                   >
-                    <option value="">—</option>
-                    {PT_OPTIONS.map((o) => (
-                      <option key={o.v} value={o.v}>
-                        {o.label}
+                    {PROJECT_TYPE_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt || "—"}
                       </option>
                     ))}
                   </select>
-                </Td>
-
-                <Td>
+                </td>
+                {/* Details - Dropdown */}
+                <td style={td}>
                   <select
-                    value={r.project_details ?? ""}
-                    onChange={(e) =>
-                      onEdit(r.id, { project_details: (e.target.value || null) as Project["project_details"] })
-                    }
+                    defaultValue={p.project_details || ""}
+                    onChange={(e) => {
+                      const newVal = e.target.value || null;
+                      if (newVal !== p.project_details) {
+                        handleUpdateProject(p.id, { project_details: newVal });
+                      }
+                    }}
+                    style={selectStyle}
                   >
-                    <option value="">—</option>
-                    {PD_OPTIONS.map((o) => (
-                      <option key={o.v} value={o.v}>
-                        {o.label}
+                    {PROJECT_DETAILS_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt || "—"}
                       </option>
                     ))}
                   </select>
-                </Td>
-
-                <Td>
+                </td>
+                {/* Offtake - Dropdown */}
+                <td style={td}>
                   <select
-                    value={r.offtake_structure ?? ""}
-                    onChange={(e) =>
-                      onEdit(r.id, {
-                        offtake_structure: (e.target.value || null) as Project["offtake_structure"],
-                      })
-                    }
+                    defaultValue={p.offtake_structure || ""}
+                    onChange={(e) => {
+                      const newVal = e.target.value || null;
+                      if (newVal !== p.offtake_structure) {
+                        handleUpdateProject(p.id, { offtake_structure: newVal });
+                      }
+                    }}
+                    style={selectStyle}
                   >
-                    <option value="">—</option>
-                    {OF_OPTIONS.map((o) => (
-                      <option key={o.v} value={o.v}>
-                        {o.label}
+                    {OFFTAKE_STRUCTURE_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt || "—"}
                       </option>
                     ))}
                   </select>
-                </Td>
-
-                <TdNum>
+                </td>
+                {/* AC Size */}
+                <td style={td}>
                   <input
                     type="number"
                     step="0.001"
-                    value={r.size_ac_mw ?? ""}
-                    onChange={(e) =>
-                      onEdit(r.id, { size_ac_mw: e.target.value === "" ? null : Number(e.target.value) })
-                    }
+                    defaultValue={p.size_ac_mw || ""}
+                    onBlur={(e) => {
+                      const newVal = e.currentTarget.value ? Number(e.currentTarget.value) : null;
+                      if (newVal !== p.size_ac_mw) {
+                        handleUpdateProject(p.id, { size_ac_mw: newVal });
+                      }
+                    }}
+                    style={inputStyle}
                   />
-                </TdNum>
-
-                <TdNum>
+                </td>
+                {/* DC Size */}
+                <td style={td}>
                   <input
                     type="number"
                     step="0.001"
-                    value={r.size_dc_mw ?? ""}
-                    onChange={(e) =>
-                      onEdit(r.id, { size_dc_mw: e.target.value === "" ? null : Number(e.target.value) })
-                    }
+                    defaultValue={p.size_dc_mw || ""}
+                    onBlur={(e) => {
+                      const newVal = e.currentTarget.value ? Number(e.currentTarget.value) : null;
+                      if (newVal !== p.size_dc_mw) {
+                        handleUpdateProject(p.id, { size_dc_mw: newVal });
+                      }
+                    }}
+                    style={inputStyle}
                   />
-                </TdNum>
-
-                <TdNum>
+                </td>
+                {/* Latitude */}
+                <td style={td}>
                   <input
                     type="number"
                     step="0.000001"
-                    value={r.latitude ?? ""}
-                    onChange={(e) =>
-                      onEdit(r.id, { latitude: e.target.value === "" ? null : Number(e.target.value) })
-                    }
+                    defaultValue={p.latitude || ""}
+                    onBlur={(e) => {
+                      const newVal = e.currentTarget.value ? Number(e.currentTarget.value) : null;
+                      if (newVal !== p.latitude) {
+                        handleUpdateProject(p.id, { latitude: newVal });
+                      }
+                    }}
+                    style={inputStyle}
                   />
-                </TdNum>
-
-                <TdNum>
+                </td>
+                {/* Longitude */}
+                <td style={td}>
                   <input
                     type="number"
                     step="0.000001"
-                    value={r.longitude ?? ""}
-                    onChange={(e) =>
-                      onEdit(r.id, { longitude: e.target.value === "" ? null : Number(e.target.value) })
-                    }
+                    defaultValue={p.longitude || ""}
+                    onBlur={(e) => {
+                      const newVal = e.currentTarget.value ? Number(e.currentTarget.value) : null;
+                      if (newVal !== p.longitude) {
+                        handleUpdateProject(p.id, { longitude: newVal });
+                      }
+                    }}
+                    style={inputStyle}
                   />
-                </TdNum>
-
-                <TdNarrow>
+                </td>
+                {/* State - Dropdown */}
+                <td style={td}>
+                  <select
+                    defaultValue={p.state || ""}
+                    onChange={(e) => {
+                      const newVal = e.target.value || null;
+                      if (newVal !== p.state) {
+                        handleUpdateProject(p.id, { state: newVal });
+                      }
+                    }}
+                    style={selectStyle}
+                  >
+                    {STATE_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt || "—"}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                {/* County */}
+                <td style={td}>
                   <input
-                    maxLength={2}
-                    value={r.state ?? ""}
-                    onChange={(e) => onEdit(r.id, { state: e.target.value.toUpperCase() })}
+                    type="text"
+                    defaultValue={p.county || ""}
+                    onBlur={(e) => {
+                      const newVal = e.currentTarget.value || null;
+                      if (newVal !== p.county) {
+                        handleUpdateProject(p.id, { county: newVal });
+                      }
+                    }}
+                    style={inputStyle}
                   />
-                </TdNarrow>
-
-                <Td>
-                  <input value={r.county ?? ""} onChange={(e) => onEdit(r.id, { county: e.target.value })} />
-                </Td>
-                <Td>
-                  <input value={r.city ?? ""} onChange={(e) => onEdit(r.id, { city: e.target.value })} />
-                </Td>
-                <Td>
-                  <input value={r.address ?? ""} onChange={(e) => onEdit(r.id, { address: e.target.value })} />
-                </Td>
-                <Td>
-                  <input value={r.other ?? ""} onChange={(e) => onEdit(r.id, { other: e.target.value })} />
-                </Td>
-
-                <Td style={{ textAlign: "right" }}>
+                </td>
+                {/* City */}
+                <td style={td}>
+                  <input
+                    type="text"
+                    defaultValue={p.city || ""}
+                    onBlur={(e) => {
+                      const newVal = e.currentTarget.value || null;
+                      if (newVal !== p.city) {
+                        handleUpdateProject(p.id, { city: newVal });
+                      }
+                    }}
+                    style={inputStyle}
+                  />
+                </td>
+                {/* Address */}
+                <td style={td}>
+                  <input
+                    type="text"
+                    defaultValue={p.address || ""}
+                    onBlur={(e) => {
+                      const newVal = e.currentTarget.value || null;
+                      if (newVal !== p.address) {
+                        handleUpdateProject(p.id, { address: newVal });
+                      }
+                    }}
+                    style={inputStyle}
+                  />
+                </td>
+                {/* Other */}
+                <td style={td}>
+                  <input
+                    type="text"
+                    defaultValue={p.other || ""}
+                    onBlur={(e) => {
+                      const newVal = e.currentTarget.value || null;
+                      if (newVal !== p.other) {
+                        handleUpdateProject(p.id, { other: newVal });
+                      }
+                    }}
+                    style={inputStyle}
+                  />
+                </td>
+                {/* Actions */}
+                <td style={actionsTd}>
                   <button
-                    disabled={saving === r.id}
-                    onClick={() => removeRow(r.id)}
-                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #ddd" }}
+                    onClick={() => handleSelectProject(p.id)}
+                    style={{
+                      padding: "5px 10px",
+                      background: "white",
+                      color: "#374151",
+                      border: "1px solid #d1d5db",
+                      borderRadius: 5,
+                      cursor: "pointer",
+                      fontSize: 12,
+                      fontWeight: 500,
+                      marginRight: 6,
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseOver={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.background = "#f3f4f6";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#9ca3af";
+                    }}
+                    onMouseOut={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.background = "white";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#d1d5db";
+                    }}
                   >
-                    Delete
+                    View
                   </button>
-                </Td>
+                  <button
+                    onClick={() => handleDeleteProject(p.id)}
+                    style={{
+                      padding: "5px 10px",
+                      background: "#fee2e2",
+                      color: "#7f1d1d",
+                      border: "1px solid #fecaca",
+                      borderRadius: 5,
+                      cursor: canDeleteProjects ? "pointer" : "default",
+                      fontSize: 12,
+                      fontWeight: 500,
+                      transition: "all 0.15s ease",
+                      opacity: canDeleteProjects ? 1 : 0.4,
+                    }}
+                    onMouseOver={(e) => {
+                      if (!canDeleteProjects) return;
+                      (e.currentTarget as HTMLButtonElement).style.background = "#fecaca";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#fca5a5";
+                    }}
+                    onMouseOut={(e) => {
+                      if (!canDeleteProjects) return;
+                      (e.currentTarget as HTMLButtonElement).style.background = "#fee2e2";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#fecaca";
+                    }}
+                  >
+                    Remove
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -291,15 +453,59 @@ export default function ProjectSummary() {
   );
 }
 
-function Th({ children }: { children: any }) {
-  return <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 700 }}>{children}</th>;
-}
-function Td({ children, style }: { children: any; style?: React.CSSProperties }) {
-  return (
-    <td style={{ padding: "8px 10px", borderTop: "1px solid #e5e7eb", verticalAlign: "middle", ...style }}>
-      {children}
-    </td>
-  );
-}
-const TdNum: React.FC<{ children: any }> = ({ children }) => <Td style={{ minWidth: 110 }}>{children}</Td>;
-const TdNarrow: React.FC<{ children: any }> = ({ children }) => <Td style={{ minWidth: 80 }}>{children}</Td>;
+const th: React.CSSProperties = {
+  textAlign: "left",
+  padding: "10px 12px",
+  fontWeight: 600,
+  fontSize: 12,
+  color: "#6b7280",
+  background: "#f3f4f6",
+  border: "none",
+  borderBottom: "1px solid #e5e7eb",
+  whiteSpace: "nowrap",
+};
+
+const td: React.CSSProperties = {
+  padding: "10px 12px",
+  verticalAlign: "middle",
+  borderBottom: "1px solid #e5e7eb",
+  minWidth: 120,
+  fontSize: 13,
+  color: "#1f2937",
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "6px 10px",
+  border: "1px solid #e5e7eb",
+  borderRadius: 5,
+  fontSize: 13,
+  boxSizing: "border-box",
+  background: "white",
+  color: "#1f2937",
+  transition: "all 0.15s ease",
+};
+
+const selectStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "6px 10px",
+  paddingRight: 24,
+  border: "1px solid #e5e7eb",
+  borderRadius: 5,
+  fontSize: 13,
+  boxSizing: "border-box",
+  background: "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+  backgroundSize: "10px",
+  color: "#1f2937",
+  cursor: "pointer",
+  appearance: "none" as any,
+};
+
+const actionsTd: React.CSSProperties = {
+  ...td,
+  position: "sticky",
+  right: 0,
+  background: "#ffffff",
+  borderLeft: "1px solid #e5e7eb",
+  minWidth: 140,
+};
