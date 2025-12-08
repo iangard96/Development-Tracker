@@ -1,25 +1,18 @@
 # core/settings.py
 from pathlib import Path
 import os
-import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- Basic ---
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key-change-me")
-
-# Locally you can override with DJANGO_DEBUG=False if you want
-DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
-
-# For now, be liberal so local, tunnels, and Render all work
+DEBUG = True
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
     "[::1]",
-    ".ngrok-free.dev",
-    ".loca.lt",
-    ".onrender.com",
-    "*",  # fine for dev/demo
+    ".ngrok-free.dev",  # allow any *.ngrok-free.dev tunnel host
+    ".loca.lt",  # allow any *.loca.lt tunnel host
 ]
 
 # --- Apps ---
@@ -49,14 +42,14 @@ MIDDLEWARE = [
 
 # --- URLs / WSGI ---
 ROOT_URLCONF = "core.urls"
-WSGI_APPLICATION = "core.wsgi.application"  # IMPORTANT for gunicorn on Render
+WSGI_APPLICATION = None  # using runserver only; set to "core.wsgi.application" for WSGI deploys
 
 # --- Templates ---
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [BASE_DIR / "templates"],
-        "APP_DIRS": True,  # use app templates (admin, etc.)
+        "APP_DIRS": False,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -68,19 +61,36 @@ TEMPLATES = [
     },
 ]
 
-# --- Database ---
-# Locally: fall back to your existing Postgres on 127.0.0.1:5434
-# Render: uses DATABASE_URL env var (which you already have set)
-LOCAL_DB_URL = "postgresql://postgres:iangard96@127.0.0.1:5434/postgres"
+# --- Database (matches your earlier dump) ---
 
 DATABASES = {
-    "default": dj_database_url.config(
-        env="DATABASE_URL",        # what Render sets
-        default=LOCAL_DB_URL,      # used locally if DATABASE_URL is not set
-        conn_max_age=600,
-        ssl_require=os.getenv("RENDER") == "true",  # only require SSL on Render
-    )
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "HOST": os.getenv("PGHOST", "127.0.0.1"),
+        "PORT": os.getenv("PGPORT", "5434"),
+        "NAME": os.getenv("PGDATABASE", "postgres"),
+        "USER": os.getenv("PGUSER", "postgres"),
+        "PASSWORD": os.getenv("PGPASSWORD", "iangard96"),
+        "OPTIONS": {
+            "options": "-c search_path=app,public",
+            "sslmode": os.getenv("PGSSLMODE", "disable"),
+        },
+        "CONN_MAX_AGE": 60,
+    }
 }
+
+'''
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DT_DB_NAME", "postgres"),
+        "USER": os.getenv("DT_DB_USER", "postgres"),
+        "PASSWORD": os.getenv("DT_DB_PASSWORD", "iangard96"),
+        "HOST": os.getenv("DT_DB_HOST", "127.0.0.1"),
+        "PORT": os.getenv("DT_DB_PORT", "5434"),
+    }
+}
+'''
 
 # --- Internationalization ---
 LANGUAGE_CODE = "en-us"
@@ -91,7 +101,6 @@ USE_TZ = True
 # --- Static ---
 STATIC_URL = "/static/"
 STATICFILES_DIRS = []
-STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # --- CORS / DRF ---
 CORS_ALLOW_ALL_ORIGINS = True
@@ -99,6 +108,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 200,
+    # Force JSON responses; avoids needing the browsable API template when hitting the API via tunnel/browser
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
