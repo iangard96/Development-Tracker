@@ -31,7 +31,11 @@ export default function ProjectSummaryPage() {
       
       // Bootstrap development steps for the new project
       try {
-        const bootstrapRes = await fetch(`http://127.0.0.1:8010/api/projects/${fresh.id}/bootstrap_steps/`, {
+        const apiBase = import.meta.env.VITE_API_URL;
+        if (!apiBase) {
+          throw new Error("VITE_API_URL is not set.");
+        }
+        const bootstrapRes = await fetch(`${apiBase}/projects/${fresh.id}/bootstrap_steps/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         });
