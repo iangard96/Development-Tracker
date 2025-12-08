@@ -1,9 +1,15 @@
 // ui/src/api.ts
 import type { DevStep, Project, DevType, ProjectContact } from "./types";
 
-const API =
-  import.meta.env.VITE_API_URL ??
-  "http://127.0.0.1:8010/api";
+const API = (() => {
+  const fromEnv = import.meta.env.VITE_API_URL;
+  if (!fromEnv) {
+    throw new Error(
+      "VITE_API_URL is not set. Configure your API base URL in the environment (e.g., Render backend /api).",
+    );
+  }
+  return fromEnv;
+})();
 // const API = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8010/api";
 
 /* ---------- helpers ---------- */
