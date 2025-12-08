@@ -16,6 +16,7 @@ type ProjectContextValue = {
   error: string | null;
   selectProject: (id: number) => void;
   clearProject: () => void;
+  setCurrentProject: (p: Project | null) => void;
 };
 
 const ProjectContext = createContext<ProjectContextValue | undefined>(
@@ -69,6 +70,10 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setProject(null);
   };
 
+  const setCurrentProject = (p: Project | null) => {
+    setProject(p);
+  };
+
   return (
     <ProjectContext.Provider
       value={{
@@ -78,6 +83,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         error,
         selectProject,
         clearProject,
+        setCurrentProject,
       }}
     >
       {children}

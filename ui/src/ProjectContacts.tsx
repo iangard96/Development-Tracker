@@ -122,13 +122,15 @@ export default function ProjectContacts() {
   function removeRow(id: number) {
     setRows((prev) => prev.filter((r) => r.id !== id));
     if (id > 0) {
+      const apiBase = import.meta.env.VITE_API_URL ?? import.meta.env.VITE_API_BASE;
+      if (!apiBase) {
+        console.warn("API base URL not set; skipping remote delete");
+        return;
+      }
       // Best-effort delete on server
-      fetch(
-        `${
-          import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8010"
-        }/api/project-contacts/${id}/`,
-        { method: "DELETE" },
-      ).catch((e) => console.warn("Failed to delete contact", e));
+      fetch(`${apiBase}/project-contacts/${id}/`, { method: "DELETE" }).catch((e) =>
+        console.warn("Failed to delete contact", e),
+      );
     }
   }
 

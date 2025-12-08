@@ -15,7 +15,7 @@ export default function ProjectSummaryPage() {
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { selectProject } = useProject();
+  const { selectProject, projectId: selectedProjectId, setCurrentProject } = useProject();
 
   useEffect(() => {
     setLoading(true);
@@ -77,6 +77,9 @@ export default function ProjectSummaryPage() {
       setProjects((prev) =>
         prev.map((p) => (p.id === projectId ? updated : p))
       );
+      if (selectedProjectId === projectId) {
+        setCurrentProject(updated);
+      }
     } catch (e: any) {
       alert(`Failed to update project name.\n${e?.message ?? ""}`);
     }
@@ -91,6 +94,9 @@ export default function ProjectSummaryPage() {
       setProjects((prev) =>
         prev.map((p) => (p.id === projectId ? updated : p))
       );
+      if (selectedProjectId === projectId) {
+        setCurrentProject(updated);
+      }
     } catch (e: any) {
       alert(`Failed to update project.\n${e?.message ?? ""}`);
     }
