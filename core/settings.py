@@ -1,6 +1,7 @@
 # core/settings.py
 from pathlib import Path
 import os
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -68,23 +69,17 @@ TEMPLATES = [
 ]
 
 # --- Database ---
-# Local defaults: your existing Postgres on 127.0.0.1:5434
-# On Render: when you link a Render Postgres, PG* vars are injected automatically.
+# Locally: fall back to your existing Postgres on 127.0.0.1:5434
+# Render: uses DATABASE_URL env var (which you already have set)
+LOCAL_DB_URL = "postgresql://postgres:iangard96@127.0.0.1:5434/postgres"
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "HOST": os.getenv("PGHOST", "127.0.0.1"),
-        "PORT": os.getenv("PGPORT", "5434"),
-        "NAME": os.getenv("PGDATABASE", "postgres"),
-        "USER": os.getenv("PGUSER", "postgres"),
-        "PASSWORD": os.getenv("PGPASSWORD", "iangard96"),
-        "OPTIONS": {
-            "options": "-c search_path=app,public",
-            # Locally default to no SSL; on Render set PGSSLMODE=require
-            "sslmode": os.getenv("PGSSLMODE", "disable"),
-        },
-        "CONN_MAX_AGE": 60,
-    }
+    "default": dj_database_url.config(
+        env="DATABASE_URL",        # what Render sets
+        default=LOCAL_DB_URL,      # used locally if DATABASE_URL is not set
+        conn_max_age=600,
+        ssl_require=os.getenv("RENDER") == "true",  # only require SSL on Render
+    )
 }
 
 # --- Internationalization ---
@@ -96,7 +91,6 @@ USE_TZ = True
 # --- Static ---
 STATIC_URL = "/static/"
 STATICFILES_DIRS = []
-# Optional but nice for Render if you later use collectstatic:
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # --- CORS / DRF ---
