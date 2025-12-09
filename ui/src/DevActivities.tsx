@@ -381,11 +381,28 @@ function SpendCell({
         : "";
 
   async function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
-    const raw = e.currentTarget.value;
+    const raw = e.currentTarget.value.trim();
 
     try {
-      const num = raw === "" ? null : Number(raw);
-      const v = num !== null ? Math.round(num * 100) / 100 : null;
+      if (raw === "") {
+        // Explicit clear → null
+        const fresh = await updateStepSpend(id, {
+          [field]: null,
+        });
+        onSaved(fresh);
+        onEdit(id, key, "");
+        return;
+      }
+
+      const num = Number(raw);
+      if (Number.isNaN(num)) {
+        alert("Please enter a number or leave blank to clear.");
+        // reset local edit to current value from props
+        onEdit(id, key, "");
+        return;
+      }
+
+      const v = Math.round(num * 100) / 100;
 
       const fresh = await updateStepSpend(id, {
         [field]: v,

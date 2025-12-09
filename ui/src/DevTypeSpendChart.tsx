@@ -42,11 +42,17 @@ export default function DevTypeSpendChart({ steps }: Props) {
       );
 
       const planned = group.reduce(
-        (sum, s: any) => sum + (s.planned_spend ?? 0),
+        (sum, s: any) => {
+          const val = Number(s.planned_spend ?? 0);
+          return sum + (Number.isFinite(val) ? val : 0);
+        },
         0
       );
       const actual = group.reduce(
-        (sum, s: any) => sum + (s.actual_spend ?? 0),
+        (sum, s: any) => {
+          const val = Number(s.actual_spend ?? 0);
+          return sum + (Number.isFinite(val) ? val : 0);
+        },
         0
       );
 
