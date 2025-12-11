@@ -166,6 +166,8 @@ export default function ProjectSummaryPage() {
               <th style={th}>Offtake Structure</th>
               <th style={th}>AC (MW)</th>
               <th style={th}>DC (MW)</th>
+              <th style={th}>Lease Option Start</th>
+              <th style={th}>Lease Option Expiration</th>
               <th style={th}>Lat</th>
               <th style={th}>Lon</th>
               <th style={th}>State</th>
@@ -289,6 +291,34 @@ export default function ProjectSummaryPage() {
                       const newVal = e.currentTarget.value ? Number(e.currentTarget.value) : null;
                       if (newVal !== p.size_dc_mw) {
                         handleUpdateProject(p.id, { size_dc_mw: newVal });
+                      }
+                    }}
+                    style={inputStyle}
+                  />
+                </td>
+                {/* Lease Option Start */}
+                <td style={td}>
+                  <input
+                    type="date"
+                    defaultValue={(p as any).lease_option_start_date || ""}
+                    onBlur={(e) => {
+                      const newVal = e.currentTarget.value || null;
+                      if (newVal !== (p as any).lease_option_start_date) {
+                        handleUpdateProject(p.id, { lease_option_start_date: newVal as any });
+                      }
+                    }}
+                    style={inputStyle}
+                  />
+                </td>
+                {/* Lease Option Expiration */}
+                <td style={td}>
+                  <input
+                    type="date"
+                    defaultValue={(p as any).lease_option_expiration_date || ""}
+                    onBlur={(e) => {
+                      const newVal = e.currentTarget.value || null;
+                      if (newVal !== (p as any).lease_option_expiration_date) {
+                        handleUpdateProject(p.id, { lease_option_expiration_date: newVal as any });
                       }
                     }}
                     style={inputStyle}

@@ -61,6 +61,8 @@ export default function Dashboard() {
       ? `${project.county ?? ""}${project.county && project.state ? ", " : ""}${project.state ?? ""}`
       : "—";
   const sizeLabel = fmtSize(project?.size_ac_mw, project?.size_dc_mw);
+  const leaseStart = (project as any)?.lease_option_start_date || "—";
+  const leaseEnd = (project as any)?.lease_option_expiration_date || "—";
 
   return (
     <div className="page-root">
@@ -131,6 +133,47 @@ export default function Dashboard() {
             >
               <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Project Details</div>
               <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{projectDetails}</div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: 16,
+              flexWrap: "wrap",
+              marginBottom: 24,
+            }}
+          >
+            <div
+              style={{
+                background: "#f9fafb",
+                border: "1px solid #e5e7eb",
+                borderRadius: 10,
+                padding: "10px 12px",
+                minWidth: 220,
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
+                Lease Option Start Date
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{leaseStart}</div>
+            </div>
+            <div
+              style={{
+                background: "#f9fafb",
+                border: "1px solid #e5e7eb",
+                borderRadius: 10,
+                padding: "10px 12px",
+                minWidth: 220,
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
+                Lease Option Expiration Date
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{leaseEnd}</div>
             </div>
           </div>
         </>

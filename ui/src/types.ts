@@ -37,6 +37,8 @@ export type Project = {
   offtake_structure: "FTM_UTIL" | "FTM_DIST" | "BTM" | null;
   size_ac_mw: number | null;
   size_dc_mw: number | null;
+  lease_option_start_date?: string | null;
+  lease_option_expiration_date?: string | null;
   latitude: number | null;
   longitude: number | null;
   state: string | null;
