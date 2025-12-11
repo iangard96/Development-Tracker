@@ -13,6 +13,15 @@ export default function Dashboard() {
   const [steps, setSteps] = useState<DevStep[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
+  // Always call hooks (useMemo) on every render to avoid hook order issues
+  const permittingSteps = useMemo(
+    () =>
+      (steps ?? []).filter(
+        (s) => (s.development_type || "").toLowerCase() === "permitting",
+      ),
+    [steps],
+  );
+
   useEffect(() => {
     if (!projectId) {
       setSteps(null);
@@ -63,13 +72,6 @@ export default function Dashboard() {
   const sizeLabel = fmtSize(project?.size_ac_mw, project?.size_dc_mw);
   const leaseStart = (project as any)?.lease_option_start_date || "—";
   const leaseEnd = (project as any)?.lease_option_expiration_date || "—";
-  const permittingSteps = useMemo(
-    () =>
-      (steps ?? []).filter(
-        (s) => (s.development_type || "").toLowerCase() === "permitting",
-      ),
-    [steps],
-  );
 
   return (
     <div className="page-root">
