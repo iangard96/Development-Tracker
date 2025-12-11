@@ -11,8 +11,7 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
     "[::1]",
-    ".ngrok-free.dev",  # allow any *.ngrok-free.dev tunnel host
-    ".loca.lt",  # allow any *.loca.lt tunnel host
+    ".onrender.com",
 ]
 
 # --- Apps ---
