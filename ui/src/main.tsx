@@ -8,6 +8,7 @@ import Dashboard from "./Dashboard";
 import ProjectSummary from "./ProjectSummary";
 import DevActivities from "./DevActivities";
 import ProjectContacts from "./ProjectContacts";
+import Requirements from "./Requirements";
 import "./index.css";
 import "./Layout.css";
 
@@ -49,6 +50,7 @@ function AppShell() {
           {/* All project-scoped pages with context */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/development" element={<DevActivities />} />
+          <Route path="/requirements" element={<Requirements />} />
           <Route path="/project_contacts" element={<ProjectContacts />} />
           
           {/* Catch-all */}
