@@ -66,7 +66,20 @@ export default function NavBar({ collapsed, setCollapsed }: { collapsed: boolean
             aria-label={item.title}
           >
             {collapsed ? (
-              <span aria-hidden="true" style={{ fontSize: 16 }}>{item.icon}</span>
+              <span
+                aria-hidden="true"
+                style={{
+                  fontSize: 16,
+                  color: "#9ca3af",
+                  opacity: 0.75,
+                  lineHeight: 1,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {item.icon}
+              </span>
             ) : (
               <span className="nav-label">{item.label}</span>
             )}
