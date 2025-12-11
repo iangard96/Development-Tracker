@@ -53,7 +53,7 @@ class DevelopmentStepSerializer(serializers.ModelSerializer):
         payload.pop("id", None)
 
         cols = [
-            ("Development Steps", payload.get("name")),
+            ('"Development Steps"', payload.get("name")),
             ("phase", payload.get("phase")),
             ("start_date", payload.get("start_date")),
             ("end_date", payload.get("end_date")),
