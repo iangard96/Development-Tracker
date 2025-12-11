@@ -87,6 +87,16 @@ function LayoutInner() {
                 Development Activities
               </NavLink>
               <NavLink
+                to="requirements"
+                style={({ isActive }) => ({
+                  fontSize: 14,
+                  textDecoration: isActive ? "underline" : "none",
+                  fontWeight: isActive ? 600 : 400,
+                })}
+              >
+                Requirements
+              </NavLink>
+              <NavLink
                 to="contacts"
                 style={({ isActive }) => ({
                   fontSize: 14,
@@ -113,7 +123,7 @@ function LayoutInner() {
                 })}
                 title="Dashboard"
               >
-                •••
+                ...
               </NavLink>
               <NavLink
                 to="activities"
@@ -126,7 +136,20 @@ function LayoutInner() {
                 })}
                 title="Development Activities"
               >
-                •••
+                ...
+              </NavLink>
+              <NavLink
+                to="requirements"
+                style={({ isActive }) => ({
+                  display: "flex",
+                  gap: 2,
+                  textDecoration: "none",
+                  opacity: isActive ? 1 : 0.5,
+                  fontSize: 10,
+                })}
+                title="Requirements"
+              >
+                ...
               </NavLink>
               <NavLink
                 to="contacts"
@@ -139,7 +162,7 @@ function LayoutInner() {
                 })}
                 title="Project Contacts"
               >
-                •••
+                ...
               </NavLink>
             </>
           )}

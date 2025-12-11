@@ -53,3 +53,23 @@ button {
     padding: 16px;
   }
 }
+
+/* Print helpers */
+.print-hidden {
+  /* visible by default; hidden only in print */
+}
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+  .page-root {
+    padding: 12px;
+  }
+  .print-hidden {
+    display: none !important;
+  }
+  .requirements-card {
+    page-break-inside: avoid;
+  }
+}
