@@ -34,6 +34,15 @@ class DevelopmentStepSerializer(serializers.ModelSerializer):
             "project",
         ]
         read_only_fields = ["id", "duration_days"]
+        extra_kwargs = {
+            "duration_days": {"required": False, "read_only": True},
+        }
+
+    def create(self, validated_data):
+        # Generated column: never send duration_days on insert
+        validated_data.pop("duration_days", None)
+        validated_data.pop("id", None)
+        return DevelopmentStep.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         # optimized update: go through queryset.update, then refresh
