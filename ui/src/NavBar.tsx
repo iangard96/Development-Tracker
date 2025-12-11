@@ -12,11 +12,11 @@ const linkStyle: React.CSSProperties = {
 
 export default function NavBar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) {
   const navItems = [
-    { to: "/project_summary", label: "Project Summary", title: "Project Summary" },
-    { to: "/dashboard", label: "Project Dashboard", title: "Project Dashboard" },
-    { to: "/development", label: "Development Activities", title: "Development Activities" },
-    { to: "/requirements", label: "Requirements", title: "Requirements" },
-    { to: "/project_contacts", label: "Project Contacts", title: "Project Contacts" },
+    { to: "/project_summary", label: "Project Summary", title: "Project Summary", icon: "📄" },
+    { to: "/dashboard", label: "Project Dashboard", title: "Project Dashboard", icon: "📊" },
+    { to: "/development", label: "Development Activities", title: "Development Activities", icon: "🛠️" },
+    { to: "/requirements", label: "Requirements", title: "Requirements", icon: "✅" },
+    { to: "/project_contacts", label: "Project Contacts", title: "Project Contacts", icon: "📇" },
   ];
 
   return (
@@ -66,7 +66,7 @@ export default function NavBar({ collapsed, setCollapsed }: { collapsed: boolean
             aria-label={item.title}
           >
             {collapsed ? (
-              <span className="nav-dot" aria-hidden="true"></span>
+              <span aria-hidden="true" style={{ fontSize: 16 }}>{item.icon}</span>
             ) : (
               <span className="nav-label">{item.label}</span>
             )}
