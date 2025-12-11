@@ -63,6 +63,13 @@ export default function Dashboard() {
   const sizeLabel = fmtSize(project?.size_ac_mw, project?.size_dc_mw);
   const leaseStart = (project as any)?.lease_option_start_date || "—";
   const leaseEnd = (project as any)?.lease_option_expiration_date || "—";
+  const permittingSteps = useMemo(
+    () =>
+      (steps ?? []).filter(
+        (s) => (s.development_type || "").toLowerCase() === "permitting",
+      ),
+    [steps],
+  );
 
   return (
     <div className="page-root">
@@ -193,8 +200,71 @@ export default function Dashboard() {
       {/* 3. Budget vs Actual spend under the Gantt */}
       <DevTypeSpendChart steps={steps} />
 
-      {/* 4. Map view */}
-      <LocationMap project={project ?? null} />
+      {/* Map and permit matrix side-by-side */}
+      <div
+        style={{
+          marginTop: 16,
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 16,
+          alignItems: "stretch",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 320, maxWidth: "52%" }}>
+          <LocationMap project={project ?? null} />
+        </div>
+
+        <div
+          style={{
+            flex: 1,
+            minWidth: 320,
+            maxWidth: "48%",
+            border: "1px solid #e5e7eb",
+            borderRadius: 10,
+            background: "#ffffff",
+            padding: 12,
+            boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+          }}
+        >
+          <div style={{ fontSize: 16, fontWeight: 600, color: "#111827", marginBottom: 8 }}>
+            Permit Matrix
+          </div>
+          {permittingSteps.length === 0 ? (
+            <div style={{ fontSize: 13, color: "#6b7280" }}>
+              No permitting activities yet.
+            </div>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: 13,
+                }}
+              >
+                <thead style={{ background: "#f9fafb" }}>
+                  <tr>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Activity</th>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Status</th>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Start</th>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>End</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {permittingSteps.map((p) => (
+                    <tr key={p.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                      <td style={{ padding: "8px 10px", fontWeight: 600 }}>{p.name}</td>
+                      <td style={{ padding: "8px 10px" }}>{p.status ?? "—"}</td>
+                      <td style={{ padding: "8px 10px" }}>{(p as any).start_date ?? "—"}</td>
+                      <td style={{ padding: "8px 10px" }}>{(p as any).end_date ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
