@@ -1,5 +1,5 @@
 // ui/src/Dashboard.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { fetchStepsForProject } from "./api";
 import DevTypeProgressRow from "./DevTypeProgressRow";
 import DevTypeSpendChart from "./DevTypeSpendChart";
