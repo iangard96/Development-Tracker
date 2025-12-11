@@ -73,8 +73,9 @@ export default function Dashboard() {
           </h1>
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
               gap: 12,
               marginBottom: 24,
             }}
@@ -85,6 +86,7 @@ export default function Dashboard() {
                 border: "1px solid #e5e7eb",
                 borderRadius: 10,
                 padding: "10px 12px",
+                minWidth: 220,
               }}
             >
               <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>AC / DC Size</div>
@@ -96,6 +98,7 @@ export default function Dashboard() {
                 border: "1px solid #e5e7eb",
                 borderRadius: 10,
                 padding: "10px 12px",
+                minWidth: 220,
               }}
             >
               <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>County / State</div>
@@ -107,6 +110,7 @@ export default function Dashboard() {
                 border: "1px solid #e5e7eb",
                 borderRadius: 10,
                 padding: "10px 12px",
+                minWidth: 220,
               }}
             >
               <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Offtake Structure</div>
@@ -118,6 +122,7 @@ export default function Dashboard() {
                 border: "1px solid #e5e7eb",
                 borderRadius: 10,
                 padding: "10px 12px",
+                minWidth: 220,
               }}
             >
               <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Project Type</div>
@@ -129,6 +134,7 @@ export default function Dashboard() {
                 border: "1px solid #e5e7eb",
                 borderRadius: 10,
                 padding: "10px 12px",
+                minWidth: 220,
               }}
             >
               <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Project Details</div>
