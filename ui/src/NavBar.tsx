@@ -12,11 +12,11 @@ const linkStyle: React.CSSProperties = {
 
 export default function NavBar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) {
   const navItems = [
-    { to: "/project_summary", label: "Project Summary", title: "Project Summary", icon: "📄" },
-    { to: "/dashboard", label: "Project Dashboard", title: "Project Dashboard", icon: "📊" },
-    { to: "/development", label: "Development Activities", title: "Development Activities", icon: "🛠️" },
-    { to: "/requirements", label: "Requirements", title: "Requirements", icon: "✅" },
-    { to: "/project_contacts", label: "Project Contacts", title: "Project Contacts", icon: "📇" },
+    { to: "/project_summary", label: "Project Summary", title: "Project Summary", icon: "≡" },
+    { to: "/dashboard", label: "Project Dashboard", title: "Project Dashboard", icon: "▤" },
+    { to: "/development", label: "Development Activities", title: "Development Activities", icon: "⚙" },
+    { to: "/requirements", label: "Requirements", title: "Requirements", icon: "☑" },
+    { to: "/project_contacts", label: "Project Contacts", title: "Project Contacts", icon: "✉" },
   ];
 
   return (
@@ -70,8 +70,8 @@ export default function NavBar({ collapsed, setCollapsed }: { collapsed: boolean
                 aria-hidden="true"
                 style={{
                   fontSize: 16,
-                  color: "#9ca3af",
-                  opacity: 0.75,
+                  color: "#b0b4bb",
+                  opacity: 0.65,
                   lineHeight: 1,
                   display: "inline-flex",
                   alignItems: "center",
