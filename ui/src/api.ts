@@ -80,6 +80,20 @@ export async function fetchStepsForProject(
   return normalizeResults<DevStep>(data);
 }
 
+/** CREATE a development step */
+export async function createDevelopmentStep(
+  payload: Partial<DevStep>,
+): Promise<DevStep> {
+  const body: any = { ...payload };
+  delete body.id;
+  const r = await fetch(`${API}/development-steps/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return jsonOrThrow(r, "step create failed");
+}
+
 /** PATCH status only */
 export async function updateStepStatus(
   id: number,

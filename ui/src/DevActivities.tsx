@@ -10,6 +10,7 @@ import {
   updateStepMeta,
   createProjectContact,
   fetchProjectContacts,
+  createDevelopmentStep,
 } from "./api";
 import { useProject } from "./ProjectContext";
 
@@ -381,28 +382,11 @@ function SpendCell({
         : "";
 
   async function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
-    const raw = e.currentTarget.value.trim();
+    const raw = e.currentTarget.value;
 
     try {
-      if (raw === "") {
-        // Explicit clear → null
-        const fresh = await updateStepSpend(id, {
-          [field]: null,
-        });
-        onSaved(fresh);
-        onEdit(id, key, "");
-        return;
-      }
-
-      const num = Number(raw);
-      if (Number.isNaN(num)) {
-        alert("Please enter a number or leave blank to clear.");
-        // reset local edit to current value from props
-        onEdit(id, key, "");
-        return;
-      }
-
-      const v = Math.round(num * 100) / 100;
+      const num = raw === "" ? null : Number(raw);
+      const v = num !== null ? Math.round(num * 100) / 100 : null;
 
       const fresh = await updateStepSpend(id, {
         [field]: v,
@@ -446,6 +430,7 @@ export default function DevActivities() {
   const [rows, setRows] = useState<DevStep[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [devTypeFilter, setDevTypeFilter] = useState<DevType | "ALL">("ALL");
+  const [searchTerm, setSearchTerm] = useState("");
   // Local state for spend inputs so we can type freely
   const [spendEdits, setSpendEdits] = useState<
     Record<number, { planned: string; actual: string }>
@@ -560,9 +545,14 @@ export default function DevActivities() {
       (a: any, b: any) =>
         (a.sequence ?? 0) - (b.sequence ?? 0) || a.id - b.id,
     );
-    if (devTypeFilter === "ALL") return base;
-    return base.filter((r) => (r.development_type ?? "") === devTypeFilter);
-  }, [rows, devTypeFilter]);
+    const byType =
+      devTypeFilter === "ALL"
+        ? base
+        : base.filter((r) => (r.development_type ?? "") === devTypeFilter);
+    if (!searchTerm.trim()) return byType;
+    const q = searchTerm.toLowerCase();
+    return byType.filter((r) => r.name.toLowerCase().includes(q));
+  }, [rows, devTypeFilter, searchTerm]);
 
   if (err)
     return <div style={{ color: "red", padding: 16 }}>Error: {err}</div>;
@@ -618,13 +608,14 @@ export default function DevActivities() {
       <div
         style={{
           marginBottom: 16,
-          display: "flex",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
           gap: 12,
           alignItems: "center",
         }}
       >
-        <label style={{ fontSize: 13 }}>
-          <span style={{ marginRight: 8 }}>Development Type:</span>
+        <label style={{ fontSize: 13, display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ marginRight: 8 }}>Development Type</span>
           <select
             value={devTypeFilter}
             onChange={(e) =>
@@ -650,6 +641,23 @@ export default function DevActivities() {
               </option>
             ))}
           </select>
+        </label>
+        <label style={{ fontSize: 13, display: "flex", flexDirection: "column", gap: 6 }}>
+          <span>Search Activity</span>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by activity name"
+            style={{
+              padding: "6px 10px",
+              borderRadius: 5,
+              border: "1px solid #e5e7eb",
+              fontSize: 13,
+              color: "#1f2937",
+              background: "white",
+            }}
+          />
         </label>
       </div>
 
@@ -1068,6 +1076,39 @@ export default function DevActivities() {
             ))}
           </tbody>
         </table>
+      </div>
+      <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
+        <button
+          type="button"
+          onClick={async () => {
+            if (!projectId) return;
+            const name = window.prompt("Activity name?");
+            const trimmed = (name || "").trim();
+            if (!trimmed) return;
+            try {
+              const created = await createDevelopmentStep({
+                project: Number(projectId),
+                name: trimmed,
+              });
+              setRows((cur) => (cur ? [...cur, created] : [created]));
+            } catch (e: any) {
+              console.error(e);
+              alert(`Failed to add activity.\n${e?.message ?? ""}`);
+            }
+          }}
+          style={{
+            borderRadius: 6,
+            border: "1px solid #d1d5db",
+            padding: "8px 12px",
+            fontSize: 13,
+            fontWeight: 600,
+            background: "#f9fafb",
+            color: "#1f2937",
+            cursor: "pointer",
+          }}
+        >
+          + Activity
+        </button>
       </div>
       {/* agency suggestions */}
       <datalist id="agency-options">
