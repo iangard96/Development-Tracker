@@ -52,7 +52,9 @@ function parseRequirement(raw: string | null | undefined): RequirementBucket[] {
   const matched = new Set<RequirementBucket>();
   tokens.forEach((t) => {
     const lower = t.toLowerCase();
-    if (lower.startsWith("finance")) matched.add("Financing");
+    if (lower.startsWith("finance") || lower.includes("financ")) {
+      matched.add("Financing");
+    }
     if (lower.startsWith("permit") || lower.includes("compliance")) {
       matched.add("Permitting/Compliance");
     }
