@@ -11,6 +11,7 @@ import {
   createProjectContact,
   fetchProjectContacts,
   createDevelopmentStep,
+  deleteDevelopmentStep,
 } from "./api";
 import { useProject } from "./ProjectContext";
 
@@ -431,6 +432,7 @@ export default function DevActivities() {
   const [err, setErr] = useState<string | null>(null);
   const [devTypeFilter, setDevTypeFilter] = useState<DevType | "ALL">("ALL");
   const [searchTerm, setSearchTerm] = useState("");
+  const [customIds, setCustomIds] = useState<Set<number>>(new Set());
   // Local state for spend inputs so we can type freely
   const [spendEdits, setSpendEdits] = useState<
     Record<number, { planned: string; actual: string }>
@@ -682,6 +684,7 @@ export default function DevActivities() {
               <th style={th}>Status</th>
               <th style={th}>Phase</th>
               <th style={{ ...th, ...stickyActivity }}>Activity</th>
+              <th style={th}>Phase</th>
               <th style={th}>Dev Type</th>
               <th style={{ ...th, minWidth: "140px" }}>Planned Spend ($)</th>
               <th style={{ ...th, minWidth: "140px" }}>Actual Spend ($)</th>
@@ -695,6 +698,7 @@ export default function DevActivities() {
               <th style={th}>Process</th>
               <th style={th}>Link</th>
               <th style={{ ...th, ...requirementTh }}>Requirement</th>
+              <th style={th}></th>
             </tr>
           </thead>
           <tbody>
@@ -710,6 +714,10 @@ export default function DevActivities() {
                   transition: "background 0.3s ease",
                 }}
               >
+                {(() => {
+                  const isCustom = customIds.has(r.id);
+                  return null;
+                })()}
                 <td style={{ ...td, display: "none" }}>{(r as any).sequence ?? i + 1}</td>
 
                 {/* Status */}
@@ -729,10 +737,75 @@ export default function DevActivities() {
                 </td>
 
                 {/* Phase */}
-                <td style={td}>{(r as any).phase ?? ""}</td>
+                <td style={td}>
+                  {customIds.has(r.id) ? (
+                    <input
+                      type="number"
+                      defaultValue={(r as any).phase ?? ""}
+                      placeholder="Phase"
+                      onBlur={async (e) => {
+                        const raw = e.currentTarget.value;
+                        const next = raw === "" ? null : Number(raw);
+                        const current = (r as any).phase ?? null;
+                        if (next === current) return;
+                        try {
+                          const fresh = await updateStepMeta(r.id, { phase: next });
+                          applyFresh(fresh);
+                        } catch (err: any) {
+                          console.error(err);
+                          alert(`Failed to update phase.\n${err?.message ?? ""}`);
+                          e.currentTarget.value = current ?? "";
+                        }
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "6px 8px",
+                        borderRadius: 5,
+                        border: "1px solid #e5e7eb",
+                        fontSize: 13,
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  ) : (
+                    (r as any).phase ?? ""
+                  )}
+                </td>
 
                 {/* Activity / Tasks */}
-                <td style={{ ...td, ...stickyActivity }}>{r.name}</td>
+                <td style={{ ...td, ...stickyActivity }}>
+                  {customIds.has(r.id) ? (
+                    <input
+                      type="text"
+                      defaultValue={r.name}
+                      onBlur={async (e) => {
+                        const val = e.currentTarget.value.trim();
+                        if (!val) {
+                          e.currentTarget.value = r.name;
+                          return;
+                        }
+                        if (val === r.name) return;
+                        try {
+                          const fresh = await updateStepMeta(r.id, { name: val });
+                          applyFresh(fresh);
+                        } catch (err: any) {
+                          console.error(err);
+                          alert(`Failed to update activity name.\n${err?.message ?? ""}`);
+                          e.currentTarget.value = r.name;
+                        }
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "6px 8px",
+                        borderRadius: 5,
+                        border: "1px solid #e5e7eb",
+                        fontSize: 13,
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  ) : (
+                    r.name
+                  )}
+                </td>
 
                 {/* Dev Type */}
                 <td style={td}>
@@ -1032,11 +1105,11 @@ export default function DevActivities() {
                     </div>
                   ) : null}
                 </td>
-                <td style={requirementTd}>
-                  <div style={requirementList}>
-                    {["Engineering", "Permitting/Compliance", "Financing"].map((opt) => {
-                      const requirementVal = (r as any).requirement ?? "";
-                      const selected = new Set(
+              <td style={requirementTd}>
+                <div style={requirementList}>
+                  {["Engineering", "Permitting/Compliance", "Financing"].map((opt) => {
+                    const requirementVal = (r as any).requirement ?? "";
+                    const selected = new Set(
                         requirementVal
                           .split(",")
                           .map((s: string) => s.trim())
@@ -1069,11 +1142,45 @@ export default function DevActivities() {
                           <span>{opt}</span>
                         </label>
                       );
-                    })}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  })}
+                </div>
+              </td>
+              <td style={{ ...td, whiteSpace: "nowrap" }}>
+                {customIds.has(r.id) ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const ok = window.confirm("Delete this activity? This cannot be undone.");
+                      if (!ok) return;
+                      try {
+                        await deleteDevelopmentStep(r.id);
+                        setRows((cur) => (cur ? cur.filter((x) => x.id !== r.id) : cur));
+                        setCustomIds((prev) => {
+                          const next = new Set(prev);
+                          next.delete(r.id);
+                          return next;
+                        });
+                      } catch (err: any) {
+                        console.error(err);
+                        alert(`Failed to delete activity.\n${err?.message ?? ""}`);
+                      }
+                    }}
+                    style={{
+                      border: "1px solid #fecaca",
+                      background: "#fee2e2",
+                      color: "#7f1d1d",
+                      borderRadius: 5,
+                      padding: "6px 10px",
+                      fontSize: 12,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Delete
+                  </button>
+                ) : null}
+              </td>
+            </tr>
+          ))}
           </tbody>
         </table>
       </div>
@@ -1085,12 +1192,16 @@ export default function DevActivities() {
             const name = window.prompt("Activity name?");
             const trimmed = (name || "").trim();
             if (!trimmed) return;
+            const phaseInput = window.prompt("Phase number (optional)?");
+            const phaseVal = phaseInput && phaseInput.trim() !== "" ? Number(phaseInput) : null;
             try {
               const created = await createDevelopmentStep({
                 project: Number(projectId),
                 name: trimmed,
+                phase: isNaN(phaseVal as any) ? null : phaseVal,
               });
               setRows((cur) => (cur ? [...cur, created] : [created]));
+              setCustomIds((prev) => new Set(prev).add(created.id));
             } catch (e: any) {
               console.error(e);
               alert(`Failed to add activity.\n${e?.message ?? ""}`);

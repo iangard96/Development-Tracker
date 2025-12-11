@@ -94,6 +94,14 @@ export async function createDevelopmentStep(
   return jsonOrThrow(r, "step create failed");
 }
 
+/** DELETE a development step */
+export async function deleteDevelopmentStep(id: number): Promise<void> {
+  const r = await fetch(`${API}/development-steps/${id}/`, {
+    method: "DELETE",
+  });
+  await jsonOrThrow(r, "step delete failed");
+}
+
 /** PATCH status only */
 export async function updateStepStatus(
   id: number,
