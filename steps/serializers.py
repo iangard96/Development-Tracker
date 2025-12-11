@@ -39,10 +39,54 @@ class DevelopmentStepSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        # Generated column: never send duration_days on insert
-        validated_data.pop("duration_days", None)
-        validated_data.pop("id", None)
-        return DevelopmentStep.objects.create(**validated_data)
+        """
+        Insert without touching the generated column duration_days.
+        Django's default insert will include NULL for duration_days, which
+        Postgres rejects because the column is generated, so we perform a
+        manual INSERT that omits the column entirely.
+        """
+        from django.db import connection
+
+        # ensure only expected fields are inserted
+        payload = {**validated_data}
+        payload.pop("duration_days", None)
+        payload.pop("id", None)
+
+        cols = [
+            ("Development Steps", payload.get("name")),
+            ("phase", payload.get("phase")),
+            ("start_date", payload.get("start_date")),
+            ("end_date", payload.get("end_date")),
+            ("status", payload.get("status")),
+            ("dev_type", payload.get("development_type")),
+            ("planned_spend", payload.get("planned_spend")),
+            ("actual_spend", payload.get("actual_spend")),
+            ("agency", payload.get("agency")),
+            ("responsible_party", payload.get("responsible_party")),
+            ("responsible_individual", payload.get("responsible_individual")),
+            ("process", payload.get("process")),
+            ("link", payload.get("link")),
+            ("requirement", payload.get("requirement")),
+            ("purpose_related_activity", payload.get("purpose_related_activity")),
+            ("project_id", payload.get("project").id if payload.get("project") else None),
+        ]
+
+        col_names = [c for c, _ in cols]
+        placeholders = ["%s"] * len(cols)
+        values = [v for _, v in cols]
+
+        with connection.cursor() as cur:
+            cur.execute(
+                f'''
+                INSERT INTO "app"."DevTracker" ({", ".join(col_names)})
+                VALUES ({", ".join(placeholders)})
+                RETURNING id;
+                ''',
+                values,
+            )
+            new_id = cur.fetchone()[0]
+
+        return DevelopmentStep.objects.get(pk=new_id)
 
     def update(self, instance, validated_data):
         # optimized update: go through queryset.update, then refresh
