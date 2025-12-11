@@ -684,7 +684,6 @@ export default function DevActivities() {
               <th style={th}>Status</th>
               <th style={th}>Phase</th>
               <th style={{ ...th, ...stickyActivity }}>Activity</th>
-              <th style={th}>Phase</th>
               <th style={th}>Dev Type</th>
               <th style={{ ...th, minWidth: "140px" }}>Planned Spend ($)</th>
               <th style={{ ...th, minWidth: "140px" }}>Actual Spend ($)</th>
@@ -698,7 +697,7 @@ export default function DevActivities() {
               <th style={th}>Process</th>
               <th style={th}>Link</th>
               <th style={{ ...th, ...requirementTh }}>Requirement</th>
-              <th style={th}></th>
+              <th style={{ ...th, width: 100, minWidth: 100 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -715,7 +714,9 @@ export default function DevActivities() {
                 }}
               >
                 {(() => {
-                  const isCustom = customIds.has(r.id);
+                  const isCustom =
+                    customIds.has(r.id) ||
+                    (r.name || "").toLowerCase().includes("custom");
                   return null;
                 })()}
                 <td style={{ ...td, display: "none" }}>{(r as any).sequence ?? i + 1}</td>
@@ -738,7 +739,12 @@ export default function DevActivities() {
 
                 {/* Phase */}
                 <td style={td}>
-                  {customIds.has(r.id) ? (
+                  {(() => {
+                    const isCustom =
+                      customIds.has(r.id) ||
+                      (r.name || "").toLowerCase().includes("custom");
+                    if (!isCustom) return (r as any).phase ?? "";
+                    return (
                     <input
                       type="number"
                       defaultValue={(r as any).phase ?? ""}
@@ -759,21 +765,26 @@ export default function DevActivities() {
                       }}
                       style={{
                         width: "100%",
-                        padding: "6px 8px",
+                        minWidth: 100,
+                        padding: "8px 10px",
                         borderRadius: 5,
                         border: "1px solid #e5e7eb",
                         fontSize: 13,
                         boxSizing: "border-box",
                       }}
                     />
-                  ) : (
-                    (r as any).phase ?? ""
-                  )}
+                    );
+                  })()}
                 </td>
 
                 {/* Activity / Tasks */}
                 <td style={{ ...td, ...stickyActivity }}>
-                  {customIds.has(r.id) ? (
+                  {(() => {
+                    const isCustom =
+                      customIds.has(r.id) ||
+                      (r.name || "").toLowerCase().includes("custom");
+                    if (!isCustom) return r.name;
+                    return (
                     <input
                       type="text"
                       defaultValue={r.name}
@@ -795,16 +806,16 @@ export default function DevActivities() {
                       }}
                       style={{
                         width: "100%",
-                        padding: "6px 8px",
+                        minWidth: 260,
+                        padding: "8px 10px",
                         borderRadius: 5,
                         border: "1px solid #e5e7eb",
                         fontSize: 13,
                         boxSizing: "border-box",
                       }}
                     />
-                  ) : (
-                    r.name
-                  )}
+                    );
+                  })()}
                 </td>
 
                 {/* Dev Type */}
@@ -1145,8 +1156,8 @@ export default function DevActivities() {
                   })}
                 </div>
               </td>
-              <td style={{ ...td, whiteSpace: "nowrap" }}>
-                {customIds.has(r.id) ? (
+              <td style={{ ...td, whiteSpace: "nowrap", width: 100, minWidth: 100, textAlign: "center" }}>
+                {customIds.has(r.id) || (r.name || "").toLowerCase().includes("custom") ? (
                   <button
                     type="button"
                     onClick={async () => {
