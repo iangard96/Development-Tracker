@@ -737,7 +737,7 @@ export default function DevActivities() {
             }}
           >
             <option value="ALL">All</option>
-            {DEV_TYPE_OPTIONS.filter((x) => x !== "").map((opt) => (
+            {DEFAULT_DEV_TYPE_OPTIONS.filter((x) => x !== "").map((opt) => (
               <option key={opt} value={opt}>
                 {opt}
               </option>
