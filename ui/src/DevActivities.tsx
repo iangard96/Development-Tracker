@@ -180,7 +180,7 @@ function StatusCell({
 }
 
 /** Dev Type dropdown cell */
-const DEV_TYPE_OPTIONS: DevType[] = [
+const DEFAULT_DEV_TYPE_OPTIONS: DevType[] = [
   "",
   "Interconnection",
   "Permitting",
@@ -189,11 +189,21 @@ const DEV_TYPE_OPTIONS: DevType[] = [
 
 function DevTypeCell({
   step,
+  customDevTypes,
+  onCustomDevTypesChange,
   onSaved,
+  rows,
+  applyFresh,
 }: {
   step: DevStep;
+  customDevTypes: string[];
+  onCustomDevTypesChange: (next: string[]) => void;
   onSaved: (fresh: DevStep) => void;
+  rows: DevStep[];
+  applyFresh: (fresh: DevStep) => void;
 }) {
+  const options = [...DEFAULT_DEV_TYPE_OPTIONS.filter((x) => x !== ""), ...customDevTypes];
+
   async function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = (e.target.value || "") as DevType | "";
     try {
@@ -206,28 +216,92 @@ function DevTypeCell({
   }
 
   return (
-    <select
-      value={step.development_type ?? ""}
-      onChange={onChange}
-      style={{
-        padding: "6px 10px",
-        border: "1px solid #e5e7eb",
-        borderRadius: 5,
-        background: "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
-        backgroundSize: "10px",
-        paddingRight: 24,
-        fontSize: 13,
-        color: "#1f2937",
-        cursor: "pointer",
-        appearance: "none" as any,
-      }}
-    >
-      {DEV_TYPE_OPTIONS.map((opt) => (
-        <option key={opt} value={opt}>
-          {opt === "" ? "—" : opt}
-        </option>
-      ))}
-    </select>
+    <div style={{ position: "relative" }}>
+      <input
+        list="dev-type-options"
+        defaultValue={step.development_type ?? ""}
+        onBlur={async (e) => {
+          const val = e.currentTarget.value.trim();
+          const next = val === "" ? "" : (val as DevType | string);
+          if (next === step.development_type || (step.development_type ?? "") === "" && next === "") return;
+          try {
+            const fresh = await updateStepDevType(step.id, next as DevType);
+            onSaved(fresh);
+            // track new custom types
+            if (next && !DEFAULT_DEV_TYPE_OPTIONS.includes(next as DevType) && !customDevTypes.includes(next)) {
+              onCustomDevTypesChange([...customDevTypes, next]);
+            }
+          } catch (err) {
+            console.error(err);
+            alert(`Failed to update development type.\n${(err as any)?.message ?? ""}`);
+            e.currentTarget.value = step.development_type ?? "";
+          }
+        }}
+        onDoubleClick={(e) => {
+          const current = (step.development_type ?? "").trim();
+          if (!current) return;
+          if (!customDevTypes.includes(current)) return; // only edit custom
+          const renamed = window.prompt("Rename custom Dev Type", current);
+          if (!renamed || renamed.trim() === "" || renamed.trim() === current) return;
+          const newName = renamed.trim();
+          // update list
+          onCustomDevTypesChange(
+            customDevTypes.map((c) => (c === current ? newName : c)),
+          );
+          // update rows with this dev type
+          rows
+            .filter((r) => (r.development_type ?? "") === current)
+            .forEach(async (r) => {
+              try {
+                const fresh = await updateStepDevType(r.id, newName as DevType);
+                applyFresh(fresh);
+              } catch (err) {
+                console.warn("Rename dev type failed for row", r.id, err);
+              }
+            });
+          e.currentTarget.value = newName;
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          const current = (step.development_type ?? "").trim();
+          if (!current) return;
+          if (!customDevTypes.includes(current)) return;
+          const ok = window.confirm(`Remove custom Dev Type "${current}" and clear it from rows?`);
+          if (!ok) return;
+          onCustomDevTypesChange(customDevTypes.filter((c) => c !== current));
+          rows
+            .filter((r) => (r.development_type ?? "") === current)
+            .forEach(async (r) => {
+              try {
+                const fresh = await updateStepDevType(r.id, "" as DevType);
+                applyFresh(fresh);
+              } catch (err) {
+                console.warn("Clear dev type failed for row", r.id, err);
+              }
+            });
+          e.currentTarget.value = "";
+        }}
+        placeholder="Select or type custom"
+        style={{
+          width: "100%",
+          padding: "6px 10px",
+          borderRadius: 5,
+          border: "1px solid #e5e7eb",
+          fontSize: 13,
+          color: "#1f2937",
+          boxSizing: "border-box",
+          background:
+            "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+          backgroundSize: "10px",
+          paddingRight: 24,
+        }}
+      />
+      <datalist id="dev-type-options">
+        {options.map((opt) => (
+          <option key={opt} value={opt} />
+        ))}
+      </datalist>
+    </div>
   );
 }
 
@@ -434,6 +508,7 @@ export default function DevActivities() {
   const [searchTerm, setSearchTerm] = useState("");
   const [phaseFilter, setPhaseFilter] = useState<1 | 2 | 3 | "ALL">("ALL");
   const [customIds, setCustomIds] = useState<Set<number>>(new Set());
+  const [customDevTypes, setCustomDevTypes] = useState<string[]>([]);
   // Local state for spend inputs so we can type freely
   const [spendEdits, setSpendEdits] = useState<
     Record<number, { planned: string; actual: string }>
@@ -510,7 +585,22 @@ export default function DevActivities() {
     setRows(null);
     setErr(null);
     fetchStepsForProject(projectId)
-      .then(setRows)
+      .then((data) => {
+        setRows(data);
+        // derive custom dev types from data
+        const extras = Array.from(
+          new Set(
+            data
+              .map((d) => d.development_type || "")
+              .filter(
+                (dt) =>
+                  dt &&
+                  !DEFAULT_DEV_TYPE_OPTIONS.includes(dt as DevType),
+              ),
+          ),
+        );
+        setCustomDevTypes(extras);
+      })
       .catch((e) => setErr(String(e)));
 
     fetchProjectContacts(projectId)
@@ -772,6 +862,8 @@ export default function DevActivities() {
                 <td style={td}>
                   <StatusCell
                     step={r}
+                    customDevTypes={customDevTypes}
+                    onCustomDevTypesChange={setCustomDevTypes}
                     onSaved={(fresh) =>
                       setRows((cur) =>
                         cur
@@ -781,6 +873,8 @@ export default function DevActivities() {
                           : cur,
                       )
                     }
+                    rows={filtered}
+                    applyFresh={applyFresh}
                   />
                 </td>
 
