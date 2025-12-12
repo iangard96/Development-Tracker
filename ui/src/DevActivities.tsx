@@ -217,7 +217,7 @@ function DevTypeCell({
   }
 
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", minWidth: 200 }}>
       <input
         list="dev-type-options"
         defaultValue={step.development_type ?? ""}
@@ -514,6 +514,7 @@ export default function DevActivities() {
   const [phaseFilter, setPhaseFilter] = useState<1 | 2 | 3 | "ALL">("ALL");
   const [customIds, setCustomIds] = useState<Set<number>>(new Set());
   const [customDevTypes, setCustomDevTypes] = useState<string[]>([]);
+  const safeCustomDevTypes = Array.isArray(customDevTypes) ? customDevTypes : [];
   // Local state for spend inputs so we can type freely
   const [spendEdits, setSpendEdits] = useState<
     Record<number, { planned: string; actual: string }>
@@ -747,6 +748,11 @@ export default function DevActivities() {
                 {opt}
               </option>
             ))}
+            {safeCustomDevTypes.map((opt) => (
+              <option key={`custom-${opt}`} value={opt}>
+                {opt}
+              </option>
+            ))}
           </select>
         </label>
         <label style={{ fontSize: 13, display: "flex", flexDirection: "column", gap: 6 }}>
@@ -826,7 +832,7 @@ export default function DevActivities() {
               <th style={th}>Status</th>
               <th style={th}>Phase</th>
               <th style={{ ...th, ...stickyActivity }}>Activity</th>
-              <th style={th}>Dev Type</th>
+              <th style={{ ...th, minWidth: 200 }}>Dev Type</th>
               <th style={{ ...th, minWidth: "140px" }}>Planned Spend ($)</th>
               <th style={{ ...th, minWidth: "140px" }}>Actual Spend ($)</th>
               <th style={th}>Start Date</th>
@@ -986,9 +992,13 @@ export default function DevActivities() {
                 </td>
 
                 {/* Dev Type */}
-                <td style={td}>
+                <td style={{ ...td, minWidth: 200 }}>
                   <DevTypeCell
                     step={r}
+                    customDevTypes={safeCustomDevTypes}
+                    onCustomDevTypesChange={setCustomDevTypes}
+                    rows={rows ?? []}
+                    applyFresh={applyFresh}
                     onSaved={(fresh) =>
                       setRows((cur) =>
                         cur
