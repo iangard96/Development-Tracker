@@ -432,6 +432,7 @@ export default function DevActivities() {
   const [err, setErr] = useState<string | null>(null);
   const [devTypeFilter, setDevTypeFilter] = useState<DevType | "ALL">("ALL");
   const [searchTerm, setSearchTerm] = useState("");
+  const [phaseFilter, setPhaseFilter] = useState<1 | 2 | 3 | "ALL">("ALL");
   const [customIds, setCustomIds] = useState<Set<number>>(new Set());
   // Local state for spend inputs so we can type freely
   const [spendEdits, setSpendEdits] = useState<
@@ -551,10 +552,19 @@ export default function DevActivities() {
       devTypeFilter === "ALL"
         ? base
         : base.filter((r) => (r.development_type ?? "") === devTypeFilter);
-    if (!searchTerm.trim()) return byType;
+
+    const byPhase =
+      phaseFilter === "ALL"
+        ? byType
+        : byType.filter((r) => {
+            const ph = (r as any).phase ?? null;
+            return ph === phaseFilter;
+          });
+
+    if (!searchTerm.trim()) return byPhase;
     const q = searchTerm.toLowerCase();
-    return byType.filter((r) => r.name.toLowerCase().includes(q));
-  }, [rows, devTypeFilter, searchTerm]);
+    return byPhase.filter((r) => r.name.toLowerCase().includes(q));
+  }, [rows, devTypeFilter, phaseFilter, searchTerm]);
 
   if (err)
     return <div style={{ color: "red", padding: 16 }}>Error: {err}</div>;
@@ -660,6 +670,43 @@ export default function DevActivities() {
               background: "white",
             }}
           />
+        </label>
+        <label style={{ fontSize: 13, display: "flex", flexDirection: "column", gap: 6 }}>
+          <span>Phase</span>
+          <select
+            value={phaseFilter}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === "ALL") {
+                setPhaseFilter("ALL");
+              } else {
+                const num = Number(val);
+                if (num === 1 || num === 2 || num === 3) {
+                  setPhaseFilter(num);
+                } else {
+                  setPhaseFilter("ALL");
+                }
+              }
+            }}
+            style={{
+              padding: "6px 10px",
+              borderRadius: 5,
+              border: "1px solid #e5e7eb",
+              fontSize: 13,
+              background:
+                "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+              backgroundSize: "10px",
+              paddingRight: 24,
+              color: "#1f2937",
+              cursor: "pointer",
+              appearance: "none" as any,
+            }}
+          >
+            <option value="ALL">All</option>
+            <option value={1}>Pre Dev</option>
+            <option value={2}>Dev</option>
+            <option value={3}>Pre Con</option>
+          </select>
         </label>
       </div>
 
