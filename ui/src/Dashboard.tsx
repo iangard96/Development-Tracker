@@ -1,6 +1,6 @@
 // ui/src/Dashboard.tsx
 import { useEffect, useMemo, useState } from "react";
-import { fetchStepsForProject } from "./api";
+import { fetchProject, fetchStepsForProject } from "./api";
 import DevTypeProgressRow from "./DevTypeProgressRow";
 import DevTypeSpendChart from "./DevTypeSpendChart";
 import DevTypeGanttChart from "./DevTypeGanttChart";
@@ -9,7 +9,7 @@ import type { DevStep } from "./types";
 import { useProject } from "./ProjectContext";
 
 export default function Dashboard() {
-  const { projectId, project } = useProject();
+  const { projectId, project, setCurrentProject } = useProject();
   const [steps, setSteps] = useState<DevStep[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -35,6 +35,15 @@ export default function Dashboard() {
       .then((rows: DevStep[]) => setSteps(rows))
       .catch((e) => setErr(String(e)));
   }, [projectId]);
+
+  // Refresh the selected project when landing on the dashboard so lease dates and other
+  // fields reflect the latest saves from Project Summary.
+  useEffect(() => {
+    if (!projectId) return;
+    fetchProject(projectId)
+      .then((p) => setCurrentProject(p))
+      .catch((e) => console.warn("Failed to refresh project on dashboard", e));
+  }, [projectId, setCurrentProject]);
 
   if (!projectId) {
     return (
