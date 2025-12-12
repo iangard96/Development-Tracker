@@ -196,13 +196,14 @@ function DevTypeCell({
   applyFresh,
 }: {
   step: DevStep;
-  customDevTypes: string[];
+  customDevTypes: string[] | undefined;
   onCustomDevTypesChange: (next: string[]) => void;
   onSaved: (fresh: DevStep) => void;
   rows: DevStep[];
   applyFresh: (fresh: DevStep) => void;
 }) {
-  const options = [...DEFAULT_DEV_TYPE_OPTIONS.filter((x) => x !== ""), ...customDevTypes];
+  const safeCustom = Array.isArray(customDevTypes) ? customDevTypes : [];
+  const options = [...DEFAULT_DEV_TYPE_OPTIONS.filter((x) => x !== ""), ...safeCustom];
 
   async function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = (e.target.value || "") as DevType | "";
@@ -228,8 +229,12 @@ function DevTypeCell({
             const fresh = await updateStepDevType(step.id, next as DevType);
             onSaved(fresh);
             // track new custom types
-            if (next && !DEFAULT_DEV_TYPE_OPTIONS.includes(next as DevType) && !customDevTypes.includes(next)) {
-              onCustomDevTypesChange([...customDevTypes, next]);
+            if (
+              next &&
+              !DEFAULT_DEV_TYPE_OPTIONS.includes(next as DevType) &&
+              !safeCustom.includes(next)
+            ) {
+              onCustomDevTypesChange([...safeCustom, next]);
             }
           } catch (err) {
             console.error(err);
@@ -240,13 +245,13 @@ function DevTypeCell({
         onDoubleClick={(e) => {
           const current = (step.development_type ?? "").trim();
           if (!current) return;
-          if (!customDevTypes.includes(current)) return; // only edit custom
+          if (!safeCustom.includes(current)) return; // only edit custom
           const renamed = window.prompt("Rename custom Dev Type", current);
           if (!renamed || renamed.trim() === "" || renamed.trim() === current) return;
           const newName = renamed.trim();
           // update list
           onCustomDevTypesChange(
-            customDevTypes.map((c) => (c === current ? newName : c)),
+            safeCustom.map((c) => (c === current ? newName : c)),
           );
           // update rows with this dev type
           rows
@@ -265,10 +270,10 @@ function DevTypeCell({
           e.preventDefault();
           const current = (step.development_type ?? "").trim();
           if (!current) return;
-          if (!customDevTypes.includes(current)) return;
+          if (!safeCustom.includes(current)) return;
           const ok = window.confirm(`Remove custom Dev Type "${current}" and clear it from rows?`);
           if (!ok) return;
-          onCustomDevTypesChange(customDevTypes.filter((c) => c !== current));
+          onCustomDevTypesChange(safeCustom.filter((c) => c !== current));
           rows
             .filter((r) => (r.development_type ?? "") === current)
             .forEach(async (r) => {
