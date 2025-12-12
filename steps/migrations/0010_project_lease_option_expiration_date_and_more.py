@@ -10,14 +10,40 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='project',
-            name='lease_option_expiration_date',
-            field=models.DateField(blank=True, null=True),
-        ),
-        migrations.AddField(
-            model_name='project',
-            name='lease_option_start_date',
-            field=models.DateField(blank=True, null=True),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(
+                    sql=(
+                        "ALTER TABLE steps_project "
+                        "ADD COLUMN IF NOT EXISTS lease_option_start_date date;"
+                    ),
+                    reverse_sql=(
+                        "ALTER TABLE steps_project "
+                        "DROP COLUMN IF EXISTS lease_option_start_date;"
+                    ),
+                ),
+                migrations.RunSQL(
+                    sql=(
+                        "ALTER TABLE steps_project "
+                        "ADD COLUMN IF NOT EXISTS lease_option_expiration_date date;"
+                    ),
+                    reverse_sql=(
+                        "ALTER TABLE steps_project "
+                        "DROP COLUMN IF EXISTS lease_option_expiration_date;"
+                    ),
+                ),
+            ],
+            state_operations=[
+                migrations.AddField(
+                    model_name='project',
+                    name='lease_option_start_date',
+                    field=models.DateField(blank=True, null=True),
+                ),
+                migrations.AddField(
+                    model_name='project',
+                    name='lease_option_expiration_date',
+                    field=models.DateField(blank=True, null=True),
+                ),
+            ],
         ),
     ]
