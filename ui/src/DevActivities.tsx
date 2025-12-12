@@ -743,36 +743,57 @@ export default function DevActivities() {
                     const isCustom =
                       customIds.has(r.id) ||
                       (r.name || "").toLowerCase().includes("custom");
-                    if (!isCustom) return (r as any).phase ?? "";
+
+                    const phaseVal = (r as any).phase ?? null;
+                    const phaseLabel =
+                      phaseVal === 1
+                        ? "Pre Dev"
+                        : phaseVal === 2
+                          ? "Dev"
+                          : phaseVal === 3
+                            ? "Pre Con"
+                            : "—";
+
+                    if (!isCustom) {
+                      return phaseLabel;
+                    }
+
                     return (
-                    <input
-                      type="number"
-                      defaultValue={(r as any).phase ?? ""}
-                      placeholder="Phase"
-                      onBlur={async (e) => {
-                        const raw = e.currentTarget.value;
-                        const next = raw === "" ? null : Number(raw);
-                        const current = (r as any).phase ?? null;
-                        if (next === current) return;
-                        try {
-                          const fresh = await updateStepMeta(r.id, { phase: next });
-                          applyFresh(fresh);
-                        } catch (err: any) {
-                          console.error(err);
-                          alert(`Failed to update phase.\n${err?.message ?? ""}`);
-                          e.currentTarget.value = current ?? "";
-                        }
-                      }}
-                      style={{
-                        width: "100%",
-                        minWidth: 100,
-                        padding: "8px 10px",
-                        borderRadius: 5,
-                        border: "1px solid #e5e7eb",
-                        fontSize: 13,
-                        boxSizing: "border-box",
-                      }}
-                    />
+                      <select
+                        defaultValue={phaseVal ?? ""}
+                        onChange={async (e) => {
+                          const raw = e.target.value;
+                          const next = raw === "" ? null : Number(raw);
+                          const current = (r as any).phase ?? null;
+                          if (next === current) return;
+                          try {
+                            const fresh = await updateStepMeta(r.id, { phase: next });
+                            applyFresh(fresh);
+                          } catch (err: any) {
+                            console.error(err);
+                            alert(`Failed to update phase.\n${err?.message ?? ""}`);
+                            e.target.value = current ?? "";
+                          }
+                        }}
+                        style={{
+                          width: "100%",
+                          minWidth: 120,
+                          padding: "8px 10px",
+                          borderRadius: 5,
+                          border: "1px solid #e5e7eb",
+                          fontSize: 13,
+                          boxSizing: "border-box",
+                          background:
+                            "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+                          backgroundSize: "10px",
+                          paddingRight: 24,
+                        }}
+                      >
+                        <option value="">—</option>
+                        <option value="1">Pre Dev</option>
+                        <option value="2">Dev</option>
+                        <option value="3">Pre Con</option>
+                      </select>
                     );
                   })()}
                 </td>
