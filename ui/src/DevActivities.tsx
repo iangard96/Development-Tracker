@@ -203,13 +203,21 @@ function DevTypeCell({
   applyFresh: (fresh: DevStep) => void;
 }) {
   const safeCustom = Array.isArray(customDevTypes) ? customDevTypes : [];
-  const options = [...DEFAULT_DEV_TYPE_OPTIONS.filter((x) => x !== ""), ...safeCustom];
+  const baseOptions = DEFAULT_DEV_TYPE_OPTIONS.filter((x) => x !== "");
+  const options = [...baseOptions, ...safeCustom];
 
-  async function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const next = (e.target.value || "") as DevType | "";
+  async function applyValue(next: string) {
+    const normalized = next.trim();
     try {
-      const fresh = await updateStepDevType(step.id, next);
+      const fresh = await updateStepDevType(step.id, normalized as DevType);
       onSaved(fresh);
+      if (
+        normalized &&
+        !baseOptions.includes(normalized as DevType) &&
+        !safeCustom.includes(normalized)
+      ) {
+        onCustomDevTypesChange([...safeCustom, normalized]);
+      }
     } catch (err: any) {
       console.error(err);
       alert(`Failed to update development type.\n${err?.message ?? ""}`);
@@ -218,42 +226,31 @@ function DevTypeCell({
 
   return (
     <div style={{ position: "relative", minWidth: 200 }}>
-      <input
-        list="dev-type-options"
-        defaultValue={step.development_type ?? ""}
-        onBlur={async (e) => {
-          const val = e.currentTarget.value.trim();
-          const next = val === "" ? "" : (val as DevType | string);
-          if (next === step.development_type || (step.development_type ?? "") === "" && next === "") return;
-          try {
-            const fresh = await updateStepDevType(step.id, next as DevType);
-            onSaved(fresh);
-            // track new custom types
-            if (
-              next &&
-              !DEFAULT_DEV_TYPE_OPTIONS.includes(next as DevType) &&
-              !safeCustom.includes(next)
-            ) {
-              onCustomDevTypesChange([...safeCustom, next]);
+      <select
+        value={step.development_type ?? ""}
+        onChange={async (e) => {
+          const val = e.target.value;
+          if (val === "__CUSTOM__") {
+            const name = window.prompt("Add custom Dev Type");
+            if (!name || !name.trim()) {
+              e.target.value = step.development_type ?? "";
+              return;
             }
-          } catch (err) {
-            console.error(err);
-            alert(`Failed to update development type.\n${(err as any)?.message ?? ""}`);
-            e.currentTarget.value = step.development_type ?? "";
+            await applyValue(name.trim());
+            return;
           }
+          await applyValue(val);
         }}
-        onDoubleClick={(e) => {
+        onDoubleClick={async (e) => {
           const current = (step.development_type ?? "").trim();
           if (!current) return;
           if (!safeCustom.includes(current)) return; // only edit custom
           const renamed = window.prompt("Rename custom Dev Type", current);
           if (!renamed || renamed.trim() === "" || renamed.trim() === current) return;
           const newName = renamed.trim();
-          // update list
           onCustomDevTypesChange(
             safeCustom.map((c) => (c === current ? newName : c)),
           );
-          // update rows with this dev type
           rows
             .filter((r) => (r.development_type ?? "") === current)
             .forEach(async (r) => {
@@ -264,7 +261,7 @@ function DevTypeCell({
                 console.warn("Rename dev type failed for row", r.id, err);
               }
             });
-          e.currentTarget.value = newName;
+          await applyValue(newName);
         }}
         onContextMenu={(e) => {
           e.preventDefault();
@@ -284,28 +281,32 @@ function DevTypeCell({
                 console.warn("Clear dev type failed for row", r.id, err);
               }
             });
-          e.currentTarget.value = "";
+          applyValue("");
         }}
-        placeholder="Select or type custom"
         style={{
           width: "100%",
-          padding: "6px 10px",
-          borderRadius: 5,
-          border: "1px solid #e5e7eb",
+          padding: "8px 12px",
+          borderRadius: 6,
+          border: "1px solid #d1d5db",
           fontSize: 13,
-          color: "#1f2937",
-          boxSizing: "border-box",
+          color: "#111827",
           background:
-            "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+            "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 10px center",
           backgroundSize: "10px",
-          paddingRight: 24,
+          paddingRight: 28,
+          appearance: "none" as any,
+          cursor: "pointer",
         }}
-      />
-      <datalist id="dev-type-options">
+      >
+        <option value="">Select Dev Type</option>
         {options.map((opt) => (
-          <option key={opt} value={opt} />
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
         ))}
-      </datalist>
+        <option disabled>────────────</option>
+        <option value="__CUSTOM__">+ Add custom…</option>
+      </select>
     </div>
   );
 }
