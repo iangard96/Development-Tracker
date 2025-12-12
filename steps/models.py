@@ -16,6 +16,12 @@ class Project(models.Model):
     size_dc_mw = models.DecimalField(
         null=True, blank=True, max_digits=10, decimal_places=3
     )
+    lease_option_start_date = models.DateField(
+        null=True, blank=True
+    )
+    lease_option_expiration_date = models.DateField(
+        null=True, blank=True
+    )
     latitude = models.DecimalField(
         null=True, blank=True, max_digits=10, decimal_places=6
     )

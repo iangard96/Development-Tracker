@@ -116,6 +116,8 @@ class ProjectSerializer(serializers.ModelSerializer):
             "offtake_structure",
             "size_ac_mw",
             "size_dc_mw",
+            "lease_option_start_date",
+            "lease_option_expiration_date",
             "latitude",
             "longitude",
             "state",
