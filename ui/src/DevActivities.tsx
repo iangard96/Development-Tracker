@@ -691,6 +691,25 @@ export default function DevActivities() {
 
   const deferredFiltered = useDeferredValue(filtered);
 
+  const requirementSets = useMemo(() => {
+    const map = new Map<number, Set<string>>();
+    (rows ?? []).forEach((r) => {
+      const raw = ((r as any).requirement ?? "") as string;
+      if (!raw) {
+        map.set(r.id, new Set());
+        return;
+      }
+      const set = new Set(
+        raw
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      );
+      map.set(r.id, set);
+    });
+    return map;
+  }, [rows]);
+
   const sorted = useMemo(() => {
     const list = [...deferredFiltered];
     if (!sortBy) return list;
@@ -752,14 +771,14 @@ export default function DevActivities() {
     return list;
   }, [filtered, sortBy, sortDir]);
 
-  const toggleSort = (key: typeof sortBy) => {
+  const toggleSort = useCallback((key: typeof sortBy) => {
     if (sortBy === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortBy(key);
       setSortDir("asc");
     }
-  };
+  }, [sortBy]);
 
   const resetSort = () => {
     setSortBy(null);
@@ -1651,40 +1670,34 @@ export default function DevActivities() {
               <td style={requirementTd}>
                 <div style={requirementList}>
                   {["Engineering", "Permitting/Compliance", "Financing", "Interconnection"].map((opt) => {
-                    const requirementVal = (r as any).requirement ?? "";
-                    const selected = new Set(
-                        requirementVal
-                          .split(",")
-                          .map((s: string) => s.trim())
-                          .filter(Boolean),
-                      );
-                      const checked = selected.has(opt);
-                      return (
-                        <label key={opt} style={requirementLabel}>
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            style={requirementCheckbox}
-                            onChange={async (e) => {
-                              const next = new Set(selected);
-                              if (e.target.checked) {
-                                next.add(opt);
-                              } else {
-                                next.delete(opt);
-                              }
-                              const nextVal = Array.from(next).join(", ");
-                              try {
-                                const fresh = await updateStepMeta(r.id, { requirement: nextVal || null });
-                                applyFresh(fresh);
-                              } catch (err: any) {
-                                console.error(err);
-                                alert(`Failed to update requirement.\n${err?.message ?? ""}`);
-                              }
-                            }}
-                          />
-                          <span>{opt}</span>
-                        </label>
-                      );
+                    const selected = new Set(requirementSets.get(r.id) ?? []);
+                    const checked = selected.has(opt);
+                    return (
+                      <label key={opt} style={requirementLabel}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          style={requirementCheckbox}
+                          onChange={async (e) => {
+                            const next = new Set(selected);
+                            if (e.target.checked) {
+                              next.add(opt);
+                            } else {
+                              next.delete(opt);
+                            }
+                            const nextVal = Array.from(next).join(", ");
+                            try {
+                              const fresh = await updateStepMeta(r.id, { requirement: nextVal || null });
+                              applyFresh(fresh);
+                            } catch (err: any) {
+                              console.error(err);
+                              alert(`Failed to update requirement.\n${err?.message ?? ""}`);
+                            }
+                          }}
+                        />
+                        <span>{opt}</span>
+                      </label>
+                    );
                   })}
                 </div>
               </td>
