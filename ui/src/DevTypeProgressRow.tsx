@@ -43,10 +43,6 @@ export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
           border: "1px solid #e5e7eb",
           padding: 24,
           boxSizing: "border-box",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: 260,
         }}
       >
         <div
