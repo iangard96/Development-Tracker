@@ -9,6 +9,7 @@ import ProjectSummary from "./ProjectSummary";
 import DevActivities from "./DevActivities";
 import ProjectContacts from "./ProjectContacts";
 import Requirements from "./Requirements";
+import Lease from "./Lease";
 import "./index.css";
 import "./Layout.css";
 
@@ -51,6 +52,7 @@ function AppShell() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/development" element={<DevActivities />} />
           <Route path="/requirements" element={<Requirements />} />
+          <Route path="/lease" element={<Lease />} />
           <Route path="/project_contacts" element={<ProjectContacts />} />
           
           {/* Catch-all */}
