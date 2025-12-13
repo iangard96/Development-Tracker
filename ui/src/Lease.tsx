@@ -1,8 +1,15 @@
 // ui/src/Lease.tsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import SaveAsPdfButton from "./SaveAsPdfButton";
 import logo from "../public/landcharge-logo.png";
 import { useProject } from "./ProjectContext";
+import {
+  fetchProjectEconomics,
+  fetchProjectIncentives,
+  updateProjectEconomics,
+  updateProjectIncentives,
+} from "./api";
+import type { ProjectEconomics, ProjectIncentives } from "./types";
 
 type LeaseDetails = {
   ownerName: string;
@@ -73,6 +80,10 @@ export default function Lease() {
     opexPerKwYr: null,
   });
 
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const payments = useMemo<PaymentRow[]>(() => {
     const list: PaymentRow[] = [];
     const years = Math.max(1, Math.round(lease.termYears || 25));
@@ -97,6 +108,93 @@ export default function Lease() {
     const rec = econ.recPrice ?? 0;
     return prod * (ppa + rec);
   }, [econ.pvsystYieldMWh, econ.ppaPrice, econ.recPrice]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    setLoading(true);
+    setError(null);
+    Promise.all([
+      fetchProjectEconomics(projectId),
+      fetchProjectIncentives(projectId),
+    ])
+      .then(([eco, inc]) => {
+        setLease((cur) => ({
+          ...cur,
+          ownerName: eco.owner_name ?? "",
+          counterparty: eco.counterparty ?? "",
+          apn: eco.apn ?? "",
+          legalDescription: eco.legal_description ?? "",
+          optionTermYears: eco.option_term_years,
+          constructionTermYears: eco.construction_term_years,
+          leaseStart: eco.lease_start ?? "",
+          leaseEnd: eco.lease_end ?? "",
+          baseRent: eco.base_rent ?? 0,
+          escalatorPct: eco.escalator_pct ?? 0,
+          frequency: (eco.frequency as any) || "Annual",
+          termYears: eco.term_years ?? 25,
+          leasedAreaImage: eco.leased_area_image_url || undefined,
+          leasedAreaImageName: eco.leased_area_image_name || undefined,
+        }));
+        setEcon({
+          itcEligiblePct: inc.itc_eligible_pct ?? 30,
+          recPrice: inc.rec_price,
+          recTenorYears: inc.rec_tenor_years,
+          ppaPrice: inc.ppa_price,
+          ppaEscPct: inc.ppa_esc_pct,
+          ppaTermYears: inc.ppa_term_years,
+          pvsystYieldMWh: inc.pvsyst_yield_mwh,
+          pvsystDegradationPct: inc.pvsyst_deg_pct ?? 0.5,
+          capexPerKw: inc.capex_per_kw,
+          opexPerKwYr: inc.opex_per_kw_yr,
+        });
+      })
+      .catch((e) => setError(String(e)))
+      .finally(() => setLoading(false));
+  }, [projectId]);
+
+  async function handleSave() {
+    if (!projectId) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const econPayload: Partial<ProjectEconomics> = {
+        owner_name: lease.ownerName,
+        counterparty: lease.counterparty,
+        apn: lease.apn,
+        legal_description: lease.legalDescription,
+        option_term_years: lease.optionTermYears,
+        construction_term_years: lease.constructionTermYears,
+        lease_start: lease.leaseStart || null,
+        lease_end: lease.leaseEnd || null,
+        base_rent: lease.baseRent,
+        escalator_pct: lease.escalatorPct,
+        frequency: lease.frequency,
+        term_years: lease.termYears,
+        leased_area_image_url: lease.leasedAreaImage || "",
+        leased_area_image_name: lease.leasedAreaImageName || "",
+      };
+      const incPayload: Partial<ProjectIncentives> = {
+        itc_eligible_pct: econ.itcEligiblePct,
+        rec_price: econ.recPrice,
+        rec_tenor_years: econ.recTenorYears,
+        ppa_price: econ.ppaPrice,
+        ppa_esc_pct: econ.ppaEscPct,
+        ppa_term_years: econ.ppaTermYears,
+        pvsyst_yield_mwh: econ.pvsystYieldMWh,
+        pvsyst_deg_pct: econ.pvsystDegradationPct,
+        capex_per_kw: econ.capexPerKw,
+        opex_per_kw_yr: econ.opexPerKwYr,
+      };
+      await Promise.all([
+        updateProjectEconomics(projectId, econPayload),
+        updateProjectIncentives(projectId, incPayload),
+      ]);
+    } catch (e: any) {
+      setError(String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (!projectId) {
     return (
@@ -125,6 +223,8 @@ export default function Lease() {
           <p style={{ margin: "0 0 6px", color: "#6b7280", fontSize: 13 }}>
             Lease, payments, incentives, production, and a lightweight financial snapshot.
           </p>
+          {loading && <div style={{ fontSize: 12, color: "#6b7280" }}>Loading economics…</div>}
+          {error && <div style={{ fontSize: 12, color: "crimson" }}>{error}</div>}
         </div>
         <div className="print-hidden" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <SaveAsPdfButton style={{ marginRight: 4 }} />
@@ -134,6 +234,14 @@ export default function Lease() {
             style={ghostButton}
           >
             Generate Lease
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            style={{ ...ghostButton, background: "#111827", color: "#fff", borderColor: "#111827" }}
+            disabled={saving}
+          >
+            {saving ? "Saving…" : "Save"}
           </button>
           <img
             src={logo}

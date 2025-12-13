@@ -63,3 +63,41 @@ export type ProjectContact = {
   phone1: string | null;
   phone2: string | null;
 };
+
+export type ProjectEconomics = {
+  id: number;
+  project: number;
+  owner_name: string;
+  counterparty: string;
+  apn: string;
+  legal_description: string;
+  option_term_years: number | null;
+  construction_term_years: number | null;
+  lease_start: string | null;
+  lease_end: string | null;
+  base_rent: number | null;
+  escalator_pct: number | null;
+  frequency: "Annual" | "Monthly" | string;
+  term_years: number | null;
+  leased_area_image_url: string;
+  leased_area_image_name: string;
+  lease_template_url: string;
+  lease_template_name: string;
+  meta: Record<string, unknown>;
+};
+
+export type ProjectIncentives = {
+  id: number;
+  project: number;
+  itc_eligible_pct: number | null;
+  rec_price: number | null;
+  rec_tenor_years: number | null;
+  ppa_price: number | null;
+  ppa_esc_pct: number | null;
+  ppa_term_years: number | null;
+  pvsyst_yield_mwh: number | null;
+  pvsyst_deg_pct: number | null;
+  capex_per_kw: number | null;
+  opex_per_kw_yr: number | null;
+  meta: Record<string, unknown>;
+};

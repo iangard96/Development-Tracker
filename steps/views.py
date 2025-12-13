@@ -3,12 +3,15 @@ from django.db import connection, transaction
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework import generics
 
-from .models import DevelopmentStep, Project, ProjectContact
+from .models import DevelopmentStep, Project, ProjectContact, ProjectEconomics, ProjectIncentives
 from .serializers import (
     DevelopmentStepSerializer,
     ProjectSerializer,
     ProjectContactSerializer,
+    ProjectEconomicsSerializer,
+    ProjectIncentivesSerializer,
 )
 
 
@@ -36,6 +39,28 @@ class DevelopmentStepViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+
+class ProjectEconomicsView(generics.RetrieveUpdateAPIView):
+    serializer_class = ProjectEconomicsSerializer
+    lookup_url_kwarg = "project_id"
+
+    def get_object(self):
+        project_id = self.kwargs.get(self.lookup_url_kwarg)
+        project = generics.get_object_or_404(Project, pk=project_id)
+        obj, _ = ProjectEconomics.objects.get_or_create(project=project)
+        return obj
+
+
+class ProjectIncentivesView(generics.RetrieveUpdateAPIView):
+    serializer_class = ProjectIncentivesSerializer
+    lookup_url_kwarg = "project_id"
+
+    def get_object(self):
+        project_id = self.kwargs.get(self.lookup_url_kwarg)
+        project = generics.get_object_or_404(Project, pk=project_id)
+        obj, _ = ProjectIncentives.objects.get_or_create(project=project)
+        return obj
 
 
 class ProjectViewSet(viewsets.ModelViewSet):

@@ -1,5 +1,6 @@
 // ui/src/api.ts
 import type { DevStep, Project, DevType, ProjectContact } from "./types";
+import type { ProjectEconomics, ProjectIncentives } from "./types";
 
 const API = (() => {
   const fromEnv = import.meta.env.VITE_API_URL;
@@ -282,4 +283,40 @@ export async function updateProject(
 export async function deleteProject(id: number): Promise<void> {
   const r = await fetch(`${API}/projects/${id}/`, { method: "DELETE" });
   await jsonOrThrow(r, "project delete failed");
+}
+
+/* ---------- Economics / Incentives ---------- */
+
+export async function fetchProjectEconomics(projectId: number): Promise<ProjectEconomics> {
+  const r = await fetch(`${API}/projects/${projectId}/economics/`);
+  return jsonOrThrow(r, "economics fetch failed");
+}
+
+export async function updateProjectEconomics(
+  projectId: number,
+  payload: Partial<ProjectEconomics>,
+): Promise<ProjectEconomics> {
+  const r = await fetch(`${API}/projects/${projectId}/economics/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return jsonOrThrow(r, "economics update failed");
+}
+
+export async function fetchProjectIncentives(projectId: number): Promise<ProjectIncentives> {
+  const r = await fetch(`${API}/projects/${projectId}/incentives/`);
+  return jsonOrThrow(r, "incentives fetch failed");
+}
+
+export async function updateProjectIncentives(
+  projectId: number,
+  payload: Partial<ProjectIncentives>,
+): Promise<ProjectIncentives> {
+  const r = await fetch(`${API}/projects/${projectId}/incentives/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return jsonOrThrow(r, "incentives update failed");
 }

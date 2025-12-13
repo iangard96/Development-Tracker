@@ -120,3 +120,67 @@ class ProjectContact(models.Model):
 
     class Meta:
         db_table = "steps_project_contact"
+
+
+class ProjectEconomics(models.Model):
+    """
+    Per-project lease/economics metadata (single row per project).
+    """
+
+    id = models.AutoField(primary_key=True)
+    project = models.OneToOneField(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="economics",
+    )
+
+    owner_name = models.CharField(max_length=255, blank=True, default="")
+    counterparty = models.CharField(max_length=255, blank=True, default="")
+    apn = models.CharField(max_length=255, blank=True, default="")
+    legal_description = models.TextField(blank=True, default="")
+    option_term_years = models.IntegerField(null=True, blank=True)
+    construction_term_years = models.IntegerField(null=True, blank=True)
+    lease_start = models.DateField(null=True, blank=True)
+    lease_end = models.DateField(null=True, blank=True)
+    base_rent = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    escalator_pct = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
+    frequency = models.CharField(max_length=16, blank=True, default="Annual")  # Annual | Monthly
+    term_years = models.IntegerField(null=True, blank=True)
+
+    leased_area_image_url = models.TextField(blank=True, default="")
+    leased_area_image_name = models.CharField(max_length=255, blank=True, default="")
+    lease_template_url = models.TextField(blank=True, default="")
+    lease_template_name = models.CharField(max_length=255, blank=True, default="")
+
+    meta = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        db_table = "steps_project_economics"
+
+
+class ProjectIncentives(models.Model):
+    """
+    Per-project incentives/production/financial assumptions (single row per project).
+    """
+
+    id = models.AutoField(primary_key=True)
+    project = models.OneToOneField(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="incentives",
+    )
+
+    itc_eligible_pct = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
+    rec_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    rec_tenor_years = models.IntegerField(null=True, blank=True)
+    ppa_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    ppa_esc_pct = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
+    ppa_term_years = models.IntegerField(null=True, blank=True)
+    pvsyst_yield_mwh = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    pvsyst_deg_pct = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
+    capex_per_kw = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    opex_per_kw_yr = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    meta = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        db_table = "steps_project_incentives"

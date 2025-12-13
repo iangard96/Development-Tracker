@@ -1,6 +1,6 @@
 # steps/serializers.py
 from rest_framework import serializers
-from .models import DevelopmentStep, Project, ProjectContact
+from .models import DevelopmentStep, Project, ProjectContact, ProjectEconomics, ProjectIncentives
 
 
 class DevelopmentStepSerializer(serializers.ModelSerializer):
@@ -171,3 +171,51 @@ class ProjectContactSerializer(serializers.ModelSerializer):
         # ensure is_deleted defaults to False for legacy table that has no DB default
         validated_data.setdefault("is_deleted", False)
         return super().create(validated_data)
+
+
+class ProjectEconomicsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectEconomics
+        fields = [
+            "id",
+            "project",
+            "owner_name",
+            "counterparty",
+            "apn",
+            "legal_description",
+            "option_term_years",
+            "construction_term_years",
+            "lease_start",
+            "lease_end",
+            "base_rent",
+            "escalator_pct",
+            "frequency",
+            "term_years",
+            "leased_area_image_url",
+            "leased_area_image_name",
+            "lease_template_url",
+            "lease_template_name",
+            "meta",
+        ]
+        read_only_fields = ["id"]
+
+
+class ProjectIncentivesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectIncentives
+        fields = [
+            "id",
+            "project",
+            "itc_eligible_pct",
+            "rec_price",
+            "rec_tenor_years",
+            "ppa_price",
+            "ppa_esc_pct",
+            "ppa_term_years",
+            "pvsyst_yield_mwh",
+            "pvsyst_deg_pct",
+            "capex_per_kw",
+            "opex_per_kw_yr",
+            "meta",
+        ]
+        read_only_fields = ["id"]
