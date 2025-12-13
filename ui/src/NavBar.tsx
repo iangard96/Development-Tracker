@@ -12,7 +12,7 @@ const linkStyle: React.CSSProperties = {
 
 export default function NavBar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) {
   const navItems = [
-    { to: "/project_summary", label: "Project Summary", title: "Project Summary", icon: "S" },
+    { to: "/project_summary", label: "Project Portfolio", title: "Project Portfolio", icon: "S" },
     { to: "/dashboard", label: "Project Dashboard", title: "Project Dashboard", icon: "D" },
     { to: "/development", label: "Development Activities", title: "Development Activities", icon: "A" },
     { to: "/requirements", label: "Requirements", title: "Requirements", icon: "R" },
