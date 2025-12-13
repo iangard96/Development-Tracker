@@ -4,6 +4,7 @@ import type { DevStep } from "./types";
 import { fetchStepsForProject } from "./api";
 import { useProject } from "./ProjectContext";
 import SaveAsPdfButton from "./SaveAsPdfButton";
+import logo from "../public/landcharge-logo.png";
 
 const REQUIREMENT_BUCKETS = ["Financing", "Permitting/Compliance", "Engineering", "Interconnection"] as const;
 type RequirementBucket = (typeof REQUIREMENT_BUCKETS)[number];
@@ -158,8 +159,13 @@ export default function Requirements() {
             Auto-populated from requirement checkboxes in Development Activities.
           </p>
         </div>
-        <div className="print-hidden" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <SaveAsPdfButton />
+        <div className="print-hidden" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <SaveAsPdfButton style={{ marginRight: 4 }} />
+          <img
+            src={logo}
+            alt="Land Charge"
+            style={{ height: 32, width: "auto", objectFit: "contain", display: "block" }}
+          />
         </div>
       </div>
 

@@ -15,6 +15,7 @@ import {
 } from "./api";
 import { useProject } from "./ProjectContext";
 import SaveAsPdfButton from "./SaveAsPdfButton";
+import logo from "../public/landcharge-logo.png";
 
 const th: React.CSSProperties = {
   textAlign: "left",
@@ -946,8 +947,16 @@ export default function DevActivities() {
           {project.project_name}
         </h1>
       )}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }} className="print-hidden">
-        <SaveAsPdfButton />
+      <div
+        style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10, marginBottom: 12 }}
+        className="print-hidden"
+      >
+        <SaveAsPdfButton style={{ marginRight: 4 }} />
+        <img
+          src={logo}
+          alt="Land Charge"
+          style={{ height: 32, width: "auto", objectFit: "contain", display: "block" }}
+        />
       </div>
       <div
         style={{

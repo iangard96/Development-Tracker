@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useProject } from "./ProjectContext";
 import SaveAsPdfButton from "./SaveAsPdfButton";
+import logo from "../public/landcharge-logo.png";
 import {
   fetchProjectContacts,
   createProjectContact,
@@ -190,8 +191,16 @@ export default function ProjectContacts() {
 
   return (
     <div className="page-root">
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }} className="print-hidden">
-        <SaveAsPdfButton />
+      <div
+        style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10, marginBottom: 12 }}
+        className="print-hidden"
+      >
+        <SaveAsPdfButton style={{ marginRight: 4 }} />
+        <img
+          src={logo}
+          alt="Land Charge"
+          style={{ height: 32, width: "auto", objectFit: "contain", display: "block" }}
+        />
       </div>
       <h1 style={{ fontSize: 24, fontWeight: 600, margin: "0 0 32px" }}>
         {projectName}

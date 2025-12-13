@@ -5,6 +5,7 @@ import type { Project } from "./types";
 import { fetchProjects, createProject, deleteProject, updateProject } from "./api";
 import { useProject } from "./ProjectContext";
 import SaveAsPdfButton from "./SaveAsPdfButton";
+import logo from "../public/landcharge-logo.png";
 
 // Use former project_details options for project_type dropdown
 const PROJECT_TYPE_OPTIONS = ["", "GM_FIXED", "GM_TRACK", "BALLASTED", "ROOFTOP"];
@@ -114,8 +115,13 @@ export default function ProjectSummaryPage() {
         <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111827", margin: 0 }}>
           Project Portfolio
         </h1>
-        <div className="print-hidden">
-          <SaveAsPdfButton />
+        <div className="print-hidden" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <SaveAsPdfButton style={{ marginRight: 4 }} />
+          <img
+            src={logo}
+            alt="Land Charge"
+            style={{ height: 32, width: "auto", objectFit: "contain", display: "block" }}
+          />
         </div>
       </div>
       <div style={{ height: 12 }} />

@@ -1,5 +1,6 @@
 // ui/src/Lease.tsx
 import SaveAsPdfButton from "./SaveAsPdfButton";
+import logo from "../public/landcharge-logo.png";
 import { useProject } from "./ProjectContext";
 
 export default function Lease() {
@@ -37,8 +38,13 @@ export default function Lease() {
             Lease dates pulled from Project Portfolio.
           </p>
         </div>
-        <div className="print-hidden">
-          <SaveAsPdfButton />
+        <div className="print-hidden" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <SaveAsPdfButton style={{ marginRight: 4 }} />
+          <img
+            src={logo}
+            alt="Land Charge"
+            style={{ height: 32, width: "auto", objectFit: "contain", display: "block" }}
+          />
         </div>
       </div>
 
