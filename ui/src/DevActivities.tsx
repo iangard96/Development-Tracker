@@ -964,7 +964,7 @@ export default function DevActivities() {
           <img
             src={logo}
             alt="Land Charge"
-            style={{ height: 32, width: "auto", objectFit: "contain", display: "block" }}
+            style={{ height: 40, width: "auto", objectFit: "contain", display: "block" }}
           />
         </div>
       </div>
