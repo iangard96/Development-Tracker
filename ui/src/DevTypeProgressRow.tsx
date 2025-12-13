@@ -125,8 +125,8 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
       <div
         style={{
           position: "absolute",
-          top: "45%",
-          left: "40%",
+          top: "40%",
+          left: "60%",
           transform: "translate(-50%, -50%)",
           textAlign: "center",
           fontSize: 22,
