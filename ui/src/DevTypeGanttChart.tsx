@@ -52,65 +52,70 @@ export default function DevTypeGanttChart({ steps }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   const { rows, minDay, maxDay } = useMemo(() => {
-    const sorted = [...safeSteps].sort(
-      (a: any, b: any) =>
-        (a.sequence ?? 0) - (b.sequence ?? 0) || a.id - b.id,
-    );
+    try {
+      const sorted = [...safeSteps].sort(
+        (a: any, b: any) =>
+          (a.sequence ?? 0) - (b.sequence ?? 0) || a.id - b.id,
+      );
 
-    type Parsed = {
-      step: DevStep;
-      devType: DevType;
-      startDay: number;
-      endDay: number;
-    };
+      type Parsed = {
+        step: DevStep;
+        devType: DevType;
+        startDay: number;
+        endDay: number;
+      };
 
-    const parsed: Parsed[] = [];
+      const parsed: Parsed[] = [];
 
-    for (const s of sorted) {
-      const devType = (s as any).development_type as DevType | undefined;
-      if (!devType || !DEV_TYPE_ORDER.includes(devType)) continue;
+      for (const s of sorted) {
+        const devType = (s as any).development_type as DevType | undefined;
+        if (!devType || !DEV_TYPE_ORDER.includes(devType)) continue;
 
-      const startDay = toDayNumber((s as any).start_date);
-      const endDay = toDayNumber((s as any).end_date);
-      if (startDay == null || endDay == null) continue;
-      // Skip obviously bad ranges
-      if (Number.isNaN(startDay) || Number.isNaN(endDay)) continue;
-      if (endDay < startDay) continue;
+        const startDay = toDayNumber((s as any).start_date);
+        const endDay = toDayNumber((s as any).end_date);
+        if (startDay == null || endDay == null) continue;
+        // Skip obviously bad ranges
+        if (Number.isNaN(startDay) || Number.isNaN(endDay)) continue;
+        if (endDay < startDay) continue;
 
-      parsed.push({ step: s, devType, startDay, endDay });
-    }
+        parsed.push({ step: s, devType, startDay, endDay });
+      }
 
-    if (!parsed.length) {
+      if (!parsed.length) {
+        return { rows: [] as GanttRow[], minDay: 0, maxDay: 0 };
+      }
+
+      const minDay = parsed.reduce(
+        (m, p) => Math.min(m, p.startDay),
+        parsed[0].startDay,
+      );
+      const maxDay = parsed.reduce(
+        (m, p) => Math.max(m, p.endDay),
+        parsed[0].endDay,
+      );
+
+      const rows: GanttRow[] = [];
+
+      DEV_TYPE_ORDER.forEach((dt) => {
+        parsed
+          .filter((p) => p.devType === dt)
+          .forEach((p) => {
+            const duration = Math.max(1, p.endDay - p.startDay || 1);
+            rows.push({
+              id: p.step.id,
+              label: `${dt}: ${p.step.name}`,
+              devType: dt,
+              startOffset: p.startDay - minDay,
+              duration,
+            });
+          });
+      });
+
+      return { rows, minDay, maxDay };
+    } catch (e) {
+      console.error("DevTypeGanttChart data parsing failed", e);
       return { rows: [] as GanttRow[], minDay: 0, maxDay: 0 };
     }
-
-    const minDay = parsed.reduce(
-      (m, p) => Math.min(m, p.startDay),
-      parsed[0].startDay,
-    );
-    const maxDay = parsed.reduce(
-      (m, p) => Math.max(m, p.endDay),
-      parsed[0].endDay,
-    );
-
-    const rows: GanttRow[] = [];
-
-    DEV_TYPE_ORDER.forEach((dt) => {
-      parsed
-        .filter((p) => p.devType === dt)
-        .forEach((p) => {
-          const duration = Math.max(1, p.endDay - p.startDay || 1);
-          rows.push({
-            id: p.step.id,
-            label: `${dt}: ${p.step.name}`,
-            devType: dt,
-            startOffset: p.startDay - minDay,
-            duration,
-          });
-        });
-    });
-
-    return { rows, minDay, maxDay };
   }, [safeSteps]);
 
   if (!rows.length) {
