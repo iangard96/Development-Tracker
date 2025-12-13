@@ -505,6 +505,7 @@ function SpendCell({
 
 export default function DevActivities() {
   const { projectId, project } = useProject();
+  const noProjectSelected = !projectId;
   const [rows, setRows] = useState<DevStep[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [devTypeFilter, setDevTypeFilter] = useState<DevType | "ALL">("ALL");
@@ -640,14 +641,6 @@ export default function DevActivities() {
       .catch((e) => console.warn("Failed to load contacts", e));
   }, [projectId]);
 
-  if (!projectId) {
-    return (
-      <div style={{ padding: 16, color: "#6b7280", fontSize: 14 }}>
-        Select a project from the Project Summary to edit its development activities.
-      </div>
-    );
-  }
-
   const filtered = useMemo(() => {
     if (!rows) return [];
     const base = [...rows].sort(
@@ -746,6 +739,14 @@ export default function DevActivities() {
     setSortBy(null);
     setSortDir("asc");
   };
+
+  if (noProjectSelected) {
+    return (
+      <div style={{ padding: 16, color: "#6b7280", fontSize: 14 }}>
+        Select a project from the Project Summary to edit its development activities.
+      </div>
+    );
+  }
 
   if (err)
     return <div style={{ color: "red", padding: 16 }}>Error: {err}</div>;
