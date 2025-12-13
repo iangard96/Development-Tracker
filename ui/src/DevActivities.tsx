@@ -823,6 +823,53 @@ export default function DevActivities() {
     }
   };
 
+  const handleDurationUpdate = async (row: DevStep, durationInput: string) => {
+    const parsed = Number(durationInput);
+    const duration = Number.isFinite(parsed) ? Math.max(0, Math.ceil(parsed)) : null;
+    if (!duration || duration <= 0) {
+      alert("Enter a duration greater than zero to compute dates.");
+      return;
+    }
+
+    const currentStart = (row as any).start_date || null;
+    const currentEnd = (row as any).end_date || null;
+
+    if (!currentStart && !currentEnd) {
+      alert("Set a start or end date before updating duration.");
+      return;
+    }
+
+    let payload: { start_date?: string | null; end_date?: string | null } = {};
+
+    if (currentStart) {
+      const base = new Date(currentStart);
+      if (Number.isNaN(+base)) {
+        alert("Start date is invalid; fix it before setting duration.");
+        return;
+      }
+      base.setDate(base.getDate() + duration);
+      payload = { start_date: currentStart, end_date: toIso(base) };
+    } else if (currentEnd) {
+      const base = new Date(currentEnd);
+      if (Number.isNaN(+base)) {
+        alert("End date is invalid; fix it before setting duration.");
+        return;
+      }
+      base.setDate(base.getDate() - duration);
+      payload = { start_date: toIso(base), end_date: currentEnd };
+    }
+
+    try {
+      const fresh = await updateStepDates(row.id, payload);
+      setRows((cur) =>
+        cur ? cur.map((x) => (x.id === row.id ? { ...x, ...fresh } : x)) : cur,
+      );
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to update duration.\n${err?.message ?? ""}`);
+    }
+  };
+
   const jumpToId = (id: number) => {
     const target = sorted.find((p) => p.id === id);
     if (target) {
@@ -1308,7 +1355,27 @@ export default function DevActivities() {
                   />
                 </td>
 
-                <td style={td}>{(r as any).duration_days ?? ""}</td>
+                <td style={td}>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    defaultValue={(r as any).duration_days ?? ""}
+                    onBlur={(e) => {
+                      const val = e.currentTarget.value;
+                      if (!val) return;
+                      handleDurationUpdate(r, val);
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "6px 10px",
+                      borderRadius: 5,
+                      border: "1px solid #e5e7eb",
+                      fontSize: 13,
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </td>
 
                 <td style={td}>
                   <RelatedActivityCell
