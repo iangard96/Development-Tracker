@@ -321,7 +321,7 @@ export default function Lease() {
               </button>
             </div>
             <p style={{ fontSize: 12, color: "#6b7280", marginTop: 8 }}>
-              Use merge fields like <code>{{"{owner_name}"}}</code>, <code>{{"{apn}"}}</code>, <code>{{"{base_rent}"}}</code>, <code>{{"{escalator_pct}"}}</code> to auto-fill.
+              Use merge fields like <code>{"{owner_name}"}</code>, <code>{"{apn}"}</code>, <code>{"{base_rent}"}</code>, <code>{"{escalator_pct}"}</code> to auto-fill.
             </p>
           </Card>
         </div>
