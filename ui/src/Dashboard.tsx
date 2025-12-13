@@ -126,33 +126,41 @@ export default function Dashboard() {
 
   return (
     <div className="page-root">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            gap: 12,
-            marginBottom: 12,
-          }}
-          className="print-hidden"
-        >
-          <SaveAsPdfButton style={{ marginRight: 4 }} />
-          <img
-            src="/landcharge-logo.png"
-            alt="Land Charge"
-            style={{ height: 48, width: "auto", objectFit: "contain", display: "block" }}
-          />
-        </div>
       {project && (
         <>
-          {steps === null && (
-            <div style={{ marginBottom: 8, fontSize: 13, color: "#6b7280" }}>
-              Loading latest project data...
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: 12,
+              flexWrap: "wrap",
+              marginBottom: 12,
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <h1 className="page-title" style={{ marginBottom: 8 }}>
+                {project.project_name}
+              </h1>
+              <h2 className="page-subtitle">Dashboard</h2>
+              {steps === null && (
+                <div style={{ marginTop: 4, fontSize: 13, color: "#6b7280" }}>
+                  Loading latest project data...
+                </div>
+              )}
             </div>
-          )}
-          <h1 style={{ fontSize: 24, fontWeight: 600, margin: "0 0 16px" }}>
-            {project.project_name}
-          </h1>
+            <div
+              className="print-hidden"
+              style={{ display: "flex", alignItems: "center", gap: 12 }}
+            >
+              <SaveAsPdfButton />
+              <img
+                src="/landcharge-logo.png"
+                alt="Land Charge"
+                style={{ height: 72, width: "auto", objectFit: "contain", display: "block" }}
+              />
+            </div>
+          </div>
           <div
             style={{
               display: "grid",

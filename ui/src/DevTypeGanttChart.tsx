@@ -20,6 +20,13 @@ type GanttRow = {
   startOffset: number; // days from global min date
   duration: number; // days
 };
+type ParseError = { stepId?: number; name?: string; reason: string };
+type ParsedResult = {
+  rows: GanttRow[];
+  minDay: number;
+  maxDay: number;
+  errors: ParseError[];
+};
 
 const DEV_TYPE_ORDER: DevType[] = [
   "Interconnection",
@@ -51,7 +58,7 @@ export default function DevTypeGanttChart({ steps }: Props) {
   const safeSteps = Array.isArray(steps) ? steps : [];
   const [expanded, setExpanded] = useState(false);
 
-  const { rows, minDay, maxDay } = useMemo(() => {
+  const { rows, minDay, maxDay, errors } = useMemo<ParsedResult>(() => {
     try {
       const sorted = [...safeSteps].sort(
         (a: any, b: any) =>
@@ -66,6 +73,7 @@ export default function DevTypeGanttChart({ steps }: Props) {
       };
 
       const parsed: Parsed[] = [];
+      const errors: ParseError[] = [];
 
       for (const s of sorted) {
         const devType = (s as any).development_type as DevType | undefined;
@@ -73,16 +81,25 @@ export default function DevTypeGanttChart({ steps }: Props) {
 
         const startDay = toDayNumber((s as any).start_date);
         const endDay = toDayNumber((s as any).end_date);
-        if (startDay == null || endDay == null) continue;
+        if (startDay == null || endDay == null) {
+          errors.push({ stepId: s.id, name: (s as any).name, reason: "missing start or end date" });
+          continue;
+        }
         // Skip obviously bad ranges
-        if (Number.isNaN(startDay) || Number.isNaN(endDay)) continue;
-        if (endDay < startDay) continue;
+        if (Number.isNaN(startDay) || Number.isNaN(endDay)) {
+          errors.push({ stepId: s.id, name: (s as any).name, reason: "invalid date value" });
+          continue;
+        }
+        if (endDay < startDay) {
+          errors.push({ stepId: s.id, name: (s as any).name, reason: "end date before start date" });
+          continue;
+        }
 
         parsed.push({ step: s, devType, startDay, endDay });
       }
 
       if (!parsed.length) {
-        return { rows: [] as GanttRow[], minDay: 0, maxDay: 0 };
+        return { rows: [] as GanttRow[], minDay: 0, maxDay: 0, errors };
       }
 
       const minDay = parsed.reduce(
@@ -111,35 +128,25 @@ export default function DevTypeGanttChart({ steps }: Props) {
           });
       });
 
-      return { rows, minDay, maxDay };
+      if (errors.length) {
+        console.warn("Gantt chart skipped rows:", errors);
+      }
+
+      return { rows, minDay, maxDay, errors };
     } catch (e) {
       console.error("DevTypeGanttChart data parsing failed", e);
-      return { rows: [] as GanttRow[], minDay: 0, maxDay: 0 };
+      return { rows: [] as GanttRow[], minDay: 0, maxDay: 0, errors: [{ reason: "parse failure" }] };
     }
   }, [safeSteps]);
 
-  if (!rows.length) {
-    return (
-      <div
-        style={{
-          marginTop: 24,
-          padding: 16,
-          borderRadius: 12,
-          border: "1px solid #e5e7eb",
-          color: "#6b7280",
-          fontSize: 14,
-        }}
-      >
-        No tasks with both start and end dates to display on the Gantt chart.
-      </div>
-    );
-  }
-
+  const hasRows = rows.length > 0;
   const visibleRows = expanded ? rows : rows.slice(0, 3);
+  const isSingleRow = visibleRows.length === 1;
   const totalSpan = Math.max(1, maxDay - minDay + 1);
-  const rowHeight = expanded ? 34 : 26;
+  const spanIsFinite = Number.isFinite(totalSpan) && Number.isFinite(minDay);
+  const rowHeight = isSingleRow ? 22 : expanded ? 34 : 26;
   const basePadding = expanded ? 120 : 80;
-  const minHeight = expanded ? 360 : 260;
+  const minHeight = isSingleRow ? 180 : expanded ? 360 : 260;
   const chartHeight = Math.max(visibleRows.length * rowHeight + basePadding, minHeight);
   const legendItems = useMemo(
     () =>
@@ -173,88 +180,112 @@ export default function DevTypeGanttChart({ steps }: Props) {
     return [`${fmt(start)} - ${fmt(end)}`, "Duration"];
   };
 
-  let chartBody: React.ReactNode = null;
+  let chartBody: React.ReactNode = (
+    <div
+      style={{
+        marginTop: 24,
+        padding: 16,
+        borderRadius: 12,
+        border: "1px solid #e5e7eb",
+        color: "#6b7280",
+        fontSize: 14,
+      }}
+    >
+      No tasks with both start and end dates to display on the Gantt chart.
+    </div>
+  );
 
-  try {
-    chartBody = (
-      <div style={{ width: "100%", height: chartHeight }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={visibleRows}
-            layout="vertical"
-            margin={{ top: 10, right: 24, left: 120, bottom: 24 }}
-          >
-            <XAxis type="number" domain={[0, totalSpan]} tickFormatter={formatTick} />
-            <YAxis type="category" dataKey="label" width={180} tick={{ fontSize: 12 }} />
-            <Bar dataKey="startOffset" stackId="gantt" fill="rgba(0,0,0,0)" isAnimationActive={false} />
-            <Bar dataKey="duration" stackId="gantt" isAnimationActive={false}>
-              <LabelList
-                dataKey="label"
-                position="insideLeft"
-                style={{ fill: "#ffffff", fontSize: 11, fontWeight: 500 }}
-                formatter={(v: string) => v.split(": ")[1] ?? v}
-              />
-              {visibleRows.map((row, i) => (
-                <Cell
-                  key={row.id ?? i}
-                  fill={DEV_TYPE_COLORS[row.devType] ?? "#6b7280"}
-                  radius={[4, 4, 4, 4]}
+  if (hasRows) {
+    try {
+      if (!spanIsFinite) {
+        throw new Error("Timeline dates are invalid (non-numeric span).");
+      }
+      chartBody = (
+        <div style={{ width: "100%", height: chartHeight }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={visibleRows}
+              layout="vertical"
+              margin={{ top: 10, right: 24, left: 120, bottom: 24 }}
+            >
+              <XAxis type="number" domain={[0, totalSpan]} tickFormatter={formatTick} />
+              <YAxis type="category" dataKey="label" width={180} tick={{ fontSize: 12 }} />
+              <Bar dataKey="startOffset" stackId="gantt" fill="rgba(0,0,0,0)" isAnimationActive={false} />
+              <Bar dataKey="duration" stackId="gantt" isAnimationActive={false}>
+                <LabelList
+                  dataKey="label"
+                  position="insideLeft"
+                  style={{ fill: "#ffffff", fontSize: 11, fontWeight: 500 }}
+                  formatter={(v: string | number | null | undefined) =>
+                    typeof v === "string" && v.includes(": ")
+                      ? v.split(": ")[1] ?? v
+                      : typeof v === "string"
+                      ? v
+                      : ""
+                  }
                 />
-              ))}
-            </Bar>
+                {visibleRows.map((row, i) => (
+                  <Cell
+                    key={row.id ?? i}
+                    fill={DEV_TYPE_COLORS[row.devType] ?? "#6b7280"}
+                    radius={[4, 4, 4, 4]}
+                  />
+                ))}
+              </Bar>
 
-            <Tooltip formatter={tooltipFormatter} labelFormatter={() => ""} />
-            <Legend
-              verticalAlign="bottom"
-              align="center"
-              content={() =>
-                legendItems.length ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 14,
-                      justifyContent: "center",
-                      alignItems: "center",
-                      fontSize: 12,
-                      paddingTop: 8,
-                    }}
-                  >
-                    {legendItems.map((item) => (
-                      <span
-                        key={item.value}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 6,
-                        }}
-                      >
+              <Tooltip formatter={tooltipFormatter} labelFormatter={() => ""} />
+              <Legend
+                verticalAlign="bottom"
+                align="center"
+                content={() =>
+                  legendItems.length ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 14,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        fontSize: 12,
+                        paddingTop: 8,
+                      }}
+                    >
+                      {legendItems.map((item) => (
                         <span
+                          key={item.value}
                           style={{
-                            width: 12,
-                            height: 12,
-                            background: item.color,
-                            borderRadius: 2,
-                            display: "inline-block",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
                           }}
-                        />
-                        <span>{item.value}</span>
-                      </span>
-                    ))}
-                  </div>
-                ) : null
-              }
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    );
-  } catch (e) {
-    console.error("DevTypeGanttChart render failed", e);
-    chartBody = (
-      <div style={{ color: "crimson", fontSize: 13, padding: 12 }}>
-        Timeline chart failed to render.
-      </div>
-    );
+                        >
+                          <span
+                            style={{
+                              width: 12,
+                              height: 12,
+                              background: item.color,
+                              borderRadius: 2,
+                              display: "inline-block",
+                            }}
+                          />
+                          <span>{item.value}</span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : null
+                }
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    } catch (e) {
+      console.error("DevTypeGanttChart render failed", e);
+      chartBody = (
+        <div style={{ color: "crimson", fontSize: 13, padding: 12 }}>
+          Timeline chart failed to render.
+        </div>
+      );
+    }
   }
 
   return (
@@ -308,6 +339,12 @@ export default function DevTypeGanttChart({ steps }: Props) {
         <div style={{ marginBottom: 10, color: "#6b7280", fontSize: 13 }}>
           Showing {visibleRows.length} of {rows.length} activities. Maximize to
           see everything.
+        </div>
+      )}
+
+      {errors.length > 0 && (
+        <div style={{ marginBottom: 10, color: "#b45309", fontSize: 12 }}>
+          Skipped {errors.length} step{errors.length === 1 ? "" : "s"} with invalid or missing dates.
         </div>
       )}
 

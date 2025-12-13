@@ -191,27 +191,35 @@ export default function ProjectContacts() {
 
   return (
     <div className="page-root">
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 12,
+          flexWrap: "wrap",
+          marginBottom: 12,
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <h1 className="page-title" style={{ marginBottom: 8 }}>{projectName}</h1>
+          <h2 className="page-subtitle" style={{ marginBottom: 8 }}>Project Contacts</h2>
+          <p style={{ margin: 0, color: "#6b7280", fontSize: 13 }}>
+            {project ? `For ${project.project_name}` : null} - Track key organizations and people involved with this project.
+          </p>
+        </div>
         <div
-          style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10, marginBottom: 12 }}
+          style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10 }}
           className="print-hidden"
         >
-          <SaveAsPdfButton style={{ marginRight: 4 }} />
+          <SaveAsPdfButton />
           <img
             src={logo}
             alt="Land Charge"
-            style={{ height: 40, width: "auto", objectFit: "contain", display: "block" }}
+            style={{ height: 60, width: "auto", objectFit: "contain", display: "block" }}
           />
         </div>
-      <h1 style={{ fontSize: 24, fontWeight: 600, margin: "0 0 32px" }}>
-        {projectName}
-      </h1>
-      <h2 style={{ fontSize: 16, fontWeight: 500, margin: "0 0 16px" }}>
-        Project Contacts
-      </h2>
-      <p style={{ marginBottom: 16, color: "#6b7280", fontSize: 13 }}>
-        {project ? `For ${project.project_name}` : null} - Track key
-        organizations and people involved with this project.
-      </p>
+      </div>
 
       <div
         style={{

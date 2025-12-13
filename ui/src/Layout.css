@@ -452,20 +452,21 @@ button:disabled {
 /* ===== PAGE HEADERS ===== */
 
 .page-header {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .page-title {
-  font-size: 28px;
-  font-weight: 700;
-  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
   color: #111827;
 }
 
 .page-subtitle {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #111827;
+  margin: 8px 0 4px;
 }
 
 /* ===== UTILITY CLASSES ===== */
@@ -548,4 +549,3 @@ button:disabled {
 .nav-collapse-btn:hover {
   background: #e5e7eb;
 }
-

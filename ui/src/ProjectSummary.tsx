@@ -112,15 +112,13 @@ export default function ProjectSummaryPage() {
   return (
     <div className="page-root">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111827", margin: 0 }}>
-          Project Portfolio
-        </h1>
+        <h1 className="page-title">Project Portfolio</h1>
         <div className="print-hidden" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <SaveAsPdfButton style={{ marginRight: 4 }} />
           <img
             src={logo}
             alt="Land Charge"
-            style={{ height: 40, width: "auto", objectFit: "contain", display: "block" }}
+            style={{ height: 60, width: "auto", objectFit: "contain", display: "block" }}
           />
         </div>
       </div>

@@ -1,5 +1,11 @@
 // ui/src/DevTypeProgressRow.tsx
 import { useEffect, useMemo, useState } from "react";
+import {
+  RadialBarChart,
+  RadialBar,
+  ResponsiveContainer,
+  PolarAngleAxis,
+} from "recharts";
 import type { DevStep, DevType } from "./types";
 
 const DEV_TYPES: { key: DevType; label: string }[] = [
@@ -65,25 +71,45 @@ export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
 
 function DonutGauge({ label, pct }: { label: string; pct: number }) {
   const clamped = Math.max(0, Math.min(100, pct));
-  const [animatedPct, setAnimatedPct] = useState(0);
+  const [chartValue, setChartValue] = useState(0);
+
+  // For 0%, animate a full sweep (100) but still show 0% in the label
+  const targetValue = clamped === 0 ? 100 : clamped;
+  const barColor = clamped === 0 ? "#e5e7eb" : "#C6B5FF";
 
   useEffect(() => {
-    const id = requestAnimationFrame(() => setAnimatedPct(clamped));
-    return () => cancelAnimationFrame(id);
-  }, [clamped]);
+    let raf: number | null = null;
+    const duration = 800; // ms
+    const startTime = performance.now();
+    setChartValue(0);
 
-  const size = 110;
-  const strokeWidth = 10;
-  const r = (size - strokeWidth) / 2;
-  const c = 2 * Math.PI * r;
-  const offset = c * (1 - animatedPct / 100);
+    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const t = Math.min(1, elapsed / duration);
+      const eased = easeOutCubic(t);
+      const next = targetValue * eased;
+      setChartValue(next <= 0 ? 0.0001 : next);
+      if (t < 1) {
+        raf = requestAnimationFrame(tick);
+      }
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => {
+      if (raf !== null) cancelAnimationFrame(raf);
+    };
+  }, [targetValue]);
+
+  const size = 140;
 
   return (
     <div
       style={{
         flex: "1 1 150px",
-        maxWidth: 190,
-        minWidth: 140,
+        maxWidth: 200,
+        minWidth: 150,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -91,42 +117,36 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
         position: "relative",
       }}
     >
-      <svg
-        width={size}
-        height={size}
-        style={{ display: "block", marginTop: -2 }}
-        viewBox={`0 0 ${size} ${size}`}
-      >
-        <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            fill="none"
-            stroke="#e5e7eb"
-            strokeWidth={strokeWidth}
-          />
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            fill="none"
-            stroke="#C6B5FF"
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            strokeDasharray={`${c} ${c}`}
-            strokeDashoffset={offset}
-            style={{
-              transition: "stroke-dashoffset 900ms ease-in-out",
-            }}
-          />
-        </g>
-      </svg>
+      <div style={{ width: size, height: size }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <RadialBarChart
+            cx="50%"
+            cy="50%"
+            innerRadius="72%"
+            outerRadius="88%"
+            barSize={10}
+            data={[{ name: label, value: chartValue }]}
+            startAngle={90}
+            endAngle={-270}
+          >
+            <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+            <RadialBar
+              minAngle={2}
+              background={{ fill: "#f1f5f9" }}
+              clockWise
+              dataKey="value"
+              cornerRadius={999}
+              fill={barColor}
+              isAnimationActive={false} // animation is driven via state above
+            />
+          </RadialBarChart>
+        </ResponsiveContainer>
+      </div>
       <div
         style={{
           position: "absolute",
-          top: "44%",
-          left: "53%",
+          top: "50%",
+          left: "50%",
           transform: "translate(-50%, -50%)",
           textAlign: "center",
           fontSize: 22,

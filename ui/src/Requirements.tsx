@@ -149,22 +149,16 @@ export default function Requirements() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>
-            {projectName}
-          </h1>
-          <h2 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 500 }}>
-            Requirements
-          </h2>
-          <p style={subText}>
-            Auto-populated from requirement checkboxes in Development Activities.
-          </p>
+          <h1 className="page-title">{projectName}</h1>
+          <h2 className="page-subtitle">Requirements</h2>
+          <p style={subText}>Auto-populated from requirement checkboxes in Development Activities.</p>
         </div>
         <div className="print-hidden" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <SaveAsPdfButton style={{ marginRight: 4 }} />
           <img
             src={logo}
             alt="Land Charge"
-            style={{ height: 40, width: "auto", objectFit: "contain", display: "block" }}
+            style={{ height: 60, width: "auto", objectFit: "contain", display: "block" }}
           />
         </div>
       </div>

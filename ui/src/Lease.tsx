@@ -20,6 +20,8 @@ export default function Lease() {
     (project as any)?.lease_option_expiration_date ||
     "Not set (lease expiration)";
 
+  const projectName = project?.project_name ?? "Project";
+
   return (
     <div className="page-root">
       <div
@@ -31,10 +33,9 @@ export default function Lease() {
         }}
       >
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#111827" }}>
-            Lease
-          </h1>
-          <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 13 }}>
+          <h1 className="page-title">{projectName}</h1>
+          <h2 className="page-subtitle">Lease</h2>
+          <p style={{ margin: "0 0 6px", color: "#6b7280", fontSize: 13 }}>
             Lease dates pulled from Project Portfolio.
           </p>
         </div>
@@ -43,7 +44,7 @@ export default function Lease() {
           <img
             src={logo}
             alt="Land Charge"
-            style={{ height: 40, width: "auto", objectFit: "contain", display: "block" }}
+            style={{ height: 60, width: "auto", objectFit: "contain", display: "block" }}
           />
         </div>
       </div>
