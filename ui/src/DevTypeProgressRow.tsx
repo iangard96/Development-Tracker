@@ -50,7 +50,7 @@ export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
             display: "flex",
             flexWrap: "wrap",
             justifyContent: "space-around",
-            alignItems: "center",
+            alignItems: "flex-start",
             gap: 24,
           }}
         >
@@ -72,7 +72,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
     return () => cancelAnimationFrame(id);
   }, [clamped]);
 
-  const size = 150;
+  const size = 120;
   const strokeWidth = 12;
   const r = (size - strokeWidth) / 2;
   const c = 2 * Math.PI * r;
@@ -81,18 +81,19 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
   return (
     <div
       style={{
-        flex: "1 1 180px",
-        maxWidth: 220,
-        minWidth: 170,
+        flex: "1 1 160px",
+        maxWidth: 200,
+        minWidth: 150,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        gap: 8,
       }}
     >
       <svg
         width={size}
         height={size}
-        style={{ display: "block", marginTop: -6 }}
+        style={{ display: "block", marginTop: -2 }}
         viewBox={`0 0 ${size} ${size}`}
       >
         <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
@@ -122,10 +123,10 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
       </svg>
       <div
         style={{
-          marginTop: -95,
+          marginTop: -78,
           position: "relative",
           textAlign: "center",
-          fontSize: 28,
+          fontSize: 24,
           fontWeight: 700,
           color: "#111827",
         }}
@@ -134,9 +135,9 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
       </div>
       <div
         style={{
-          marginTop: 12,
+          marginTop: 8,
           textAlign: "center",
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: 600,
           color: "#111827",
         }}
