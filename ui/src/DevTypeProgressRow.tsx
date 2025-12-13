@@ -41,7 +41,7 @@ export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
           background: "#ffffff",
           borderRadius: 16,
           border: "1px solid #e5e7eb",
-          padding: 24,
+          padding: "12px 20px 16px",
           boxSizing: "border-box",
         }}
       >
@@ -73,7 +73,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
     return () => cancelAnimationFrame(id);
   }, [clamped]);
 
-  const size = 140;
+  const size = 150;
   const strokeWidth = 12;
   const r = (size - strokeWidth) / 2;
   const c = 2 * Math.PI * r;
@@ -93,7 +93,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
       <svg
         width={size}
         height={size}
-        style={{ display: "block", marginTop: -4 }}
+        style={{ display: "block", marginTop: -6 }}
         viewBox={`0 0 ${size} ${size}`}
       >
         <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
