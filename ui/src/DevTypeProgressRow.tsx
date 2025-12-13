@@ -88,6 +88,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
         flexDirection: "column",
         alignItems: "center",
         gap: 8,
+        position: "relative",
       }}
     >
       <svg
@@ -123,19 +124,22 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
       </svg>
       <div
         style={{
-          marginTop: -54,
-          position: "relative",
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
           textAlign: "center",
           fontSize: 22,
           fontWeight: 700,
           color: "#111827",
+          lineHeight: 1,
         }}
       >
         {clamped}%
       </div>
       <div
         style={{
-          marginTop: 14,
+          marginTop: size * 0.08,
           textAlign: "center",
           fontSize: 13,
           fontWeight: 600,
