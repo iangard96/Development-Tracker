@@ -1,5 +1,12 @@
 // ui/src/DevActivities.tsx
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { DevStep, DevType } from "./types";
 import {
   fetchStepsForProject,
@@ -556,6 +563,12 @@ export default function DevActivities() {
     [],
   );
 
+  // Defer heavy filtering/sorting work so header indicators feel snappier
+  const deferredRows = useDeferredValue(rows);
+  const deferredSearch = useDeferredValue(searchTerm);
+  const deferredDevTypeFilter = useDeferredValue(devTypeFilter);
+  const deferredPhaseFilter = useDeferredValue(phaseFilter);
+
   async function maybeCreateContact(opts: {
     organization: string | null | undefined;
     name?: string | null;
@@ -653,31 +666,33 @@ export default function DevActivities() {
   }, [projectId]);
 
   const filtered = useMemo(() => {
-    if (!rows) return [];
-    const base = [...rows].sort(
+    if (!deferredRows) return [];
+    const base = [...deferredRows].sort(
       (a: any, b: any) =>
         (a.sequence ?? 0) - (b.sequence ?? 0) || a.id - b.id,
     );
     const byType =
-      devTypeFilter === "ALL"
+      deferredDevTypeFilter === "ALL"
         ? base
-        : base.filter((r) => (r.development_type ?? "") === devTypeFilter);
+        : base.filter((r) => (r.development_type ?? "") === deferredDevTypeFilter);
 
     const byPhase =
-      phaseFilter === "ALL"
+      deferredPhaseFilter === "ALL"
         ? byType
         : byType.filter((r) => {
             const ph = (r as any).phase ?? null;
-            return ph === phaseFilter;
+            return ph === deferredPhaseFilter;
           });
 
-    if (!searchTerm.trim()) return byPhase;
-    const q = searchTerm.toLowerCase();
+    if (!deferredSearch.trim()) return byPhase;
+    const q = deferredSearch.toLowerCase();
     return byPhase.filter((r) => r.name.toLowerCase().includes(q));
-  }, [rows, devTypeFilter, phaseFilter, searchTerm]);
+  }, [deferredRows, deferredDevTypeFilter, deferredPhaseFilter, deferredSearch]);
+
+  const deferredFiltered = useDeferredValue(filtered);
 
   const sorted = useMemo(() => {
-    const list = [...filtered];
+    const list = [...deferredFiltered];
     if (!sortBy) return list;
 
     const cmp = (aVal: any, bVal: any) => {
