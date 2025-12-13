@@ -64,21 +64,21 @@ export default function Dashboard() {
   const safeSteps = Array.isArray(steps) ? steps : [];
 
   const fmtSize = (ac: number | null | undefined, dc: number | null | undefined) => {
-    const acLabel = ac !== null && ac !== undefined ? `${ac} AC` : "—";
-    const dcLabel = dc !== null && dc !== undefined ? `${dc} DC` : "—";
+    const acLabel = ac !== null && ac !== undefined ? `${ac} AC` : "N/A";
+    const dcLabel = dc !== null && dc !== undefined ? `${dc} DC` : "N/A";
     return `${acLabel} / ${dcLabel}`;
   };
 
-  const projectType = project?.project_type ?? "—";
-  const projectDetails = project?.project_details ?? "—";
-  const offtake = project?.offtake_structure ?? "—";
+  const projectType = project?.project_type ?? "N/A";
+  const projectDetails = project?.project_details ?? "N/A";
+  const offtake = project?.offtake_structure ?? "N/A";
   const location =
     project && (project.county || project.state)
       ? `${project.county ?? ""}${project.county && project.state ? ", " : ""}${project.state ?? ""}`
-      : "—";
+      : "N/A";
   const sizeLabel = fmtSize(project?.size_ac_mw, project?.size_dc_mw);
-  const leaseStart = (project as any)?.lease_option_start_date || "—";
-  const leaseEnd = (project as any)?.lease_option_expiration_date || "—";
+  const leaseStart = (project as any)?.lease_option_start_date || "N/A";
+  const leaseEnd = (project as any)?.lease_option_expiration_date || "N/A";
 
   return (
     <div className="page-root">
@@ -86,7 +86,7 @@ export default function Dashboard() {
         <>
           {steps === null && (
             <div style={{ marginBottom: 8, fontSize: 13, color: "#6b7280" }}>
-              Loading latest project data…
+              Loading latest project data...
             </div>
           )}
           <h1 style={{ fontSize: 24, fontWeight: 600, margin: "0 0 16px" }}>
@@ -268,9 +268,9 @@ export default function Dashboard() {
                   {permittingSteps.map((p) => (
                     <tr key={p.id} style={{ borderTop: "1px solid #e5e7eb" }}>
                       <td style={{ padding: "8px 10px", fontWeight: 600 }}>{p.name}</td>
-                      <td style={{ padding: "8px 10px" }}>{p.status ?? "—"}</td>
-                      <td style={{ padding: "8px 10px" }}>{(p as any).start_date ?? "—"}</td>
-                      <td style={{ padding: "8px 10px" }}>{(p as any).end_date ?? "—"}</td>
+                      <td style={{ padding: "8px 10px" }}>{p.status ?? "N/A"}</td>
+                      <td style={{ padding: "8px 10px" }}>{(p as any).start_date ?? "N/A"}</td>
+                      <td style={{ padding: "8px 10px" }}>{(p as any).end_date ?? "N/A"}</td>
                     </tr>
                   ))}
                 </tbody>

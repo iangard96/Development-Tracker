@@ -10,7 +10,7 @@ const DEV_TYPES: { key: DevType; label: string }[] = [
 
 type GaugeRow = {
   devTypeLabel: string;
-  pct: number; // 0–100
+  pct: number; // 0-100
 };
 
 export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
@@ -68,10 +68,11 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
   const [animPct, setAnimPct] = useState(0);
 
   useEffect(() => {
-    // reset to 0 then animate up to the target to mimic the original spin-up
+    // Always animate, even for 0%, by nudging to a tiny epsilon first.
+    const target = clamped === 0 ? 0.0001 : clamped;
     setAnimPct(0);
-    const id = window.setTimeout(() => setAnimPct(clamped), 50);
-    return () => window.clearTimeout(id);
+    const id = window.requestAnimationFrame(() => setAnimPct(target));
+    return () => window.cancelAnimationFrame(id);
   }, [clamped]);
 
   const radius = 60;
@@ -79,6 +80,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
   const offset = circumference * (1 - animPct / 100);
   const track = "#e5e7eb";
   const purple = "#C6B5FF";
+  const progressColor = clamped === 0 ? track : purple;
 
   return (
     <div
@@ -106,7 +108,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
           <circle
             r={radius}
             fill="none"
-            stroke={purple}
+            stroke={progressColor}
             strokeWidth={16}
             strokeDasharray={circumference}
             strokeDashoffset={offset}
