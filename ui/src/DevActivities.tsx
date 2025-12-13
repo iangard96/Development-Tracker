@@ -1,5 +1,5 @@
 // ui/src/DevActivities.tsx
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DevStep, DevType } from "./types";
 import {
   fetchStepsForProject,
@@ -509,6 +509,7 @@ export default function DevActivities() {
   const [rows, setRows] = useState<DevStep[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [devTypeFilter, setDevTypeFilter] = useState<DevType | "ALL">("ALL");
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [phaseFilter, setPhaseFilter] = useState<1 | 2 | 3 | "ALL">("ALL");
   const [customIds, setCustomIds] = useState<Set<number>>(new Set());
@@ -538,12 +539,22 @@ export default function DevActivities() {
   >([]);
   const [contactOrgs, setContactOrgs] = useState<string[]>([]);
 
-  const applyFresh = (fresh: DevStep) =>
-    setRows((cur) =>
-      cur
-        ? cur.map((x) => (x.id === fresh.id ? { ...x, ...fresh } : x))
-        : cur,
-    );
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      setSearchTerm(searchInput.trim());
+    }, 200);
+    return () => window.clearTimeout(handle);
+  }, [searchInput]);
+
+  const applyFresh = useCallback(
+    (fresh: DevStep) =>
+      setRows((cur) =>
+        cur
+          ? cur.map((x) => (x.id === fresh.id ? { ...x, ...fresh } : x))
+          : cur,
+      ),
+    [],
+  );
 
   async function maybeCreateContact(opts: {
     organization: string | null | undefined;
@@ -1053,8 +1064,8 @@ export default function DevActivities() {
           <span>Search Activity</span>
           <input
             type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search by activity name"
             style={{
               padding: "6px 10px",
