@@ -801,6 +801,9 @@ export default function DevActivities() {
           {project.project_name}
         </h1>
       )}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }} className="print-hidden">
+        <SaveAsPdfButton />
+      </div>
       <h2 style={{ fontSize: 16, fontWeight: 500, color: "#374151", margin: "0 0 20px" }}>
         Development Activities
       </h2>

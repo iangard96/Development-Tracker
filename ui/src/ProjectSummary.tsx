@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import type { Project } from "./types";
 import { fetchProjects, createProject, deleteProject, updateProject } from "./api";
 import { useProject } from "./ProjectContext";
+import SaveAsPdfButton from "./SaveAsPdfButton";
 
 const PROJECT_TYPE_OPTIONS = ["", "GM", "RT", "OT"];
 const PROJECT_DETAILS_OPTIONS = ["", "GM_FIXED", "GM_TRACK", "BALLASTED", "ROOFTOP"];
@@ -109,9 +110,15 @@ export default function ProjectSummaryPage() {
 
   return (
     <div className="page-root">
-      <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111827", margin: "0 0 32px" }}>
-        Project Portfolio
-      </h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111827", margin: 0 }}>
+          Project Portfolio
+        </h1>
+        <div className="print-hidden">
+          <SaveAsPdfButton />
+        </div>
+      </div>
+      <div style={{ height: 12 }} />
 
       <button
         type="button"

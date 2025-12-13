@@ -1,6 +1,7 @@
 // ui/src/ProjectContacts.tsx
 import { useEffect, useState } from "react";
 import { useProject } from "./ProjectContext";
+import SaveAsPdfButton from "./SaveAsPdfButton";
 import {
   fetchProjectContacts,
   createProjectContact,
@@ -189,6 +190,9 @@ export default function ProjectContacts() {
 
   return (
     <div className="page-root">
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }} className="print-hidden">
+        <SaveAsPdfButton />
+      </div>
       <h1 style={{ fontSize: 24, fontWeight: 600, margin: "0 0 32px" }}>
         {projectName}
       </h1>

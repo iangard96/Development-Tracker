@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { DevStep } from "./types";
 import { fetchStepsForProject } from "./api";
 import { useProject } from "./ProjectContext";
+import SaveAsPdfButton from "./SaveAsPdfButton";
 
 const REQUIREMENT_BUCKETS = ["Financing", "Permitting/Compliance", "Engineering", "Interconnection"] as const;
 type RequirementBucket = (typeof REQUIREMENT_BUCKETS)[number];
@@ -157,13 +158,8 @@ export default function Requirements() {
             Auto-populated from requirement checkboxes in Development Activities.
           </p>
         </div>
-        <div
-          className="print-hidden"
-          style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
-        >
-          <button onClick={handlePrint}>
-            Save as PDF
-          </button>
+        <div className="print-hidden" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <SaveAsPdfButton />
         </div>
       </div>
 

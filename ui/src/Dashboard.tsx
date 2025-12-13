@@ -7,6 +7,7 @@ import DevTypeGanttChart from "./DevTypeGanttChart";
 import LocationMap from "./LocationMap";
 import type { DevStep } from "./types";
 import { useProject } from "./ProjectContext";
+import SaveAsPdfButton from "./SaveAsPdfButton";
 
 class ChartErrorBoundary extends Component<
   { title: string; children: ReactNode },
@@ -126,6 +127,9 @@ export default function Dashboard() {
 
   return (
     <div className="page-root">
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }} className="print-hidden">
+        <SaveAsPdfButton />
+      </div>
       {project && (
         <>
           {steps === null && (
