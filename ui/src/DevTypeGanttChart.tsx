@@ -73,6 +73,9 @@ export default function DevTypeGanttChart({ steps }: Props) {
       const startDay = toDayNumber((s as any).start_date);
       const endDay = toDayNumber((s as any).end_date);
       if (startDay == null || endDay == null) continue;
+      // Skip obviously bad ranges
+      if (Number.isNaN(startDay) || Number.isNaN(endDay)) continue;
+      if (endDay < startDay) continue;
 
       parsed.push({ step: s, devType, startDay, endDay });
     }

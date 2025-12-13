@@ -182,7 +182,7 @@ function StatusCell({
     >
       {STATUS_OPTIONS.map((opt) => (
         <option key={opt} value={opt}>
-          {opt === "" ? "—" : opt}
+          {opt === "" ? "--" : opt}
         </option>
       ))}
     </select>
@@ -314,8 +314,8 @@ function DevTypeCell({
             {opt}
           </option>
         ))}
-        <option disabled>────────────</option>
-        <option value="__CUSTOM__">+ Add custom…</option>
+        <option disabled>------------</option>
+        <option value="__CUSTOM__">+ Add custom...</option>
       </select>
     </div>
   );
@@ -343,7 +343,7 @@ function RelatedActivityCell({
       )
       .map((p, idx) => {
         const seq = (p as any).sequence ?? idx + 1;
-        return { value: String(p.id), label: `#${seq} — ${p.name}` };
+        return { value: String(p.id), label: `#${seq} - ${p.name}` };
       });
   }, [peers, step]);
 
@@ -757,7 +757,7 @@ export default function DevActivities() {
 
   if (err)
     return <div style={{ color: "red", padding: 16 }}>Error: {err}</div>;
-  if (!rows) return <div style={{ padding: 16 }}>Loading…</div>;
+  if (!rows) return <div style={{ padding: 16 }}>Loading...</div>;
 
   const jumpToId = (id: number) => {
     const target = sorted.find((p) => p.id === id);
@@ -924,43 +924,43 @@ export default function DevActivities() {
               <th style={{ ...th, display: "none" }}>#</th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("status")}>
-                  Status {sortBy === "status" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                  Status {sortBy === "status" ? (sortDir === "asc" ? "^" : "v") : ""}
                 </button>
               </th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("phase")}>
-                  Phase {sortBy === "phase" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                  Phase {sortBy === "phase" ? (sortDir === "asc" ? "^" : "v") : ""}
                 </button>
               </th>
               <th style={{ ...th, ...stickyActivity }}>
                 <button style={sortBtn} onClick={() => toggleSort("name")}>
-                  Activity {sortBy === "name" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                  Activity {sortBy === "name" ? (sortDir === "asc" ? "^" : "v") : ""}
                 </button>
               </th>
               <th style={{ ...th, minWidth: 200 }}>Dev Type</th>
               <th style={{ ...th, minWidth: "140px" }}>
                 <button style={sortBtn} onClick={() => toggleSort("planned_spend")}>
-                  Planned Spend ($) {sortBy === "planned_spend" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                  Planned Spend ($) {sortBy === "planned_spend" ? (sortDir === "asc" ? "^" : "v") : ""}
                 </button>
               </th>
               <th style={{ ...th, minWidth: "140px" }}>
                 <button style={sortBtn} onClick={() => toggleSort("actual_spend")}>
-                  Actual Spend ($) {sortBy === "actual_spend" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                  Actual Spend ($) {sortBy === "actual_spend" ? (sortDir === "asc" ? "^" : "v") : ""}
                 </button>
               </th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("start_date")}>
-                  Start Date {sortBy === "start_date" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                  Start Date {sortBy === "start_date" ? (sortDir === "asc" ? "^" : "v") : ""}
                 </button>
               </th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("end_date")}>
-                  End Date {sortBy === "end_date" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                  End Date {sortBy === "end_date" ? (sortDir === "asc" ? "^" : "v") : ""}
                 </button>
               </th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("duration_days")}>
-                  Duration (Days) {sortBy === "duration_days" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                  Duration (Days) {sortBy === "duration_days" ? (sortDir === "asc" ? "^" : "v") : ""}
                 </button>
               </th>
               <th style={th}>Purpose / Related Activity</th>
@@ -1029,7 +1029,7 @@ export default function DevActivities() {
                           ? "Dev"
                           : phaseVal === 3
                             ? "Pre Con"
-                            : "—";
+                            : "--";
 
                     if (!isCustom) {
                       return phaseLabel;
@@ -1066,7 +1066,7 @@ export default function DevActivities() {
                           paddingRight: 24,
                         }}
                       >
-                        <option value="">—</option>
+                        <option value="">--</option>
                         <option value="1">Pre Dev</option>
                         <option value="2">Dev</option>
                         <option value="3">Pre Con</option>

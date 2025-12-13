@@ -3,14 +3,14 @@ import type { DevStep, Project, DevType, ProjectContact } from "./types";
 
 const API = (() => {
   const fromEnv = import.meta.env.VITE_API_URL;
-  if (!fromEnv) {
-    throw new Error(
-      "VITE_API_URL is not set. Configure your API base URL in the environment (e.g., Render backend /api).",
-    );
-  }
-  return fromEnv;
+  if (fromEnv) return fromEnv;
+
+  const fallback = "http://127.0.0.1:8010/api";
+  console.warn(
+    `VITE_API_URL is not set; falling back to ${fallback}. Set VITE_API_URL in your env for deployments.`,
+  );
+  return fallback;
 })();
-// const API = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8010/api";
 
 /* ---------- helpers ---------- */
 

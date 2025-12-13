@@ -1,5 +1,5 @@
 // ui/src/Dashboard.tsx
-import { useEffect, useMemo, useState } from "react";
+import { Component, ReactNode, useEffect, useMemo, useState } from "react";
 import { fetchProject, fetchStepsForProject } from "./api";
 import DevTypeProgressRow from "./DevTypeProgressRow";
 import DevTypeSpendChart from "./DevTypeSpendChart";
@@ -7,6 +7,50 @@ import DevTypeGanttChart from "./DevTypeGanttChart";
 import LocationMap from "./LocationMap";
 import type { DevStep } from "./types";
 import { useProject } from "./ProjectContext";
+
+class ChartErrorBoundary extends Component<
+  { title: string; children: ReactNode },
+  { hasError: boolean; message: string }
+> {
+  constructor(props: { title: string; children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, message: "" };
+  }
+
+  static getDerivedStateFromError(error: unknown) {
+    return {
+      hasError: true,
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.warn("Chart error:", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          style={{
+            border: "1px solid #fee2e2",
+            background: "#fff1f2",
+            color: "#991b1b",
+            padding: 12,
+            borderRadius: 10,
+            margin: "16px 0",
+          }}
+        >
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>
+            {this.props.title} failed to load
+          </div>
+          <div style={{ fontSize: 12 }}>{this.state.message}</div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function Dashboard() {
   const { projectId, project, setCurrentProject } = useProject();
@@ -206,13 +250,19 @@ export default function Dashboard() {
         </>
       )}
       {/* 1. Top row: 3 circular gauges (should also use project-scoped data internally) */}
-      <DevTypeProgressRow steps={safeSteps} />
+      <ChartErrorBoundary title="Development type progress">
+        <DevTypeProgressRow steps={safeSteps} />
+      </ChartErrorBoundary>
 
       {/* 2. Gantt chart under the gauges */}
-      <DevTypeGanttChart steps={safeSteps} />
+      <ChartErrorBoundary title="Development timeline">
+        <DevTypeGanttChart steps={safeSteps} />
+      </ChartErrorBoundary>
 
       {/* 3. Budget vs Actual spend under the Gantt */}
-      <DevTypeSpendChart steps={safeSteps} />
+      <ChartErrorBoundary title="Budget vs actual">
+        <DevTypeSpendChart steps={safeSteps} />
+      </ChartErrorBoundary>
 
       {/* Map and permit matrix side-by-side */}
       <div

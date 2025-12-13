@@ -132,7 +132,7 @@ export default function LocationMap({ project }: Props) {
             }}
             aria-label="Zoom out"
           >
-            –
+            -
           </button>
           <select
             value={mapStyle}
@@ -150,7 +150,7 @@ export default function LocationMap({ project }: Props) {
             <option value="streets">Streets</option>
             <option value="satellite">Satellite</option>
           </select>
-          {loading && <span style={{ fontSize: 12, color: "#6b7280" }}>Geocoding…</span>}
+          {loading && <span style={{ fontSize: 12, color: "#6b7280" }}>Geocoding...</span>}
         </div>
       </div>
 

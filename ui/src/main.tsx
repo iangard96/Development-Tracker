@@ -41,7 +41,7 @@ function AppShell() {
       </div>
       <div className="app-main">
         <Routes>
-          {/* Home → Project Summary */}
+          {/* Home -> Project Summary */}
           <Route path="/" element={<Navigate to="/project_summary" replace />} />
           
           {/* Project Summary - no project context wrapper needed, uses context from provider */}

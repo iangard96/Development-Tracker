@@ -105,7 +105,7 @@ export default function ProjectSummaryPage() {
   const canDeleteProjects = projects.length > 1;
 
   if (err) return <div className="page-root">Error: {err}</div>;
-  if (loading) return <div className="page-root">Loading projects…</div>;
+  if (loading) return <div className="page-root">Loading projects...</div>;
 
   return (
     <div className="page-root">
@@ -223,7 +223,7 @@ export default function ProjectSummaryPage() {
                   >
                     {PROJECT_TYPE_OPTIONS.map((opt) => (
                       <option key={opt} value={opt}>
-                        {opt || "—"}
+                        {opt || "--"}
                       </option>
                     ))}
                   </select>
@@ -242,7 +242,7 @@ export default function ProjectSummaryPage() {
                   >
                     {PROJECT_DETAILS_OPTIONS.map((opt) => (
                       <option key={opt} value={opt}>
-                        {opt || "—"}
+                        {opt || "--"}
                       </option>
                     ))}
                   </select>
@@ -261,7 +261,7 @@ export default function ProjectSummaryPage() {
                   >
                     {OFFTAKE_STRUCTURE_OPTIONS.map((opt) => (
                       <option key={opt} value={opt}>
-                        {opt || "—"}
+                        {opt || "--"}
                       </option>
                     ))}
                   </select>
@@ -368,7 +368,7 @@ export default function ProjectSummaryPage() {
                   >
                     {STATE_OPTIONS.map((opt) => (
                       <option key={opt} value={opt}>
-                        {opt || "—"}
+                        {opt || "--"}
                       </option>
                     ))}
                   </select>

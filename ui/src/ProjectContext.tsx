@@ -19,15 +19,28 @@ type ProjectContextValue = {
   setCurrentProject: (p: Project | null) => void;
 };
 
-const ProjectContext = createContext<ProjectContextValue | undefined>(
-  undefined,
-);
+const ProjectContext = createContext<ProjectContextValue | undefined>(undefined);
 
-export function ProjectProvider({ children }: { children: ReactNode }) {
-  const [projectId, setProjectId] = useState<number | null>(null);
+type ProjectProviderProps = {
+  children: ReactNode;
+  /** Optional external project id (e.g., from the router) to prime the context */
+  projectId?: number;
+};
+
+export function ProjectProvider({ children, projectId: projectIdProp }: ProjectProviderProps) {
+  const [projectId, setProjectId] = useState<number | null>(
+    projectIdProp && projectIdProp > 0 ? projectIdProp : null,
+  );
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Keep state in sync with an externally supplied id (Layout passes :projectId)
+  useEffect(() => {
+    if (projectIdProp && projectIdProp > 0 && projectIdProp !== projectId) {
+      setProjectId(projectIdProp);
+    }
+  }, [projectIdProp, projectId]);
 
   useEffect(() => {
     // If no project selected, clear state

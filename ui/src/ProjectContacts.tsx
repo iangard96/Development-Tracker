@@ -143,7 +143,7 @@ export default function ProjectContacts() {
   }
 
   if (loading) {
-    return <div className="page-root">Loading contacts…</div>;
+    return <div className="page-root">Loading contacts...</div>;
   }
 
   if (err) {
@@ -196,7 +196,7 @@ export default function ProjectContacts() {
         Project Contacts
       </h2>
       <p style={{ marginBottom: 16, color: "#6b7280", fontSize: 13 }}>
-        {project ? `For ${project.project_name}` : null} — Track key
+        {project ? `For ${project.project_name}` : null} - Track key
         organizations and people involved with this project.
       </p>
 

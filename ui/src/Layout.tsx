@@ -8,7 +8,7 @@ function LayoutInner() {
   const [navCollapsed, setNavCollapsed] = useState(false);
   const { project, isLoading, error } = useProject();
 
-  if (isLoading) return <div className="page-root">Loading project…</div>;
+  if (isLoading) return <div className="page-root">Loading project...</div>;
   if (error) return <div className="page-root">Error: {error}</div>;
   if (!project) return <div className="page-root">Project not found.</div>;
 
@@ -72,7 +72,7 @@ function LayoutInner() {
           className="nav-collapse-btn"
           title={navCollapsed ? "Expand nav" : "Collapse nav"}
         >
-          {navCollapsed ? "◀" : "▶"}
+          {navCollapsed ? ">" : "<"}
         </button>
 
         {/* Tab links container */}

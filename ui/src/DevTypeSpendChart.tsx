@@ -314,9 +314,9 @@ export default function DevTypeSpendChart({ steps }: Props) {
                     key={i}
                     fill={
                       row.delta > 0.5
-                        ? "#15803D" // muted green – under budget (right/positive)
+                        ? "#15803D" // muted green - under budget (right/positive)
                         : row.delta < -0.5
-                        ? "#DC2626" // muted red – over budget (left/negative)
+                        ? "#DC2626" // muted red - over budget (left/negative)
                         : "#9ca3af" // ~on budget
                     }
                   />
