@@ -1,5 +1,6 @@
 // ui/src/DevTypeProgressRow.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import type { DevStep, DevType } from "./types";
 
 const DEV_TYPES: { key: DevType; label: string }[] = [
@@ -65,22 +66,11 @@ export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
 
 function DonutGauge({ label, pct }: { label: string; pct: number }) {
   const clamped = Math.max(0, Math.min(100, pct));
-  const [animPct, setAnimPct] = useState(0);
-
-  useEffect(() => {
-    // Always animate, even for 0%, by nudging to a tiny epsilon first.
-    const target = clamped === 0 ? 0.0001 : clamped;
-    setAnimPct(0);
-    const id = window.requestAnimationFrame(() => setAnimPct(target));
-    return () => window.cancelAnimationFrame(id);
-  }, [clamped]);
-
-  const radius = 60;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - animPct / 100);
-  const track = "#e5e7eb";
-  const purple = "#C6B5FF";
-  const progressColor = clamped === 0 ? track : purple;
+  const display = clamped === 0 ? 0.0001 : clamped; // epsilon so animation still runs at 0
+  const data = [
+    { name: "progress", value: display },
+    { name: "rest", value: Math.max(0, 100 - display) },
+  ];
 
   return (
     <div
@@ -93,47 +83,40 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
         alignItems: "center",
       }}
     >
-      <svg width="160" height="160" viewBox="0 0 160 160">
-        <g transform="translate(80 80)">
-          {/* Track */}
-          <circle
-            r={radius}
-            fill="none"
-            stroke={track}
-            strokeWidth={16}
-            strokeDasharray={circumference}
-            strokeDashoffset={0}
-          />
-          {/* Progress, start at top (-90 deg) */}
-          <circle
-            r={radius}
-            fill="none"
-            stroke={progressColor}
-            strokeWidth={16}
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-            transform="rotate(-90 0 0)"
-            style={{ transition: "stroke-dashoffset 0.9s cubic-bezier(0.4, 0, 0.2, 1)" }}
-          />
-          <text
-            x="0"
-            y="6"
-            textAnchor="middle"
-            fontSize="28"
-            fontWeight="700"
-            fill="#111827"
-            transform="rotate(0)"
+      <ResponsiveContainer width={180} height={180}>
+        <PieChart>
+          <Pie
+            data={data}
+            dataKey="value"
+            innerRadius={55}
+            outerRadius={70}
+            startAngle={90}
+            endAngle={-270}
+            paddingAngle={0}
+            isAnimationActive
+            animationDuration={900}
+            animationEasing="ease-in-out"
           >
-            {clamped}%
-          </text>
-        </g>
-      </svg>
-
-      {/* Label beneath donut */}
+            <Cell key="progress" fill={clamped === 0 ? "#e5e7eb" : "#C6B5FF"} stroke="none" />
+            <Cell key="rest" fill="#e5e7eb" stroke="none" />
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
       <div
         style={{
-          marginTop: 8,
+          marginTop: -110,
+          position: "relative",
+          textAlign: "center",
+          fontSize: 28,
+          fontWeight: 700,
+          color: "#111827",
+        }}
+      >
+        {clamped}%
+      </div>
+      <div
+        style={{
+          marginTop: 12,
           textAlign: "center",
           fontSize: 16,
           fontWeight: 600,
