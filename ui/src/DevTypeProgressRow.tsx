@@ -72,8 +72,8 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
     return () => cancelAnimationFrame(id);
   }, [clamped]);
 
-  const size = 120;
-  const strokeWidth = 12;
+  const size = 110;
+  const strokeWidth = 10;
   const r = (size - strokeWidth) / 2;
   const c = 2 * Math.PI * r;
   const offset = c * (1 - animatedPct / 100);
@@ -81,9 +81,9 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
   return (
     <div
       style={{
-        flex: "1 1 160px",
-        maxWidth: 200,
-        minWidth: 150,
+        flex: "1 1 150px",
+        maxWidth: 190,
+        minWidth: 140,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -123,10 +123,10 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
       </svg>
       <div
         style={{
-          marginTop: -78,
+          marginTop: -62,
           position: "relative",
           textAlign: "center",
-          fontSize: 24,
+          fontSize: 22,
           fontWeight: 700,
           color: "#111827",
         }}
@@ -135,7 +135,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
       </div>
       <div
         style={{
-          marginTop: 8,
+          marginTop: 10,
           textAlign: "center",
           fontSize: 14,
           fontWeight: 600,
