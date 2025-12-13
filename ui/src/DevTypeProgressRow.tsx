@@ -41,7 +41,7 @@ export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
           background: "#ffffff",
           borderRadius: 16,
           border: "1px solid #e5e7eb",
-          padding: "12px 20px 16px",
+          padding: 24,
           boxSizing: "border-box",
         }}
       >
@@ -49,10 +49,9 @@ export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
           style={{
             display: "flex",
             flexWrap: "wrap",
-            justifyContent: "space-evenly",
+            justifyContent: "space-around",
             alignItems: "center",
-            gap: 20,
-            width: "100%",
+            gap: 24,
           }}
         >
           {gauges.map((g) => (
@@ -123,7 +122,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
       </svg>
       <div
         style={{
-          marginTop: -110,
+          marginTop: -95,
           position: "relative",
           textAlign: "center",
           fontSize: 28,
