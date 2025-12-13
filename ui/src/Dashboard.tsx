@@ -141,11 +141,11 @@ export default function Dashboard() {
           </h1>
           <div
             style={{
-              display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "center",
+              display: "grid",
+              gridTemplateColumns: "repeat(4, minmax(180px, 1fr))",
               gap: 12,
               marginBottom: 24,
+              alignItems: "stretch",
             }}
           >
             <div
