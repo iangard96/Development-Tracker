@@ -76,6 +76,10 @@ export type ProjectEconomics = {
   lease_start: string | null;
   lease_end: string | null;
   base_rent: number | null;
+  base_rent_per_acre: number | null;
+  acres: number | null;
+  option_payment: number | null;
+  construction_payment: number | null;
   escalator_pct: number | null;
   frequency: "Annual" | "Monthly" | string;
   term_years: number | null;

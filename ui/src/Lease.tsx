@@ -22,6 +22,10 @@ type LeaseDetails = {
   leaseStart: string;
   leaseEnd: string;
   baseRent: number;
+  baseRentPerAcre: number;
+  acres: number;
+  optionPayment: number;
+  constructionPayment: number;
   frequency: "Annual" | "Monthly";
   termYears: number;
   leasedAreaImage?: string;
@@ -61,6 +65,10 @@ export default function Lease() {
     leaseStart: "",
     leaseEnd: "",
     baseRent: 0,
+    baseRentPerAcre: 0,
+    acres: 0,
+    optionPayment: 0,
+    constructionPayment: 0,
     frequency: "Annual",
     termYears: 25,
     leasedAreaImage: undefined,
@@ -86,10 +94,19 @@ export default function Lease() {
 
   const payments = useMemo<PaymentRow[]>(() => {
     const list: PaymentRow[] = [];
+    const base = lease.baseRentPerAcre > 0 && lease.acres > 0
+      ? lease.baseRentPerAcre * lease.acres
+      : lease.baseRent;
+    if (lease.optionPayment > 0) {
+      list.push({ period: 0, year: 0, amount: lease.optionPayment });
+    }
+    if (lease.constructionPayment > 0) {
+      list.push({ period: 0, year: 0, amount: lease.constructionPayment });
+    }
     const years = Math.max(1, Math.round(lease.termYears || 25));
     const freq = lease.frequency === "Monthly" ? 12 : 1;
     const esc = (lease.escalatorPct ?? 0) / 100;
-    let current = lease.baseRent || 0;
+    let current = base || 0;
     for (let y = 1; y <= years; y++) {
       for (let p = 1; p <= freq; p++) {
         const period = (y - 1) * freq + p;
@@ -129,6 +146,10 @@ export default function Lease() {
           leaseStart: eco.lease_start ?? "",
           leaseEnd: eco.lease_end ?? "",
           baseRent: eco.base_rent ?? 0,
+          baseRentPerAcre: eco.base_rent_per_acre ?? 0,
+          acres: eco.acres ?? 0,
+          optionPayment: eco.option_payment ?? 0,
+          constructionPayment: eco.construction_payment ?? 0,
           escalatorPct: eco.escalator_pct ?? 0,
           frequency: (eco.frequency as any) || "Annual",
           termYears: eco.term_years ?? 25,
@@ -167,6 +188,10 @@ export default function Lease() {
         lease_start: lease.leaseStart || null,
         lease_end: lease.leaseEnd || null,
         base_rent: lease.baseRent,
+        base_rent_per_acre: lease.baseRentPerAcre,
+        acres: lease.acres,
+        option_payment: lease.optionPayment,
+        construction_payment: lease.constructionPayment,
         escalator_pct: lease.escalatorPct,
         frequency: lease.frequency,
         term_years: lease.termYears,
@@ -313,6 +338,30 @@ export default function Lease() {
                 onChange={(v) => setLease({ ...lease, baseRent: v === "" ? 0 : Number(v) })}
               />
               <LabeledInput
+                label="Base Rent ($/acre/yr)"
+                type="number"
+                value={lease.baseRentPerAcre || ""}
+                onChange={(v) => setLease({ ...lease, baseRentPerAcre: v === "" ? 0 : Number(v) })}
+              />
+              <LabeledInput
+                label="Acres"
+                type="number"
+                value={lease.acres || ""}
+                onChange={(v) => setLease({ ...lease, acres: v === "" ? 0 : Number(v) })}
+              />
+              <LabeledInput
+                label="Option Payment ($)"
+                type="number"
+                value={lease.optionPayment || ""}
+                onChange={(v) => setLease({ ...lease, optionPayment: v === "" ? 0 : Number(v) })}
+              />
+              <LabeledInput
+                label="Construction Payment ($)"
+                type="number"
+                value={lease.constructionPayment || ""}
+                onChange={(v) => setLease({ ...lease, constructionPayment: v === "" ? 0 : Number(v) })}
+              />
+              <LabeledInput
                 label="Escalator (%)"
                 type="number"
                 value={lease.escalatorPct}
@@ -379,7 +428,7 @@ export default function Lease() {
           }>
             <div style={{ fontSize: 13, color: "#374151", marginBottom: 8 }}>
               Base rent escalated {lease.escalatorPct}%/{lease.frequency.toLowerCase()} over {lease.termYears} years.
-              Total ≈ ${totalPayments.toLocaleString(undefined, { maximumFractionDigits: 0 })}.
+              Total (incl. option/construction) ≈ ${totalPayments.toLocaleString(undefined, { maximumFractionDigits: 0 })}.
             </div>
             <div style={{ maxHeight: 260, overflow: "auto", border: "1px solid #e5e7eb", borderRadius: 8 }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>

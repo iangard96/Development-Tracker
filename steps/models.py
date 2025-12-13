@@ -146,6 +146,10 @@ class ProjectEconomics(models.Model):
     escalator_pct = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
     frequency = models.CharField(max_length=16, blank=True, default="Annual")  # Annual | Monthly
     term_years = models.IntegerField(null=True, blank=True)
+    acres = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    base_rent_per_acre = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    option_payment = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    construction_payment = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
 
     leased_area_image_url = models.TextField(blank=True, default="")
     leased_area_image_name = models.CharField(max_length=255, blank=True, default="")
