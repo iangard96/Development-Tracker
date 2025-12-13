@@ -946,7 +946,7 @@ export default function DevActivities() {
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: "flex-start",
           marginBottom: 16,
           gap: 12,
         }}
@@ -957,7 +957,7 @@ export default function DevActivities() {
           </h1>
         )}
         <div
-          style={{ display: "flex", alignItems: "center", gap: 10 }}
+          style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}
           className="print-hidden"
         >
           <SaveAsPdfButton style={{ marginRight: 4 }} />
