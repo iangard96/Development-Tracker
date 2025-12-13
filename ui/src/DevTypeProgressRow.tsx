@@ -1,6 +1,5 @@
 // ui/src/DevTypeProgressRow.tsx
-import { useMemo } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { useEffect, useMemo, useState } from "react";
 import type { DevStep, DevType } from "./types";
 
 const DEV_TYPES: { key: DevType; label: string }[] = [
@@ -66,11 +65,18 @@ export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
 
 function DonutGauge({ label, pct }: { label: string; pct: number }) {
   const clamped = Math.max(0, Math.min(100, pct));
-  const display = clamped === 0 ? 0.0001 : clamped; // epsilon so animation still runs at 0
-  const data = [
-    { name: "progress", value: display },
-    { name: "rest", value: Math.max(0, 100 - display) },
-  ];
+  const [animatedPct, setAnimatedPct] = useState(0);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setAnimatedPct(clamped));
+    return () => cancelAnimationFrame(id);
+  }, [clamped]);
+
+  const size = 180;
+  const strokeWidth = 14;
+  const r = (size - strokeWidth) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - animatedPct / 100);
 
   return (
     <div
@@ -83,25 +89,37 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
         alignItems: "center",
       }}
     >
-      <ResponsiveContainer width={180} height={180}>
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey="value"
-            innerRadius={55}
-            outerRadius={70}
-            startAngle={90}
-            endAngle={-270}
-            paddingAngle={0}
-            isAnimationActive
-            animationDuration={900}
-            animationEasing="ease-in-out"
-          >
-            <Cell key="progress" fill={clamped === 0 ? "#e5e7eb" : "#C6B5FF"} stroke="none" />
-            <Cell key="rest" fill="#e5e7eb" stroke="none" />
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
+      <svg
+        width={size}
+        height={size}
+        style={{ display: "block" }}
+        viewBox={`0 0 ${size} ${size}`}
+      >
+        <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke="#e5e7eb"
+            strokeWidth={strokeWidth}
+          />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke="#C6B5FF"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeDasharray={`${c} ${c}`}
+            strokeDashoffset={offset}
+            style={{
+              transition: "stroke-dashoffset 900ms ease-in-out",
+            }}
+          />
+        </g>
+      </svg>
       <div
         style={{
           marginTop: -110,
