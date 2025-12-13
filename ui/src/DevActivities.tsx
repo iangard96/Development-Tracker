@@ -942,21 +942,31 @@ export default function DevActivities() {
 
   return (
     <div className="page-root">
-      {project && (
-        <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111827", margin: "0 0 32px" }}>
-          {project.project_name}
-        </h1>
-      )}
       <div
-        style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10, marginBottom: 12 }}
-        className="print-hidden"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
+          gap: 12,
+        }}
       >
-        <SaveAsPdfButton style={{ marginRight: 4 }} />
-        <img
-          src={logo}
-          alt="Land Charge"
-          style={{ height: 32, width: "auto", objectFit: "contain", display: "block" }}
-        />
+        {project && (
+          <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111827", margin: 0 }}>
+            {project.project_name}
+          </h1>
+        )}
+        <div
+          style={{ display: "flex", alignItems: "center", gap: 10 }}
+          className="print-hidden"
+        >
+          <SaveAsPdfButton style={{ marginRight: 4 }} />
+          <img
+            src={logo}
+            alt="Land Charge"
+            style={{ height: 32, width: "auto", objectFit: "contain", display: "block" }}
+          />
+        </div>
       </div>
       <div
         style={{
