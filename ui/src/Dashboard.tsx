@@ -61,9 +61,7 @@ export default function Dashboard() {
     );
   }
 
-  if (!steps) {
-    return <div className="page-root">Loading...</div>;
-  }
+  const safeSteps = Array.isArray(steps) ? steps : [];
 
   const fmtSize = (ac: number | null | undefined, dc: number | null | undefined) => {
     const acLabel = ac !== null && ac !== undefined ? `${ac} AC` : "—";
@@ -86,6 +84,11 @@ export default function Dashboard() {
     <div className="page-root">
       {project && (
         <>
+          {steps === null && (
+            <div style={{ marginBottom: 8, fontSize: 13, color: "#6b7280" }}>
+              Loading latest project data…
+            </div>
+          )}
           <h1 style={{ fontSize: 24, fontWeight: 600, margin: "0 0 16px" }}>
             {project.project_name}
           </h1>
@@ -203,13 +206,13 @@ export default function Dashboard() {
         </>
       )}
       {/* 1. Top row: 3 circular gauges (should also use project-scoped data internally) */}
-      <DevTypeProgressRow steps={steps} />
+      <DevTypeProgressRow steps={safeSteps} />
 
       {/* 2. Gantt chart under the gauges */}
-      <DevTypeGanttChart steps={steps} />
+      <DevTypeGanttChart steps={safeSteps} />
 
       {/* 3. Budget vs Actual spend under the Gantt */}
-      <DevTypeSpendChart steps={steps} />
+      <DevTypeSpendChart steps={safeSteps} />
 
       {/* Map and permit matrix side-by-side */}
       <div
