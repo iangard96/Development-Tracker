@@ -16,6 +16,7 @@ const linkStyle: React.CSSProperties = {
 export default function NavBar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) {
   const { project, projectId, selectProject } = useProject();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [showPicker, setShowPicker] = useState(false);
 
   useEffect(() => {
     fetchProjects()
@@ -55,32 +56,68 @@ export default function NavBar({ collapsed, setCollapsed }: { collapsed: boolean
         >
           {collapsed ? ">" : "<"}
         </button>
-        <div className="nav-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div className="nav-title" style={{ display: "flex", alignItems: "center", gap: 6, position: "relative" }}>
           {collapsed ? "" : titleText}
           {!collapsed && (
-            <select
-              value={projectId ?? ""}
-              onChange={(e) => {
-                const val = Number(e.target.value);
-                if (!Number.isNaN(val) && val > 0) {
-                  selectProject(val);
-                }
-              }}
-              style={{
-                padding: "4px 8px",
-                borderRadius: 6,
-                border: "1px solid #d1d5db",
-                fontSize: 12,
-                maxWidth: 180,
-              }}
-            >
-              <option value="">Select project</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.project_name}
-                </option>
-              ))}
-            </select>
+            <>
+              <button
+                type="button"
+                onClick={() => setShowPicker((v) => !v)}
+                style={{
+                  border: "none",
+                  background: "none",
+                  cursor: "pointer",
+                  padding: "2px 6px",
+                  fontSize: 14,
+                  lineHeight: 1,
+                }}
+                aria-label="Change project"
+              >
+                ▾
+              </button>
+              {showPicker && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    marginTop: 6,
+                    background: "#fff",
+                    border: "1px solid #d1d5db",
+                    borderRadius: 8,
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                    padding: 8,
+                    zIndex: 10,
+                    minWidth: 180,
+                  }}
+                >
+                  <div style={{ padding: "4px 6px", fontSize: 12, color: "#6b7280" }}>Switch project</div>
+                  <div style={{ maxHeight: 220, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+                    {projects.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          selectProject(p.id);
+                          setShowPicker(false);
+                        }}
+                        style={{
+                          textAlign: "left",
+                          padding: "6px 8px",
+                          borderRadius: 6,
+                          border: "1px solid transparent",
+                          background: p.id === projectId ? "#eef2ff" : "#fff",
+                          color: "#111827",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {p.project_name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
