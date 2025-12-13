@@ -61,13 +61,22 @@ function normalizeResults<T>(data: any): T[] {
   return [];
 }
 
+/* ---------- shared helpers ---------- */
+
+const HIDDEN_STEP_NAMES = ["pre dev"];
+
+function isHeaderStep(step: Pick<DevStep, "name">): boolean {
+  const name = (step?.name || "").trim().toLowerCase();
+  return HIDDEN_STEP_NAMES.includes(name);
+}
+
 /* ---------- Development Steps ---------- */
 
 /** GET all steps (global; probably only for testing now) */
 export async function fetchAllSteps(): Promise<DevStep[]> {
   const r = await fetch(`${API}/development-steps/`);
   const data = await jsonOrThrow(r, "steps fetch failed");
-  return normalizeResults<DevStep>(data);
+  return normalizeResults<DevStep>(data).filter((s) => !isHeaderStep(s));
 }
 
 /** GET steps for a specific project */
@@ -77,7 +86,7 @@ export async function fetchStepsForProject(
   // adjust param name ("project" vs "project_id") to match your DRF view
   const r = await fetch(`${API}/development-steps/?project=${projectId}`);
   const data = await jsonOrThrow(r, "steps fetch failed");
-  return normalizeResults<DevStep>(data);
+  return normalizeResults<DevStep>(data).filter((s) => !isHeaderStep(s));
 }
 
 /** CREATE a development step */
