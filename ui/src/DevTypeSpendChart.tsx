@@ -34,25 +34,21 @@ type Props = {
 };
 
 export default function DevTypeSpendChart({ steps }: Props) {
+  const safeSteps = Array.isArray(steps) ? steps : [];
+
   // Aggregate spend by development type from the passed-in steps
   const rows = useMemo<SpendRow[]>(() => {
     return DEV_TYPES.map(({ key, label }) => {
-      const group = steps.filter(
+      const group = safeSteps.filter(
         (s: DevStep) => (s as any).development_type === key
       );
 
       const planned = group.reduce(
-        (sum, s: any) => {
-          const val = Number(s.planned_spend ?? 0);
-          return sum + (Number.isFinite(val) ? val : 0);
-        },
+        (sum, s: any) => sum + (s.planned_spend ?? 0),
         0
       );
       const actual = group.reduce(
-        (sum, s: any) => {
-          const val = Number(s.actual_spend ?? 0);
-          return sum + (Number.isFinite(val) ? val : 0);
-        },
+        (sum, s: any) => sum + (s.actual_spend ?? 0),
         0
       );
 
@@ -75,7 +71,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
 
       return { devTypeLabel: label, planned, actual, delta, deltaLabel };
     });
-  }, [steps]);
+  }, [safeSteps]);
 
   const maxAbsDelta =
     rows.reduce((m, r) => Math.max(m, Math.abs(r.delta)), 0) || 1000;

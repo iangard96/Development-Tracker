@@ -91,16 +91,9 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
         alignItems: "center",
       }}
     >
-      <svg
-        width="160"
-        height="160"
-        viewBox="0 0 160 160"
-        style={{
-          transform: "rotate(-90deg)",
-          transformOrigin: "50% 50%",
-        }}
-      >
+      <svg width="160" height="160" viewBox="0 0 160 160">
         <g transform="translate(80 80)">
+          {/* Track */}
           <circle
             r={radius}
             fill="none"
@@ -109,6 +102,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
             strokeDasharray={circumference}
             strokeDashoffset={0}
           />
+          {/* Progress, start at top (-90 deg) */}
           <circle
             r={radius}
             fill="none"
@@ -117,7 +111,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
             strokeDasharray={circumference}
             strokeDashoffset={offset}
             strokeLinecap="round"
-            transform="rotate(0)"
+            transform="rotate(-90 0 0)"
             style={{ transition: "stroke-dashoffset 0.9s cubic-bezier(0.4, 0, 0.2, 1)" }}
           />
           <text
@@ -127,6 +121,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
             fontSize="28"
             fontWeight="700"
             fill="#111827"
+            transform="rotate(0)"
           >
             {clamped}%
           </text>

@@ -48,10 +48,11 @@ type Props = {
 };
 
 export default function DevTypeGanttChart({ steps }: Props) {
+  const safeSteps = Array.isArray(steps) ? steps : [];
   const [expanded, setExpanded] = useState(false);
 
   const { rows, minDay, maxDay } = useMemo(() => {
-    const sorted = [...steps].sort(
+    const sorted = [...safeSteps].sort(
       (a: any, b: any) =>
         (a.sequence ?? 0) - (b.sequence ?? 0) || a.id - b.id,
     );
@@ -107,7 +108,7 @@ export default function DevTypeGanttChart({ steps }: Props) {
     });
 
     return { rows, minDay, maxDay };
-  }, [steps]);
+  }, [safeSteps]);
 
   if (!rows.length) {
     return (
