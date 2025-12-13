@@ -115,7 +115,6 @@ export default function Dashboard() {
   };
 
   const projectType = project?.project_type ?? "N/A";
-  const projectDetails = project?.project_details ?? "N/A";
   const offtake = project?.offtake_structure ?? "N/A";
   const location =
     project && (project.county || project.state)
@@ -196,18 +195,6 @@ export default function Dashboard() {
             >
               <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Project Type</div>
               <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{projectType}</div>
-            </div>
-            <div
-              style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
-                borderRadius: 10,
-                padding: "10px 12px",
-                minWidth: 220,
-              }}
-            >
-              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Project Details</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{projectDetails}</div>
             </div>
           </div>
 

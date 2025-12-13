@@ -6,8 +6,8 @@ import { fetchProjects, createProject, deleteProject, updateProject } from "./ap
 import { useProject } from "./ProjectContext";
 import SaveAsPdfButton from "./SaveAsPdfButton";
 
-const PROJECT_TYPE_OPTIONS = ["", "GM", "RT", "OT"];
-const PROJECT_DETAILS_OPTIONS = ["", "GM_FIXED", "GM_TRACK", "BALLASTED", "ROOFTOP"];
+// Use former project_details options for project_type dropdown
+const PROJECT_TYPE_OPTIONS = ["", "GM_FIXED", "GM_TRACK", "BALLASTED", "ROOFTOP"];
 const OFFTAKE_STRUCTURE_OPTIONS = ["", "FTM_UTIL", "FTM_DIST", "BTM"];
 const STATE_OPTIONS = ["", "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"];
 
@@ -169,7 +169,6 @@ export default function ProjectSummaryPage() {
               <th style={th}>Project Name</th>
               <th style={th}>Legal Name</th>
               <th style={th}>Project Type</th>
-              <th style={th}>Project Details</th>
               <th style={th}>Offtake Structure</th>
               <th style={th}>AC (MW)</th>
               <th style={th}>DC (MW)</th>
@@ -229,25 +228,6 @@ export default function ProjectSummaryPage() {
                     style={selectStyle}
                   >
                     {PROJECT_TYPE_OPTIONS.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt || "--"}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                {/* Details - Dropdown */}
-                <td style={td}>
-                  <select
-                    defaultValue={p.project_details || ""}
-                    onChange={(e) => {
-                      const newVal = e.target.value || null;
-                      if (newVal !== p.project_details) {
-                        handleUpdateProject(p.id, { project_details: newVal });
-                      }
-                    }}
-                    style={selectStyle}
-                  >
-                    {PROJECT_DETAILS_OPTIONS.map((opt) => (
                       <option key={opt} value={opt}>
                         {opt || "--"}
                       </option>
