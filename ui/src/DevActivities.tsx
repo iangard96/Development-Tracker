@@ -755,6 +755,16 @@ export default function DevActivities() {
       d.getDate(),
     ).padStart(2, "0")}`;
 
+  const computeDuration = (start?: string | null, end?: string | null) => {
+    if (!start || !end) return null;
+    const s = new Date(start);
+    const e = new Date(end);
+    if (Number.isNaN(+s) || Number.isNaN(+e)) return null;
+    const diffMs = e.getTime() - s.getTime();
+    const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    return days > 0 ? days : null;
+  };
+
   const handleDateUpdate = async (
     row: DevStep,
     field: "start_date" | "end_date",
@@ -815,7 +825,16 @@ export default function DevActivities() {
     try {
       const fresh = await updateStepDates(row.id, payload);
       setRows((cur) =>
-        cur ? cur.map((x) => (x.id === row.id ? { ...x, ...fresh } : x)) : cur,
+        cur
+          ? cur.map((x) => {
+              if (x.id !== row.id) return x;
+              const computedDuration = computeDuration(
+                (fresh as any).start_date ?? start,
+                (fresh as any).end_date ?? end,
+              );
+              return { ...x, ...fresh, duration_days: computedDuration };
+            })
+          : cur,
       );
     } catch (err: any) {
       console.error(err);
@@ -862,7 +881,16 @@ export default function DevActivities() {
     try {
       const fresh = await updateStepDates(row.id, payload);
       setRows((cur) =>
-        cur ? cur.map((x) => (x.id === row.id ? { ...x, ...fresh } : x)) : cur,
+        cur
+          ? cur.map((x) => {
+              if (x.id !== row.id) return x;
+              const computedDuration = computeDuration(
+                (fresh as any).start_date ?? payload.start_date,
+                (fresh as any).end_date ?? payload.end_date,
+              );
+              return { ...x, ...fresh, duration_days: computedDuration };
+            })
+          : cur,
       );
     } catch (err: any) {
       console.error(err);
