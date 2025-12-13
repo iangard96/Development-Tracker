@@ -97,6 +97,7 @@ export default function Requirements() {
       Financing: [],
       "Permitting/Compliance": [],
       Engineering: [],
+      Interconnection: [],
     };
     (steps ?? []).forEach((step) => {
       const matches = parseRequirement((step as any).requirement);
