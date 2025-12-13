@@ -761,7 +761,7 @@ export default function DevActivities() {
     const e = new Date(end);
     if (Number.isNaN(+s) || Number.isNaN(+e)) return null;
     const diffMs = e.getTime() - s.getTime();
-    const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1; // inclusive
     return days > 0 ? days : null;
   };
 
@@ -832,9 +832,7 @@ export default function DevActivities() {
                 (fresh as any).start_date ?? start,
                 (fresh as any).end_date ?? end,
               );
-              const durationDays =
-                (fresh as any).duration_days ?? computedDuration;
-              return { ...x, ...fresh, duration_days: durationDays };
+              return { ...x, ...fresh, duration_days: computedDuration };
             })
           : cur,
       );
@@ -860,8 +858,7 @@ export default function DevActivities() {
       return;
     }
 
-    // Align with backend duration calculation (end_date - start_date)
-    const offsetDays = duration - 1; // if duration is 1 day, end = start
+    const offsetDays = duration - 1; // inclusive duration
 
     let payload: { start_date?: string | null; end_date?: string | null } = {};
 
@@ -893,9 +890,11 @@ export default function DevActivities() {
                 (fresh as any).start_date ?? payload.start_date,
                 (fresh as any).end_date ?? payload.end_date,
               );
-              const durationDays =
-                (fresh as any).duration_days ?? computedDuration;
-              return { ...x, ...fresh, duration_days: durationDays };
+              return {
+                ...x,
+                ...fresh,
+                duration_days: computedDuration ?? duration,
+              };
             })
           : cur,
       );
