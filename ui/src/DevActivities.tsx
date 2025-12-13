@@ -1342,6 +1342,7 @@ export default function DevActivities() {
                 {/* Start Date */}
                 <td style={td}>
                   <DateCell
+                    key={`start-${r.id}-${(r as any).start_date ?? ""}`}
                     value={(r as any).start_date}
                     onBlurValue={(iso) => handleDateUpdate(r, "start_date", iso)}
                   />
@@ -1350,6 +1351,7 @@ export default function DevActivities() {
                 {/* End Date */}
                 <td style={td}>
                   <DateCell
+                    key={`end-${r.id}-${(r as any).end_date ?? ""}`}
                     value={(r as any).end_date}
                     onBlurValue={(iso) => handleDateUpdate(r, "end_date", iso)}
                   />
@@ -1357,6 +1359,7 @@ export default function DevActivities() {
 
                 <td style={td}>
                   <input
+                    key={`dur-${r.id}-${(r as any).duration_days ?? ""}`}
                     type="number"
                     min="0"
                     step="1"
