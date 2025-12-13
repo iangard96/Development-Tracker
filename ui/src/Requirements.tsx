@@ -4,7 +4,7 @@ import type { DevStep } from "./types";
 import { fetchStepsForProject } from "./api";
 import { useProject } from "./ProjectContext";
 
-const REQUIREMENT_BUCKETS = ["Financing", "Permitting/Compliance", "Engineering"] as const;
+const REQUIREMENT_BUCKETS = ["Financing", "Permitting/Compliance", "Engineering", "Interconnection"] as const;
 type RequirementBucket = (typeof REQUIREMENT_BUCKETS)[number];
 
 type GroupedRequirements = Record<RequirementBucket, DevStep[]>;
@@ -59,6 +59,9 @@ function parseRequirement(raw: string | null | undefined): RequirementBucket[] {
       matched.add("Permitting/Compliance");
     }
     if (lower.startsWith("engineer")) matched.add("Engineering");
+    if (lower.includes("interconnection") || lower.includes("interconnect")) {
+      matched.add("Interconnection");
+    }
   });
   return Array.from(matched);
 }
@@ -157,9 +160,6 @@ export default function Requirements() {
           className="print-hidden"
           style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
         >
-          <button onClick={handlePrint} className="primary">
-            Print
-          </button>
           <button onClick={handlePrint}>
             Save as PDF
           </button>

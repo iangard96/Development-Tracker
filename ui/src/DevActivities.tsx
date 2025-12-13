@@ -73,6 +73,16 @@ const requirementLabel: React.CSSProperties = {
 const requirementCheckbox: React.CSSProperties = {
   margin: 0,
 };
+const sortBtn: React.CSSProperties = {
+  background: "none",
+  border: "none",
+  padding: 0,
+  margin: 0,
+  fontSize: 12,
+  fontWeight: 600,
+  color: "#374151",
+  cursor: "pointer",
+};
 
 /** Convert whatever we have to what <input type="date"> expects (YYYY-MM-DD). */
 function normalizeForDateInput(value?: string | null): string {
@@ -515,6 +525,18 @@ export default function DevActivities() {
   const [phaseFilter, setPhaseFilter] = useState<1 | 2 | 3 | "ALL">("ALL");
   const [customIds, setCustomIds] = useState<Set<number>>(new Set());
   const [customDevTypes, setCustomDevTypes] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<
+    | "status"
+    | "phase"
+    | "name"
+    | "planned_spend"
+    | "actual_spend"
+    | "start_date"
+    | "end_date"
+    | "duration_days"
+    | null
+  >(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const safeCustomDevTypes = Array.isArray(customDevTypes) ? customDevTypes : [];
   // Local state for spend inputs so we can type freely
   const [spendEdits, setSpendEdits] = useState<
@@ -663,12 +685,82 @@ export default function DevActivities() {
     return byPhase.filter((r) => r.name.toLowerCase().includes(q));
   }, [rows, devTypeFilter, phaseFilter, searchTerm]);
 
+  const sorted = useMemo(() => {
+    const list = [...filtered];
+    if (!sortBy) return list;
+
+    const cmp = (aVal: any, bVal: any) => {
+      const aMissing = aVal === null || aVal === undefined || aVal === "";
+      const bMissing = bVal === null || bVal === undefined || bVal === "";
+      if (aMissing && bMissing) return 0;
+      if (aMissing) return 1;
+      if (bMissing) return -1;
+      if (aVal === bVal) return 0;
+      return aVal < bVal ? -1 : 1;
+    };
+
+    list.sort((a: any, b: any) => {
+      let aVal: any;
+      let bVal: any;
+      switch (sortBy) {
+        case "status":
+          aVal = (a.status ?? "").toString().toLowerCase();
+          bVal = (b.status ?? "").toString().toLowerCase();
+          break;
+        case "phase":
+          aVal = a.phase ?? 999;
+          bVal = b.phase ?? 999;
+          break;
+        case "name":
+          aVal = (a.name ?? "").toString().toLowerCase();
+          bVal = (b.name ?? "").toString().toLowerCase();
+          break;
+        case "planned_spend":
+          aVal = a.planned_spend ?? null;
+          bVal = b.planned_spend ?? null;
+          break;
+        case "actual_spend":
+          aVal = a.actual_spend ?? null;
+          bVal = b.actual_spend ?? null;
+          break;
+        case "start_date":
+          aVal = a.start_date ? new Date(a.start_date).getTime() : null;
+          bVal = b.start_date ? new Date(b.start_date).getTime() : null;
+          break;
+        case "end_date":
+          aVal = a.end_date ? new Date(a.end_date).getTime() : null;
+          bVal = b.end_date ? new Date(b.end_date).getTime() : null;
+          break;
+        case "duration_days":
+          aVal = a.duration_days ?? null;
+          bVal = b.duration_days ?? null;
+          break;
+        default:
+          aVal = null;
+          bVal = null;
+      }
+      const res = cmp(aVal, bVal);
+      return sortDir === "asc" ? res : -res;
+    });
+
+    return list;
+  }, [filtered, sortBy, sortDir]);
+
+  const toggleSort = (key: typeof sortBy) => {
+    if (sortBy === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(key);
+      setSortDir("asc");
+    }
+  };
+
   if (err)
     return <div style={{ color: "red", padding: 16 }}>Error: {err}</div>;
   if (!rows) return <div style={{ padding: 16 }}>Loading…</div>;
 
   const jumpToId = (id: number) => {
-    const target = filtered.find((p) => p.id === id);
+    const target = sorted.find((p) => p.id === id);
     if (target) {
       const el = rowRefs.current[target.id];
       const container = tableContainerRef.current;
@@ -830,15 +922,47 @@ export default function DevActivities() {
           <thead style={{ background: "#f9fafb" }}>
             <tr>
               <th style={{ ...th, display: "none" }}>#</th>
-              <th style={th}>Status</th>
-              <th style={th}>Phase</th>
-              <th style={{ ...th, ...stickyActivity }}>Activity</th>
+              <th style={th}>
+                <button style={sortBtn} onClick={() => toggleSort("status")}>
+                  Status {sortBy === "status" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                </button>
+              </th>
+              <th style={th}>
+                <button style={sortBtn} onClick={() => toggleSort("phase")}>
+                  Phase {sortBy === "phase" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                </button>
+              </th>
+              <th style={{ ...th, ...stickyActivity }}>
+                <button style={sortBtn} onClick={() => toggleSort("name")}>
+                  Activity {sortBy === "name" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                </button>
+              </th>
               <th style={{ ...th, minWidth: 200 }}>Dev Type</th>
-              <th style={{ ...th, minWidth: "140px" }}>Planned Spend ($)</th>
-              <th style={{ ...th, minWidth: "140px" }}>Actual Spend ($)</th>
-              <th style={th}>Start Date</th>
-              <th style={th}>End Date</th>
-              <th style={th}>Duration (Days)</th>
+              <th style={{ ...th, minWidth: "140px" }}>
+                <button style={sortBtn} onClick={() => toggleSort("planned_spend")}>
+                  Planned Spend ($) {sortBy === "planned_spend" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                </button>
+              </th>
+              <th style={{ ...th, minWidth: "140px" }}>
+                <button style={sortBtn} onClick={() => toggleSort("actual_spend")}>
+                  Actual Spend ($) {sortBy === "actual_spend" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                </button>
+              </th>
+              <th style={th}>
+                <button style={sortBtn} onClick={() => toggleSort("start_date")}>
+                  Start Date {sortBy === "start_date" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                </button>
+              </th>
+              <th style={th}>
+                <button style={sortBtn} onClick={() => toggleSort("end_date")}>
+                  End Date {sortBy === "end_date" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                </button>
+              </th>
+              <th style={th}>
+                <button style={sortBtn} onClick={() => toggleSort("duration_days")}>
+                  Duration (Days) {sortBy === "duration_days" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                </button>
+              </th>
               <th style={th}>Purpose / Related Activity</th>
               <th style={th}>Agency</th>
               <th style={th}>Responsible Party</th>
@@ -850,7 +974,7 @@ export default function DevActivities() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((r, i) => (
+            {sorted.map((r, i) => (
               <tr
                 key={r.id}
                 ref={(el) => {
@@ -885,7 +1009,7 @@ export default function DevActivities() {
                           : cur,
                       )
                     }
-                    rows={filtered}
+                    rows={sorted}
                     applyFresh={applyFresh}
                   />
                 </td>
@@ -1109,7 +1233,7 @@ export default function DevActivities() {
                 <td style={td}>
                   <RelatedActivityCell
                     step={r}
-                    peers={filtered}
+                    peers={sorted}
                     onSaved={(fresh) =>
                       setRows((cur) =>
                         cur
@@ -1296,7 +1420,7 @@ export default function DevActivities() {
                 </td>
               <td style={requirementTd}>
                 <div style={requirementList}>
-                  {["Engineering", "Permitting/Compliance", "Financing"].map((opt) => {
+                  {["Engineering", "Permitting/Compliance", "Financing", "Interconnection"].map((opt) => {
                     const requirementVal = (r as any).requirement ?? "";
                     const selected = new Set(
                         requirementVal

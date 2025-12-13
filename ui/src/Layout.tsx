@@ -23,14 +23,36 @@ function LayoutInner() {
           borderBottom: "1px solid #e5e7eb",
           paddingBottom: 8,
           marginBottom: 8,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
         }}
       >
-        <h1 style={{ fontSize: 28, fontWeight: 700 }}>
-          {project.project_name}
-        </h1>
-        <p style={{ fontSize: 14, color: "#6b7280" }}>
-          {project.legal_name}
-        </p>
+        <div>
+          <h1 style={{ fontSize: 28, fontWeight: 700 }}>
+            {project.project_name}
+          </h1>
+          <p style={{ fontSize: 14, color: "#6b7280" }}>
+            {project.legal_name}
+          </p>
+        </div>
+        <div className="print-hidden">
+          <button
+            onClick={() => window.print()}
+            style={{
+              padding: "6px 12px",
+              borderRadius: 6,
+              border: "1px solid #d1d5db",
+              background: "#fff",
+              cursor: "pointer",
+              fontSize: 13,
+              fontWeight: 500,
+            }}
+          >
+            Save as PDF
+          </button>
+        </div>
       </header>
 
       {/* Tabs for this project */}

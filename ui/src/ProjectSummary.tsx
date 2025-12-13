@@ -110,7 +110,7 @@ export default function ProjectSummaryPage() {
   return (
     <div className="page-root">
       <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111827", margin: "0 0 32px" }}>
-        Project Summary
+        Project Portfolio
       </h1>
 
       <button
