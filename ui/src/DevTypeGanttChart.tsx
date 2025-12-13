@@ -168,60 +168,10 @@ export default function DevTypeGanttChart({ steps }: Props) {
     return [`${fmt(start)} - ${fmt(end)}`, "Duration"];
   };
 
-  return (
-    <div
-      style={{
-        marginTop: 16,
-        marginBottom: 32,
-        padding: 16,
-        borderRadius: 12,
-        border: "1px solid #e5e7eb",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
-            Development Timeline by Type
-          </h2>
-          <p style={{ marginBottom: 12, color: "#4b5563", fontSize: 14 }}>
-            Tasks are grouped by development type and ordered by the overall
-            step sequence. Bars span from each task's start date to end date.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          style={{
-            border: "1px solid #d1d5db",
-            background: "#ffffff",
-            color: "#111827",
-            borderRadius: 8,
-            padding: "6px 10px",
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: "pointer",
-            minWidth: 90,
-            marginTop: 2,
-          }}
-          title={expanded ? "Minimize chart" : "Maximize chart"}
-        >
-          {expanded ? "Minimize" : "Maximize"}
-        </button>
-      </div>
-      {!expanded && rows.length > visibleRows.length && (
-        <div style={{ marginBottom: 10, color: "#6b7280", fontSize: 13 }}>
-          Showing {visibleRows.length} of {rows.length} activities. Maximize to
-          see everything.
-        </div>
-      )}
+  let chartBody: React.ReactNode = null;
 
+  try {
+    chartBody = (
       <div style={{ width: "100%", height: chartHeight }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -229,32 +179,14 @@ export default function DevTypeGanttChart({ steps }: Props) {
             layout="vertical"
             margin={{ top: 10, right: 24, left: 120, bottom: 24 }}
           >
-            <XAxis
-              type="number"
-              domain={[0, totalSpan]}
-              tickFormatter={formatTick}
-            />
-            <YAxis
-              type="category"
-              dataKey="label"
-              width={180}
-              tick={{ fontSize: 12 }}
-            />
-            <Bar
-              dataKey="startOffset"
-              stackId="gantt"
-              fill="rgba(0,0,0,0)"
-              isAnimationActive={false}
-            />
+            <XAxis type="number" domain={[0, totalSpan]} tickFormatter={formatTick} />
+            <YAxis type="category" dataKey="label" width={180} tick={{ fontSize: 12 }} />
+            <Bar dataKey="startOffset" stackId="gantt" fill="rgba(0,0,0,0)" isAnimationActive={false} />
             <Bar dataKey="duration" stackId="gantt" isAnimationActive={false}>
               <LabelList
                 dataKey="label"
                 position="insideLeft"
-                style={{
-                  fill: "#ffffff",
-                  fontSize: 11,
-                  fontWeight: 500,
-                }}
+                style={{ fill: "#ffffff", fontSize: 11, fontWeight: 500 }}
                 formatter={(v: string) => v.split(": ")[1] ?? v}
               />
               {visibleRows.map((row, i) => (
@@ -310,6 +242,71 @@ export default function DevTypeGanttChart({ steps }: Props) {
           </BarChart>
         </ResponsiveContainer>
       </div>
+    );
+  } catch (e) {
+    console.error("DevTypeGanttChart render failed", e);
+    chartBody = (
+      <div style={{ color: "crimson", fontSize: 13, padding: 12 }}>
+        Timeline chart failed to render.
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: 16,
+        marginBottom: 32,
+        padding: 16,
+        borderRadius: 12,
+        border: "1px solid #e5e7eb",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
+        <div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
+            Development Timeline by Type
+          </h2>
+          <p style={{ marginBottom: 12, color: "#4b5563", fontSize: 14 }}>
+            Tasks are grouped by development type and ordered by the overall
+            step sequence. Bars span from each task's start date to end date.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          style={{
+            border: "1px solid #d1d5db",
+            background: "#ffffff",
+            color: "#111827",
+            borderRadius: 8,
+            padding: "6px 10px",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+            minWidth: 90,
+            marginTop: 2,
+          }}
+          title={expanded ? "Minimize chart" : "Maximize chart"}
+        >
+          {expanded ? "Minimize" : "Maximize"}
+        </button>
+      </div>
+      {!expanded && rows.length > visibleRows.length && (
+        <div style={{ marginBottom: 10, color: "#6b7280", fontSize: 13 }}>
+          Showing {visibleRows.length} of {rows.length} activities. Maximize to
+          see everything.
+        </div>
+      )}
+
+      {chartBody}
     </div>
   );
 }
