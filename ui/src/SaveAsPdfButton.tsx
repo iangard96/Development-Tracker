@@ -1,5 +1,5 @@
 // ui/src/SaveAsPdfButton.tsx
-export default function SaveAsPdfButton() {
+export default function SaveAsPdfButton({ style }: { style?: React.CSSProperties }) {
   return (
     <button
       type="button"
@@ -12,6 +12,7 @@ export default function SaveAsPdfButton() {
         cursor: "pointer",
         fontSize: 13,
         fontWeight: 500,
+        ...style,
       }}
     >
       Save as PDF

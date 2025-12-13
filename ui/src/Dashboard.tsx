@@ -126,8 +126,22 @@ export default function Dashboard() {
 
   return (
     <div className="page-root">
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }} className="print-hidden">
-        <SaveAsPdfButton />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 12,
+        }}
+        className="print-hidden"
+      >
+        <SaveAsPdfButton style={{ marginRight: 4 }} />
+        <img
+          src="/landcharge-logo.png"
+          alt="Land Charge"
+          style={{ height: 38, width: "auto", objectFit: "contain", display: "block" }}
+        />
       </div>
       {project && (
         <>
