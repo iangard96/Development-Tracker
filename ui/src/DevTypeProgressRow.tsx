@@ -123,7 +123,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
       </svg>
       <div
         style={{
-          marginTop: -62,
+          marginTop: -54,
           position: "relative",
           textAlign: "center",
           fontSize: 22,
@@ -135,9 +135,9 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
       </div>
       <div
         style={{
-          marginTop: 10,
+          marginTop: 14,
           textAlign: "center",
-          fontSize: 14,
+          fontSize: 13,
           fontWeight: 600,
           color: "#111827",
         }}
