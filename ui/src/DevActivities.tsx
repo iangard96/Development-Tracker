@@ -832,7 +832,9 @@ export default function DevActivities() {
                 (fresh as any).start_date ?? start,
                 (fresh as any).end_date ?? end,
               );
-              return { ...x, ...fresh, duration_days: computedDuration };
+              const durationDays =
+                (fresh as any).duration_days ?? computedDuration;
+              return { ...x, ...fresh, duration_days: durationDays };
             })
           : cur,
       );
@@ -888,7 +890,9 @@ export default function DevActivities() {
                 (fresh as any).start_date ?? payload.start_date,
                 (fresh as any).end_date ?? payload.end_date,
               );
-              return { ...x, ...fresh, duration_days: computedDuration };
+              const durationDays =
+                (fresh as any).duration_days ?? computedDuration;
+              return { ...x, ...fresh, duration_days: durationDays };
             })
           : cur,
       );
