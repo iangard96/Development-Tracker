@@ -1,6 +1,7 @@
 // ui/src/NavBar.tsx
 import React from "react";
 import { NavLink } from "react-router-dom";
+import { useProject } from "./ProjectContext";
 
 const linkStyle: React.CSSProperties = {
   display: "block",
@@ -11,6 +12,8 @@ const linkStyle: React.CSSProperties = {
 };
 
 export default function NavBar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) {
+  const { project } = useProject();
+  const titleText = project?.project_name || "Project";
   const navItems = [
     { to: "/project_summary", label: "Project Portfolio", title: "Project Portfolio", icon: "S" },
     { to: "/dashboard", label: "Project Dashboard", title: "Project Dashboard", icon: "D" },
@@ -42,7 +45,7 @@ export default function NavBar({ collapsed, setCollapsed }: { collapsed: boolean
         >
           {collapsed ? ">" : "<"}
         </button>
-        <div className="nav-title">{collapsed ? "" : "PROJECT"}</div>
+        <div className="nav-title">{collapsed ? "" : titleText}</div>
       </div>
 
       {navItems.map((item) => (
