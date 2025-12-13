@@ -104,32 +104,17 @@ function syncTitle(e: React.ChangeEvent<HTMLInputElement>) {
 
 /** Small reusable date cell that PATCHes one field and returns the fresh row. */
 function DateCell({
-  id,
-  field,
   value,
-  onSaved,
+  onBlurValue,
 }: {
-  id: number;
-  field: "start_date" | "end_date";
   value: string | null | undefined;
-  onSaved: (fresh: DevStep) => void;
+  onBlurValue: (iso: string | null) => void;
 }) {
-  async function onBlur(e: React.FocusEvent<HTMLInputElement>) {
-    const iso = e.currentTarget.value || null; // "YYYY-MM-DD" or null
-    try {
-      const fresh = await updateStepDates(id, { [field]: iso });
-      onSaved(fresh);
-    } catch (err: any) {
-      console.error(err);
-      alert(`Failed to update date.\n${err?.message ?? ""}`);
-    }
-  }
-
   return (
     <input
       type="date"
       defaultValue={normalizeForDateInput(value)}
-      onBlur={onBlur}
+      onBlur={(e) => onBlurValue(e.currentTarget.value || null)}
       style={{
         padding: "6px 10px",
         border: "1px solid #e5e7eb",
@@ -765,6 +750,79 @@ export default function DevActivities() {
     return <div style={{ color: "red", padding: 16 }}>Error: {err}</div>;
   if (!rows) return <div style={{ padding: 16 }}>Loading...</div>;
 
+  const toIso = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate(),
+    ).padStart(2, "0")}`;
+
+  const handleDateUpdate = async (
+    row: DevStep,
+    field: "start_date" | "end_date",
+    iso: string | null,
+  ) => {
+    const currentStart = (row as any).start_date || null;
+    const currentEnd = (row as any).end_date || null;
+    const duration = (row as any).duration_days;
+
+    let start = field === "start_date" ? iso : currentStart;
+    let end = field === "end_date" ? iso : currentEnd;
+
+    const durationNum =
+      duration === null || duration === undefined
+        ? null
+        : Number.isFinite(Number(duration))
+        ? Math.ceil(Number(duration))
+        : null;
+
+    // Default payload just saves the edited field
+    let payload: { start_date?: string | null; end_date?: string | null } = {
+      [field]: iso,
+    };
+
+    // Compute missing date when we have start+duration or end+duration
+    if (start && end) {
+      payload = { start_date: start, end_date: end };
+    } else if (start && !end && durationNum && durationNum > 0) {
+      const base = new Date(start);
+      if (!Number.isNaN(+base)) {
+        base.setDate(base.getDate() + durationNum);
+        const computed = toIso(base);
+        const ok = window.confirm(
+          `Compute end date as ${computed} from start + duration?`,
+        );
+        if (ok) {
+          payload = { start_date: start, end_date: computed };
+        } else {
+          payload = { start_date: start };
+        }
+      }
+    } else if (end && !start && durationNum && durationNum > 0) {
+      const base = new Date(end);
+      if (!Number.isNaN(+base)) {
+        base.setDate(base.getDate() - durationNum);
+        const computed = toIso(base);
+        const ok = window.confirm(
+          `Compute start date as ${computed} from end - duration?`,
+        );
+        if (ok) {
+          payload = { start_date: computed, end_date: end };
+        } else {
+          payload = { end_date: end };
+        }
+      }
+    }
+
+    try {
+      const fresh = await updateStepDates(row.id, payload);
+      setRows((cur) =>
+        cur ? cur.map((x) => (x.id === row.id ? { ...x, ...fresh } : x)) : cur,
+      );
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to update date.\n${err?.message ?? ""}`);
+    }
+  };
+
   const jumpToId = (id: number) => {
     const target = sorted.find((p) => p.id === id);
     if (target) {
@@ -1237,36 +1295,16 @@ export default function DevActivities() {
                 {/* Start Date */}
                 <td style={td}>
                   <DateCell
-                    id={r.id}
-                    field="start_date"
                     value={(r as any).start_date}
-                    onSaved={(fresh) =>
-                      setRows((cur) =>
-                        cur
-                          ? cur.map((x) =>
-                              x.id === r.id ? { ...x, ...fresh } : x,
-                            )
-                          : cur,
-                      )
-                    }
+                    onBlurValue={(iso) => handleDateUpdate(r, "start_date", iso)}
                   />
                 </td>
 
                 {/* End Date */}
                 <td style={td}>
                   <DateCell
-                    id={r.id}
-                    field="end_date"
                     value={(r as any).end_date}
-                    onSaved={(fresh) =>
-                      setRows((cur) =>
-                        cur
-                          ? cur.map((x) =>
-                              x.id === r.id ? { ...x, ...fresh } : x,
-                            )
-                          : cur,
-                      )
-                    }
+                    onBlurValue={(iso) => handleDateUpdate(r, "end_date", iso)}
                   />
                 </td>
 
