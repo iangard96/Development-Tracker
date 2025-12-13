@@ -860,6 +860,9 @@ export default function DevActivities() {
       return;
     }
 
+    // Align with backend duration calculation (end_date - start_date)
+    const offsetDays = duration - 1; // if duration is 1 day, end = start
+
     let payload: { start_date?: string | null; end_date?: string | null } = {};
 
     if (currentStart) {
@@ -868,7 +871,7 @@ export default function DevActivities() {
         alert("Start date is invalid; fix it before setting duration.");
         return;
       }
-      base.setDate(base.getDate() + duration);
+      base.setDate(base.getDate() + offsetDays);
       payload = { start_date: currentStart, end_date: toIso(base) };
     } else if (currentEnd) {
       const base = new Date(currentEnd);
@@ -876,7 +879,7 @@ export default function DevActivities() {
         alert("End date is invalid; fix it before setting duration.");
         return;
       }
-      base.setDate(base.getDate() - duration);
+      base.setDate(base.getDate() - offsetDays);
       payload = { start_date: toIso(base), end_date: currentEnd };
     }
 
@@ -1402,7 +1405,7 @@ export default function DevActivities() {
                       handleDurationUpdate(r, val);
                     }}
                     style={{
-                      width: "100%",
+                      width: "90px",
                       padding: "6px 10px",
                       borderRadius: 5,
                       border: "1px solid #e5e7eb",
