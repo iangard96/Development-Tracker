@@ -1,6 +1,5 @@
 // ui/src/DevTypeProgressRow.tsx
-import { useMemo } from "react";
-import { PieChart, Pie, Cell } from "recharts";
+import { useEffect, useMemo, useState } from "react";
 import type { DevStep, DevType } from "./types";
 
 const DEV_TYPES: { key: DevType; label: string }[] = [
@@ -15,9 +14,11 @@ type GaugeRow = {
 };
 
 export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
+  const safeSteps = Array.isArray(steps) ? steps : [];
+
   const gauges = useMemo<GaugeRow[]>(() => {
     return DEV_TYPES.map(({ key, label }) => {
-      const group = steps.filter((s) => s.development_type === key);
+      const group = safeSteps.filter((s) => s.development_type === key);
 
       if (!group.length) {
         return { devTypeLabel: label, pct: 0 };
@@ -30,7 +31,7 @@ export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
       const pct = Math.round((completed / group.length) * 100);
       return { devTypeLabel: label, pct };
     });
-  }, [steps]);
+  }, [safeSteps]);
 
   return (
     <div style={{ marginBottom: 24 }}>
@@ -64,14 +65,19 @@ export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
 
 function DonutGauge({ label, pct }: { label: string; pct: number }) {
   const clamped = Math.max(0, Math.min(100, pct));
+  const [animPct, setAnimPct] = useState(0);
 
-  const data = [
-    { name: "completed", value: clamped },
-    { name: "remaining", value: 100 - clamped },
-  ];
+  useEffect(() => {
+    // animate from 0 to the current pct when mounted/updated
+    const id = window.requestAnimationFrame(() => setAnimPct(clamped));
+    return () => window.cancelAnimationFrame(id);
+  }, [clamped]);
 
-  const purple = "#C6B5FF"; // light purple
+  const radius = 60;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - animPct / 100);
   const track = "#e5e7eb";
+  const purple = "#C6B5FF";
 
   return (
     <div
@@ -84,45 +90,39 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
         alignItems: "center",
       }}
     >
-      {/* Chart + % overlay */}
-      <div
-        style={{
-          position: "relative",
-          width: 160,
-          height: 160,
-        }}
-      >
-        <PieChart width={160} height={160}>
-          <Pie
-            data={data}
-            dataKey="value"
-            startAngle={90}
-            endAngle={-270}
-            innerRadius={55}
-            outerRadius={75}
-            stroke="none"
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        <g transform="translate(80 80)">
+          <circle
+            r={radius}
+            fill="none"
+            stroke={track}
+            strokeWidth={16}
+            strokeDasharray={circumference}
+            strokeDashoffset={0}
+          />
+          <circle
+            r={radius}
+            fill="none"
+            stroke={purple}
+            strokeWidth={16}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+            transform="rotate(-90)"
+            style={{ transition: "stroke-dashoffset 0.8s ease-out" }}
+          />
+          <text
+            x="0"
+            y="6"
+            textAnchor="middle"
+            fontSize="28"
+            fontWeight="700"
+            fill="#111827"
           >
-            <Cell key="completed" fill={purple} />
-            <Cell key="remaining" fill={track} />
-          </Pie>
-        </PieChart>
-
-        {/* Centered percentage text */}
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            fontSize: 28,
-            fontWeight: 700,
-            color: "#111827",
-            textAlign: "center",
-          }}
-        >
-          {clamped}%
-        </div>
-      </div>
+            {clamped}%
+          </text>
+        </g>
+      </svg>
 
       {/* Label beneath donut */}
       <div
