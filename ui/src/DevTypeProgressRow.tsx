@@ -68,9 +68,10 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
   const [animPct, setAnimPct] = useState(0);
 
   useEffect(() => {
-    // animate from 0 to the current pct when mounted/updated
-    const id = window.requestAnimationFrame(() => setAnimPct(clamped));
-    return () => window.cancelAnimationFrame(id);
+    // reset to 0 then animate up to the target to mimic the original spin-up
+    setAnimPct(0);
+    const id = window.setTimeout(() => setAnimPct(clamped), 50);
+    return () => window.clearTimeout(id);
   }, [clamped]);
 
   const radius = 60;
@@ -90,7 +91,15 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
         alignItems: "center",
       }}
     >
-      <svg width="160" height="160" viewBox="0 0 160 160">
+      <svg
+        width="160"
+        height="160"
+        viewBox="0 0 160 160"
+        style={{
+          transform: "rotate(-90deg)",
+          transformOrigin: "50% 50%",
+        }}
+      >
         <g transform="translate(80 80)">
           <circle
             r={radius}
@@ -108,8 +117,8 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
             strokeDasharray={circumference}
             strokeDashoffset={offset}
             strokeLinecap="round"
-            transform="rotate(-90)"
-            style={{ transition: "stroke-dashoffset 0.8s ease-out" }}
+            transform="rotate(0)"
+            style={{ transition: "stroke-dashoffset 0.9s cubic-bezier(0.4, 0, 0.2, 1)" }}
           />
           <text
             x="0"
