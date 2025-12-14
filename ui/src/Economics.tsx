@@ -127,7 +127,7 @@ export default function Economics() {
           <button
             type="button"
             onClick={handleSave}
-            style={{ ...ghostButton, background: "#111827", color: "#fff", borderColor: "#111827" }}
+            style={ghostButton}
             disabled={saving}
           >
             {saving ? "Saving…" : "Save"}

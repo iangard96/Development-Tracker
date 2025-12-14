@@ -189,14 +189,6 @@ export default function Lease() {
           >
             Generate Lease
           </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            style={{ ...ghostButton, background: "#111827", color: "#fff", borderColor: "#111827" }}
-            disabled={saving}
-          >
-            {saving ? "Saving…" : "Save"}
-          </button>
           <img
             src={logo}
             alt="Land Charge"
