@@ -547,6 +547,7 @@ export default function DevActivities() {
   >([]);
   const [contactOrgs, setContactOrgs] = useState<string[]>([]);
   const [reorderPending, setReorderPending] = useState(false);
+  const [draggingId, setDraggingId] = useState<number | null>(null);
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -796,29 +797,33 @@ export default function DevActivities() {
     });
   }, [rows]);
 
+  const canReorder = useMemo(
+    () =>
+      !sortBy &&
+      !searchTerm.trim() &&
+      devTypeFilter === "ALL" &&
+      phaseFilter === "ALL",
+    [devTypeFilter, phaseFilter, searchTerm, sortBy],
+  );
+
   const performReorder = useCallback(
-    async (stepId: number, direction: "up" | "down") => {
+    async (orderedIds: number[]) => {
       if (!projectId) return;
-      if (sortBy || searchTerm.trim() || devTypeFilter !== "ALL" || phaseFilter !== "ALL") {
-        alert("Reset filters/sort before reordering.");
-        return;
-      }
-      const ordered = [...orderedBySequence];
-      const idx = ordered.findIndex((r) => r.id === stepId);
-      if (idx === -1) return;
-      const swapIdx = direction === "up" ? idx - 1 : idx + 1;
-      if (swapIdx < 0 || swapIdx >= ordered.length) return;
-      [ordered[idx], ordered[swapIdx]] = [ordered[swapIdx], ordered[idx]];
-      // assign new sequence
-      const next = ordered.map((r, i) => ({ ...r, sequence: i + 1 }));
-      setRows(next);
+      const nextSeq = orderedIds.map((id, idx) => ({ id, sequence: idx + 1 }));
+      setRows((cur) =>
+        cur
+          ? cur.map((r) => {
+              const found = nextSeq.find((n) => n.id === r.id);
+              return found ? { ...r, sequence: found.sequence } : r;
+            })
+          : cur,
+      );
       setReorderPending(true);
       try {
-        await reorderSteps(projectId, next.map((r) => r.id));
+        await reorderSteps(projectId, orderedIds);
       } catch (err) {
         console.warn("Reorder failed", err);
         alert("Reorder failed. Please try again.");
-        // on failure, refetch
         fetchStepsForProject(projectId)
           .then((data) => setRows(data))
           .catch((e) => setErr(String(e)));
@@ -826,7 +831,26 @@ export default function DevActivities() {
         setReorderPending(false);
       }
     },
-    [devTypeFilter, orderedBySequence, phaseFilter, projectId, reorderSteps, searchTerm, sortBy],
+    [projectId],
+  );
+
+  const handleDropReorder = useCallback(
+    (dragId: number, targetId: number) => {
+      if (!projectId) return;
+      if (!canReorder) {
+        alert("Reset filters and sorting before reordering.");
+        return;
+      }
+      const current = [...orderedBySequence];
+      const fromIdx = current.findIndex((r) => r.id === dragId);
+      const toIdx = current.findIndex((r) => r.id === targetId);
+      if (fromIdx === -1 || toIdx === -1) return;
+      const updated = [...current];
+      const [moved] = updated.splice(fromIdx, 1);
+      updated.splice(toIdx, 0, moved);
+      performReorder(updated.map((r) => r.id));
+    },
+    [canReorder, orderedBySequence, performReorder, projectId],
   );
 
   if (noProjectSelected) {
@@ -1279,45 +1303,27 @@ export default function DevActivities() {
                 ref={(el) => {
                   rowRefs.current[r.id] = el;
                 }}
+                draggable={canReorder}
+                onDragStart={() => setDraggingId(r.id)}
+                onDragOver={(e) => {
+                  if (canReorder) e.preventDefault();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (draggingId && draggingId !== r.id) {
+                    handleDropReorder(draggingId, r.id);
+                  }
+                  setDraggingId(null);
+                }}
+                onDragEnd={() => setDraggingId(null)}
                 style={{
                   borderTop: "1px solid #e5e7eb",
                   background: highlighted.has(r.id) ? "#e0f2fe" : undefined,
                   transition: "background 0.3s ease",
                 }}
               >
-                <td style={{ ...td, width: 70 }}>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    <button
-                      type="button"
-                      onClick={() => performReorder(r.id, "up")}
-                      disabled={reorderPending}
-                      title="Move up"
-                      style={{
-                        border: "1px solid #d1d5db",
-                        background: "#fff",
-                        padding: "4px 6px",
-                        borderRadius: 4,
-                        cursor: "pointer",
-                      }}
-                    >
-                      ↑
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => performReorder(r.id, "down")}
-                      disabled={reorderPending}
-                      title="Move down"
-                      style={{
-                        border: "1px solid #d1d5db",
-                        background: "#fff",
-                        padding: "4px 6px",
-                        borderRadius: 4,
-                        cursor: "pointer",
-                      }}
-                    >
-                      ↓
-                    </button>
-                  </div>
+                <td style={{ ...td, width: 70, cursor: canReorder ? "grab" : "default", userSelect: "none" }}>
+                  <span aria-hidden="true">☰</span>
                 </td>
 
                 {/* Status */}
