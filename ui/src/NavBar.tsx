@@ -22,7 +22,7 @@ export default function NavBar({ collapsed, setCollapsed }: { collapsed: boolean
     fetchProjects()
       .then(setProjects)
       .catch((err) => console.warn("Failed to load projects for nav", err));
-  }, []);
+  }, [project]);
 
   const titleText = project?.project_name || "Project";
   const navItems = [
