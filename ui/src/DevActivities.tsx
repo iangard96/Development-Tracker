@@ -786,11 +786,20 @@ export default function DevActivities() {
   const resetSort = () => {
     setSortBy(null);
     setSortDir("asc");
-    if (projectId) {
-      fetchStepsForProject(projectId)
-        .then((data) => setRows(data))
-        .catch((e) => setErr(String(e)));
-    }
+    if (!projectId) return;
+    setReorderPending(true);
+    fetchStepsForProject(projectId)
+      .then(async (data) => {
+        const ordered = [...data].sort((a, b) => a.id - b.id);
+        setRows(ordered);
+        try {
+          await reorderSteps(projectId, ordered.map((r) => r.id));
+        } catch (err) {
+          console.warn("Failed to reset order server-side", err);
+        }
+      })
+      .catch((e) => setErr(String(e)))
+      .finally(() => setReorderPending(false));
   };
 
   const orderedBySequence = useMemo(() => {
