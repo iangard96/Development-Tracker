@@ -4,6 +4,7 @@ from .models import DevelopmentStep, Project, ProjectContact, ProjectEconomics, 
 
 
 class DevelopmentStepSerializer(serializers.ModelSerializer):
+    sequence = serializers.IntegerField(read_only=True, required=False)
     # expose the project FK as its ID
     project = serializers.PrimaryKeyRelatedField(
         queryset=Project.objects.all(),

@@ -85,7 +85,6 @@ class DevelopmentStep(models.Model):
     purpose_related_activity = models.IntegerField(
         db_column="purpose_related_activity", blank=True, null=True
     )
-    sequence = models.IntegerField(db_column="sequence", blank=True, null=True)
 
     project = models.ForeignKey(
         Project,
