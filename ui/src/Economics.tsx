@@ -6,6 +6,7 @@ import {
   updateProjectIncentives,
 } from "./api";
 import type { ProjectIncentives } from "./types";
+import logo from "../public/landcharge-logo.png";
 
 type EconomicsBlock = {
   itcEligiblePct: number | null;
