@@ -787,6 +787,10 @@ export default function DevActivities() {
     setSortBy(null);
     setSortDir("asc");
     if (!projectId) return;
+    if (rows && rows.length > 0) {
+      const ordered = [...rows].sort((a, b) => a.id - b.id);
+      setRows(ordered.map((r, idx) => ({ ...r, sequence: idx + 1 })));
+    }
     setReorderPending(true);
     fetchStepsForProject(projectId)
       .then(async (data) => {
@@ -1117,10 +1121,15 @@ export default function DevActivities() {
         <h2 style={{ fontSize: 16, fontWeight: 500, color: "#374151", margin: 0 }}>
           Development Activities
         </h2>
-        <div className="print-hidden" style={{ display: "flex", gap: 8 }}>
+        <div className="print-hidden" style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {sortBy && (
             <div style={{ fontSize: 12, color: "#6b7280" }}>
               Sorted by {sortBy.replace("_", " ")} ({sortDir})
+            </div>
+          )}
+          {hasCustomOrder && (
+            <div style={{ fontSize: 12, color: "#ef4444" }} title="Order differs from default">
+              Custom order
             </div>
           )}
           <button
