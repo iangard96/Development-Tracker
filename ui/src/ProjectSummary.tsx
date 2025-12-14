@@ -122,6 +122,11 @@ export default function ProjectSummaryPage() {
           />
         </div>
       </div>
+      <p style={{ margin: "4px 0 16px", color: "#374151", fontSize: 12, lineHeight: 1.4 }}>
+        Please use this tool to plan and manage pre-construction projects.
+        <br />
+        Disclaimer: [App Name] supports project workflow and planning but does not replace professional judgment. Users are responsible for managing, reviewing, and validating all project information and decisions.
+      </p>
       <div style={{ height: 12 }} />
 
       <button
