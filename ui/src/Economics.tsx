@@ -127,6 +127,13 @@ export default function Economics() {
         <div className="print-hidden" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <button
             type="button"
+            onClick={() => window.print()}
+            style={ghostButton}
+          >
+            Save as PDF
+          </button>
+          <button
+            type="button"
             onClick={handleSave}
             style={ghostButton}
             disabled={saving}
