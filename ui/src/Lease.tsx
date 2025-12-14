@@ -505,7 +505,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 const ghostButton: React.CSSProperties = {
-  border: "1px solid "#d1d5db",
+  border: "1px solid #d1d5db",
   background: "#ffffff",
   padding: "6px 10px",
   borderRadius: 6,
