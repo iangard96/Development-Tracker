@@ -325,6 +325,7 @@ export default function Dashboard() {
                     <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Status</th>
                     <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Start</th>
                     <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>End</th>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Agency</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -334,6 +335,7 @@ export default function Dashboard() {
                       <td style={{ padding: "8px 10px" }}>{p.status ?? "N/A"}</td>
                       <td style={{ padding: "8px 10px" }}>{(p as any).start_date ?? "N/A"}</td>
                       <td style={{ padding: "8px 10px" }}>{(p as any).end_date ?? "N/A"}</td>
+                      <td style={{ padding: "8px 10px" }}>{(p as any).agency ?? "N/A"}</td>
                     </tr>
                   ))}
                 </tbody>
