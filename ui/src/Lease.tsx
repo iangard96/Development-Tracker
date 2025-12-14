@@ -497,7 +497,7 @@ const formGridCols2: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
   padding: "8px 10px",
-  border: "1px solid "#d1d5db",
+  border: "1px solid #d1d5db",
   borderRadius: 6,
   fontSize: 13,
   color: "#111827",
