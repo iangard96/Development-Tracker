@@ -132,6 +132,11 @@ export default function Economics() {
           >
             {saving ? "Saving…" : "Save"}
           </button>
+          <img
+            src={logo}
+            alt="Land Charge"
+            style={{ height: 60, width: "auto", objectFit: "contain", display: "block" }}
+          />
         </div>
       </div>
 
