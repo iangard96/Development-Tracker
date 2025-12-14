@@ -791,10 +791,12 @@ export default function DevActivities() {
     setSearchInput("");
     setSearchTerm("");
     if (!projectId) return;
+    const ordered = [...(rows ?? [])].sort((a, b) => a.id - b.id);
+    setRows(ordered.map((r, idx) => ({ ...r, sequence: idx + 1 })));
     setReorderPending(true);
-    const orderedIds = (rows ?? []).map((r) => r.id).sort((a, b) => a - b);
-    const doReset = async () => {
+    (async () => {
       try {
+        const orderedIds = ordered.map((r) => r.id);
         if (orderedIds.length > 0) {
           await reorderSteps(projectId, orderedIds);
         }
@@ -805,8 +807,7 @@ export default function DevActivities() {
       } finally {
         setReorderPending(false);
       }
-    };
-    doReset();
+    })();
   };
 
   const orderedBySequence = useMemo(() => {
@@ -1158,6 +1159,7 @@ export default function DevActivities() {
               fontSize: 12,
               cursor: "pointer",
             }}
+            disabled={reorderPending}
             title="Reset to original order"
           >
             Reset order
