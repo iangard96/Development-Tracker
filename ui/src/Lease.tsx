@@ -205,7 +205,7 @@ export default function Lease() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 16, alignItems: "start" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <Card title="Lease Template">
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
             <input type="file" accept=".doc,.docx,.odt,.pdf" />
