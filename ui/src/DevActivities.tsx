@@ -786,6 +786,11 @@ export default function DevActivities() {
   const resetSort = () => {
     setSortBy(null);
     setSortDir("asc");
+    if (projectId) {
+      fetchStepsForProject(projectId)
+        .then((data) => setRows(data))
+        .catch((e) => setErr(String(e)));
+    }
   };
 
   const orderedBySequence = useMemo(() => {
