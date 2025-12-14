@@ -786,24 +786,27 @@ export default function DevActivities() {
   const resetSort = () => {
     setSortBy(null);
     setSortDir("asc");
+    setDevTypeFilter("ALL");
+    setPhaseFilter("ALL");
+    setSearchInput("");
+    setSearchTerm("");
     if (!projectId) return;
-    if (rows && rows.length > 0) {
-      const ordered = [...rows].sort((a, b) => a.id - b.id);
-      setRows(ordered.map((r, idx) => ({ ...r, sequence: idx + 1 })));
-    }
     setReorderPending(true);
-    fetchStepsForProject(projectId)
-      .then(async (data) => {
-        const ordered = [...data].sort((a, b) => a.id - b.id);
-        setRows(ordered);
-        try {
-          await reorderSteps(projectId, ordered.map((r) => r.id));
-        } catch (err) {
-          console.warn("Failed to reset order server-side", err);
+    const orderedIds = (rows ?? []).map((r) => r.id).sort((a, b) => a - b);
+    const doReset = async () => {
+      try {
+        if (orderedIds.length > 0) {
+          await reorderSteps(projectId, orderedIds);
         }
-      })
-      .catch((e) => setErr(String(e)))
-      .finally(() => setReorderPending(false));
+        const fresh = await fetchStepsForProject(projectId);
+        setRows(fresh);
+      } catch (e: any) {
+        setErr(String(e));
+      } finally {
+        setReorderPending(false);
+      }
+    };
+    doReset();
   };
 
   const orderedBySequence = useMemo(() => {
