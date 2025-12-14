@@ -17,6 +17,7 @@ export interface DevStep {
   actual_spend: number | null;
   // FK to Project.id (nullable for now)
   project: number | null;
+  sequence?: number | null;
   // optional metadata
   purpose_related_activity?: number | string | null;
   agency?: string | null;

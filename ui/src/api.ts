@@ -320,3 +320,12 @@ export async function updateProjectIncentives(
   });
   return jsonOrThrow(r, "incentives update failed");
 }
+
+export async function reorderSteps(projectId: number, order: number[]): Promise<void> {
+  const r = await fetch(`${API}/development-steps/reorder/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project: projectId, order }),
+  });
+  await jsonOrThrow(r, "reorder failed");
+}

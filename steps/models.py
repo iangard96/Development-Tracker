@@ -85,6 +85,7 @@ class DevelopmentStep(models.Model):
     purpose_related_activity = models.IntegerField(
         db_column="purpose_related_activity", blank=True, null=True
     )
+    sequence = models.IntegerField(db_column="sequence", blank=True, null=True)
 
     project = models.ForeignKey(
         Project,
@@ -188,3 +189,18 @@ class ProjectIncentives(models.Model):
 
     class Meta:
         db_table = "steps_project_incentives"
+
+
+class StepOrder(models.Model):
+    """
+    Per-project ordering of development steps (fallback if the main table lacks a sequence column).
+    """
+
+    id = models.AutoField(primary_key=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="step_orders")
+    step_id = models.IntegerField()
+    sequence = models.IntegerField()
+
+    class Meta:
+        db_table = "steps_step_order"
+        unique_together = ("project", "step_id")

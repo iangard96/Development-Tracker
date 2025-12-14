@@ -32,6 +32,7 @@ class DevelopmentStepSerializer(serializers.ModelSerializer):
             "requirement",
             "purpose_related_activity",
             "project",
+            "sequence",
         ]
         read_only_fields = ["id", "duration_days"]
         extra_kwargs = {

@@ -19,6 +19,7 @@ import {
   fetchProjectContacts,
   createDevelopmentStep,
   deleteDevelopmentStep,
+  reorderSteps,
 } from "./api";
 import { useProject } from "./ProjectContext";
 import SaveAsPdfButton from "./SaveAsPdfButton";
@@ -545,6 +546,7 @@ export default function DevActivities() {
     { id: number; organization: string; name: string }
   >([]);
   const [contactOrgs, setContactOrgs] = useState<string[]>([]);
+  const [reorderPending, setReorderPending] = useState(false);
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -784,6 +786,48 @@ export default function DevActivities() {
     setSortBy(null);
     setSortDir("asc");
   };
+
+  const orderedBySequence = useMemo(() => {
+    return [...(rows ?? [])].sort((a: any, b: any) => {
+      const aSeq = (a.sequence ?? Number.MAX_SAFE_INTEGER);
+      const bSeq = (b.sequence ?? Number.MAX_SAFE_INTEGER);
+      if (aSeq !== bSeq) return aSeq - bSeq;
+      return a.id - b.id;
+    });
+  }, [rows]);
+
+  const performReorder = useCallback(
+    async (stepId: number, direction: "up" | "down") => {
+      if (!projectId) return;
+      if (sortBy || searchTerm.trim() || devTypeFilter !== "ALL" || phaseFilter !== "ALL") {
+        alert("Reset filters/sort before reordering.");
+        return;
+      }
+      const ordered = [...orderedBySequence];
+      const idx = ordered.findIndex((r) => r.id === stepId);
+      if (idx === -1) return;
+      const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= ordered.length) return;
+      [ordered[idx], ordered[swapIdx]] = [ordered[swapIdx], ordered[idx]];
+      // assign new sequence
+      const next = ordered.map((r, i) => ({ ...r, sequence: i + 1 }));
+      setRows(next);
+      setReorderPending(true);
+      try {
+        await reorderSteps(projectId, next.map((r) => r.id));
+      } catch (err) {
+        console.warn("Reorder failed", err);
+        alert("Reorder failed. Please try again.");
+        // on failure, refetch
+        fetchStepsForProject(projectId)
+          .then((data) => setRows(data))
+          .catch((e) => setErr(String(e)));
+      } finally {
+        setReorderPending(false);
+      }
+    },
+    [devTypeFilter, orderedBySequence, phaseFilter, projectId, reorderSteps, searchTerm, sortBy],
+  );
 
   if (noProjectSelected) {
     return (
@@ -1176,7 +1220,7 @@ export default function DevActivities() {
         >
           <thead style={{ background: "#f9fafb" }}>
             <tr>
-              <th style={{ ...th, display: "none" }}>#</th>
+              <th style={{ ...th, width: 70 }}>Order</th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("status")}>
                   Status {sortBy === "status" ? (sortDir === "asc" ? "▲" : "▼") : ""}
@@ -1241,13 +1285,40 @@ export default function DevActivities() {
                   transition: "background 0.3s ease",
                 }}
               >
-                {(() => {
-                  const isCustom =
-                    customIds.has(r.id) ||
-                    (r.name || "").toLowerCase().includes("custom");
-                  return null;
-                })()}
-                <td style={{ ...td, display: "none" }}>{(r as any).sequence ?? i + 1}</td>
+                <td style={{ ...td, width: 70 }}>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button
+                      type="button"
+                      onClick={() => performReorder(r.id, "up")}
+                      disabled={reorderPending}
+                      title="Move up"
+                      style={{
+                        border: "1px solid #d1d5db",
+                        background: "#fff",
+                        padding: "4px 6px",
+                        borderRadius: 4,
+                        cursor: "pointer",
+                      }}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => performReorder(r.id, "down")}
+                      disabled={reorderPending}
+                      title="Move down"
+                      style={{
+                        border: "1px solid #d1d5db",
+                        background: "#fff",
+                        padding: "4px 6px",
+                        borderRadius: 4,
+                        cursor: "pointer",
+                      }}
+                    >
+                      ↓
+                    </button>
+                  </div>
+                </td>
 
                 {/* Status */}
                 <td style={td}>

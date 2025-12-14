@@ -1,11 +1,19 @@
 # steps/views.py
 from django.db import connection, transaction
+from django.db.models import OuterRef, Subquery
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import generics
 
-from .models import DevelopmentStep, Project, ProjectContact, ProjectEconomics, ProjectIncentives
+from .models import (
+    DevelopmentStep,
+    Project,
+    ProjectContact,
+    ProjectEconomics,
+    ProjectIncentives,
+    StepOrder,
+)
 from .serializers import (
     DevelopmentStepSerializer,
     ProjectSerializer,
@@ -26,7 +34,12 @@ class DevelopmentStepViewSet(viewsets.ModelViewSet):
         project_id = self.request.query_params.get("project") or self.request.query_params.get("project_id")
         if project_id:
             qs = qs.filter(project_id=project_id)
-        return qs.order_by("id")
+        order_subq = StepOrder.objects.filter(
+            project_id=OuterRef("project_id"),
+            step_id=OuterRef("pk"),
+        ).values("sequence")[:1]
+        qs = qs.annotate(sequence=Subquery(order_subq))
+        return qs.order_by("sequence", "id")
     
     @transaction.atomic
     def create(self, request, *args, **kwargs):
@@ -39,6 +52,42 @@ class DevelopmentStepViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    @action(detail=False, methods=["post"])
+    @transaction.atomic
+    def reorder(self, request):
+        """
+        Reorder steps for a project.
+        Body: { "project": <id>, "order": [stepId1, stepId2, ...] }
+        """
+        project_id = request.data.get("project")
+        order = request.data.get("order", [])
+        if not project_id or not isinstance(order, list) or len(order) == 0:
+            return Response({"detail": "project and order[] required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate project
+        try:
+            project = Project.objects.get(pk=project_id)
+        except Project.DoesNotExist:
+            return Response({"detail": "project not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Ensure all steps belong to project
+        step_ids = [int(s) for s in order if isinstance(s, (int, str))]
+        count = DevelopmentStep.objects.filter(pk__in=step_ids, project_id=project_id).count()
+        if count != len(step_ids):
+            return Response({"detail": "order contains steps not in project"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Apply sequence
+        seq = 1
+        for sid in step_ids:
+            StepOrder.objects.update_or_create(
+                project=project,
+                step_id=sid,
+                defaults={"sequence": seq},
+            )
+            seq += 1
+
+        return Response({"detail": "ok"}, status=status.HTTP_200_OK)
 
 
 class ProjectEconomicsView(generics.RetrieveUpdateAPIView):
