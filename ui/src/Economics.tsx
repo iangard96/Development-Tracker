@@ -7,6 +7,7 @@ import {
 } from "./api";
 import type { ProjectIncentives } from "./types";
 import logo from "../public/landcharge-logo.png";
+import SaveAsPdfButton from "./SaveAsPdfButton";
 
 type EconomicsBlock = {
   itcEligiblePct: number | null;
@@ -125,21 +126,7 @@ export default function Economics() {
           {error && <div style={{ fontSize: 12, color: "crimson" }}>{error}</div>}
         </div>
         <div className="print-hidden" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            style={ghostButton}
-          >
-            Save as PDF
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            style={ghostButton}
-            disabled={saving}
-          >
-            {saving ? "Saving…" : "Save"}
-          </button>
+          <SaveAsPdfButton style={{ marginRight: 4 }} />
           <img
             src={logo}
             alt="Land Charge"
