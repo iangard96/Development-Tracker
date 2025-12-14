@@ -64,6 +64,9 @@ function parseRequirement(raw: string | null | undefined): RequirementBucket[] {
     if (lower.includes("interconnection") || lower.includes("interconnect")) {
       matched.add("Interconnection");
     }
+    if (lower.includes("site control") || lower.includes("site-control")) {
+      matched.add("Site Control");
+    }
   });
   return Array.from(matched);
 }
@@ -100,6 +103,7 @@ export default function Requirements() {
       "Permitting/Compliance": [],
       Engineering: [],
       Interconnection: [],
+      "Site Control": [],
     };
     (steps ?? []).forEach((step) => {
       const matches = parseRequirement((step as any).requirement);
