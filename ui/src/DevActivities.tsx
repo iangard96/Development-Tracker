@@ -798,14 +798,23 @@ export default function DevActivities() {
   if (!rows) return <div style={{ padding: 16 }}>Loading...</div>;
 
   const toIso = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-      d.getDate(),
+    `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(
+      d.getUTCDate(),
     ).padStart(2, "0")}`;
+
+  const parseDateOnly = (value?: string | null): Date | null => {
+    if (!value) return null;
+    const parts = value.split("-");
+    if (parts.length !== 3) return null;
+    const [y, m, d] = parts.map((p) => Number(p));
+    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+    return new Date(Date.UTC(y, m - 1, d));
+  };
 
   const computeDuration = (start?: string | null, end?: string | null) => {
     if (!start || !end) return null;
-    const s = new Date(start);
-    const e = new Date(end);
+    const s = parseDateOnly(start);
+    const e = parseDateOnly(end);
     if (Number.isNaN(+s) || Number.isNaN(+e)) return null;
     const diffMs = e.getTime() - s.getTime();
     const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1; // inclusive
@@ -840,9 +849,9 @@ export default function DevActivities() {
     if (start && end) {
       payload = { start_date: start, end_date: end };
     } else if (start && !end && durationNum && durationNum > 0) {
-      const base = new Date(start);
+      const base = parseDateOnly(start);
       if (!Number.isNaN(+base)) {
-        base.setDate(base.getDate() + durationNum);
+        base.setUTCDate(base.getUTCDate() + durationNum);
         const computed = toIso(base);
         const ok = window.confirm(
           `Compute end date as ${computed} from start + duration?`,
@@ -854,9 +863,9 @@ export default function DevActivities() {
         }
       }
     } else if (end && !start && durationNum && durationNum > 0) {
-      const base = new Date(end);
+      const base = parseDateOnly(end);
       if (!Number.isNaN(+base)) {
-        base.setDate(base.getDate() - durationNum);
+        base.setUTCDate(base.getUTCDate() - durationNum);
         const computed = toIso(base);
         const ok = window.confirm(
           `Compute start date as ${computed} from end - duration?`,
@@ -910,20 +919,20 @@ export default function DevActivities() {
     let payload: { start_date?: string | null; end_date?: string | null } = {};
 
     if (currentStart) {
-      const base = new Date(currentStart);
+      const base = parseDateOnly(currentStart);
       if (Number.isNaN(+base)) {
         alert("Start date is invalid; fix it before setting duration.");
         return;
       }
-      base.setDate(base.getDate() + offsetDays);
+      base.setUTCDate(base.getUTCDate() + offsetDays);
       payload = { start_date: currentStart, end_date: toIso(base) };
     } else if (currentEnd) {
-      const base = new Date(currentEnd);
+      const base = parseDateOnly(currentEnd);
       if (Number.isNaN(+base)) {
         alert("End date is invalid; fix it before setting duration.");
         return;
       }
-      base.setDate(base.getDate() - offsetDays);
+      base.setUTCDate(base.getUTCDate() - offsetDays);
       payload = { start_date: toIso(base), end_date: currentEnd };
     }
 
