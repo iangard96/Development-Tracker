@@ -83,6 +83,7 @@ const requirementLabel: React.CSSProperties = {
 const requirementCheckbox: React.CSSProperties = {
   margin: 0,
 };
+const REQUIREMENT_OPTIONS = ["Engineering", "Permitting/Compliance", "Financing", "Interconnection", "Site Control"] as const;
 const sortBtn: React.CSSProperties = {
   background: "none",
   border: "none",
@@ -1794,7 +1795,7 @@ export default function DevActivities() {
                 </td>
               <td style={requirementTd}>
                 <div style={requirementList}>
-                  {["Engineering", "Permitting/Compliance", "Financing", "Interconnection"].map((opt) => {
+                  {REQUIREMENT_OPTIONS.map((opt) => {
                     const selected = new Set(requirementSets.get(r.id) ?? []);
                     const checked = selected.has(opt);
                     return (

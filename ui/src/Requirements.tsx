@@ -6,7 +6,7 @@ import { useProject } from "./ProjectContext";
 import SaveAsPdfButton from "./SaveAsPdfButton";
 import logo from "../public/landcharge-logo.png";
 
-const REQUIREMENT_BUCKETS = ["Financing", "Permitting/Compliance", "Engineering", "Interconnection"] as const;
+const REQUIREMENT_BUCKETS = ["Financing", "Permitting/Compliance", "Engineering", "Interconnection", "Site Control"] as const;
 type RequirementBucket = (typeof REQUIREMENT_BUCKETS)[number];
 
 type GroupedRequirements = Record<RequirementBucket, DevStep[]>;
@@ -208,7 +208,6 @@ export default function Requirements() {
                       <tr>
                         <th style={{ whiteSpace: "nowrap" }}>Activity</th>
                         <th>Status</th>
-                        <th style={{ whiteSpace: "nowrap" }}>Dev Type</th>
                         <th>Phase</th>
                         <th>Start</th>
                         <th>End</th>
@@ -219,7 +218,6 @@ export default function Requirements() {
                         <tr key={step.id}>
                           <td style={{ fontWeight: 600 }}>{step.name}</td>
                           <td>{step.status ?? ""}</td>
-                          <td>{step.development_type ?? ""}</td>
                           <td>{(step as any).phase ?? ""}</td>
                           <td>{(step as any).start_date ?? ""}</td>
                           <td>{(step as any).end_date ?? ""}</td>
