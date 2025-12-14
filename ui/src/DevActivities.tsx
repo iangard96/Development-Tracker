@@ -815,6 +815,17 @@ export default function DevActivities() {
     });
   }, [rows]);
 
+  const hasCustomOrder = useMemo(() => {
+    if (!rows || rows.length === 0) return false;
+    const idsBySeq = orderedBySequence.map((r) => r.id);
+    const idsById = [...rows].sort((a, b) => a.id - b.id).map((r) => r.id);
+    if (idsBySeq.length !== idsById.length) return true;
+    for (let i = 0; i < idsBySeq.length; i++) {
+      if (idsBySeq[i] !== idsById[i]) return true;
+    }
+    return false;
+  }, [orderedBySequence, rows]);
+
   const canReorder = useMemo(
     () =>
       !sortBy &&
