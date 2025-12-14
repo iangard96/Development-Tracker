@@ -78,6 +78,13 @@ function sortSteps(list: DevStep[]): DevStep[] {
   );
 }
 
+function phaseLabel(phase: number | null | undefined): string {
+  if (phase === 1) return "Pre Dev";
+  if (phase === 2) return "Dev";
+  if (phase === 3) return "Pre Con";
+  return "";
+}
+
 export default function Requirements() {
   const { projectId, project } = useProject();
   const [steps, setSteps] = useState<DevStep[] | null>(null);
@@ -222,7 +229,7 @@ export default function Requirements() {
                         <tr key={step.id}>
                           <td style={{ fontWeight: 600 }}>{step.name}</td>
                           <td>{step.status ?? ""}</td>
-                          <td>{(step as any).phase ?? ""}</td>
+                          <td>{phaseLabel((step as any).phase ?? null)}</td>
                           <td>{(step as any).start_date ?? ""}</td>
                           <td>{(step as any).end_date ?? ""}</td>
                         </tr>
