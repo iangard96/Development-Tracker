@@ -1162,6 +1162,11 @@ export default function DevActivities() {
         <h2 style={{ fontSize: 16, fontWeight: 500, color: "#374151", margin: 0 }}>
           Development Activities
         </h2>
+        {project?.project_type && (
+          <div style={{ fontSize: 12, color: "#6b7280" }}>
+            Project type: {project.project_type}
+          </div>
+        )}
         <div className="print-hidden" style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {sortBy && (
             <div style={{ fontSize: 12, color: "#6b7280" }}>
@@ -1312,56 +1317,56 @@ export default function DevActivities() {
               <th style={{ ...th, width: 70 }}>Order</th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("status")}>
-                  Status {sortBy === "status" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  Status {sortBy === "status" ? (sortDir === "asc" ? "?-?" : "?-?") : ""}
                 </button>
               </th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("phase")}>
-                  Phase {sortBy === "phase" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  Phase {sortBy === "phase" ? (sortDir === "asc" ? "?-?" : "?-?") : ""}
                 </button>
               </th>
               <th style={{ ...th, ...stickyActivity }}>
                 <button style={sortBtn} onClick={() => toggleSort("name")}>
-                  Activity {sortBy === "name" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  Activity {sortBy === "name" ? (sortDir === "asc" ? "?-?" : "?-?") : ""}
                 </button>
               </th>
               <th style={{ ...th, minWidth: 140 }}>Risk Heatmap</th>
-              <th style={{ ...th, minWidth: 160 }}>Owner</th>
-              <th style={{ ...th, minWidth: 180 }}>Storage Hybrid Impact</th>
-              <th style={{ ...th, minWidth: 180 }}>Milestones / NTP Gates</th>
               <th style={{ ...th, minWidth: 200 }}>Dev Type</th>
               <th style={{ ...th, minWidth: "140px" }}>
                 <button style={sortBtn} onClick={() => toggleSort("planned_spend")}>
-                  Planned Spend ($) {sortBy === "planned_spend" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  Planned Spend ($) {sortBy === "planned_spend" ? (sortDir === "asc" ? "?-?" : "?-?") : ""}
                 </button>
               </th>
               <th style={{ ...th, minWidth: "140px" }}>
                 <button style={sortBtn} onClick={() => toggleSort("actual_spend")}>
-                  Actual Spend ($) {sortBy === "actual_spend" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  Actual Spend ($) {sortBy === "actual_spend" ? (sortDir === "asc" ? "?-?" : "?-?") : ""}
                 </button>
               </th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("start_date")}>
-                  Start Date {sortBy === "start_date" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  Start Date {sortBy === "start_date" ? (sortDir === "asc" ? "?-?" : "?-?") : ""}
                 </button>
               </th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("end_date")}>
-                  End Date {sortBy === "end_date" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  End Date {sortBy === "end_date" ? (sortDir === "asc" ? "?-?" : "?-?") : ""}
                 </button>
               </th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("duration_days")}>
-                  Duration (Days) {sortBy === "duration_days" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  Duration (Days) {sortBy === "duration_days" ? (sortDir === "asc" ? "?-?" : "?-?") : ""}
                 </button>
               </th>
               <th style={th}>Purpose / Related Activity</th>
               <th style={th}>Agency</th>
+              <th style={{ ...th, minWidth: 160 }}>Owner</th>
               <th style={th}>Responsible Party</th>
               <th style={th}>Responsible Individual</th>
               <th style={th}>Process</th>
               <th style={th}>Link</th>
               <th style={{ ...th, ...requirementTh }}>Requirement</th>
+              <th style={{ ...th, minWidth: 180 }}>Storage Hybrid Impact</th>
+              <th style={{ ...th, minWidth: 180 }}>Milestones / NTP Gates</th>
               <th style={{ ...th, width: 100, minWidth: 100 }}></th>
             </tr>
           </thead>
@@ -1552,108 +1557,6 @@ export default function DevActivities() {
                     size={24}
                   />
                 </td>
-
-                {/* Owner */}
-                <td style={td}>
-                  <input
-                    type="text"
-                    defaultValue={(r as any).owner ?? ""}
-                    placeholder="Owner"
-                    title={(r as any).owner ?? ""}
-                    onChange={syncTitle}
-                    onBlur={async (e) => {
-                      const val = e.currentTarget.value.trim();
-                      const current = (r as any).owner ?? "";
-                      if (val === current) return;
-                      try {
-                        const fresh = await updateStepMeta(r.id, { owner: val || null });
-                        applyFresh(fresh);
-                      } catch (err: any) {
-                        console.error(err);
-                        alert(`Failed to update owner.\n${err?.message ?? ""}`);
-                        e.currentTarget.value = current;
-                      }
-                    }}
-                    style={{
-                      width: "100%",
-                      minWidth: 160,
-                      padding: "6px 10px",
-                      borderRadius: 5,
-                      border: "1px solid #e5e7eb",
-                      fontSize: 13,
-                      boxSizing: "border-box",
-                    }}
-                    size={26}
-                  />
-                </td>
-
-                {/* Storage Hybrid Impact */}
-                <td style={td}>
-                  <input
-                    type="text"
-                    defaultValue={(r as any).storage_hybrid_impact ?? ""}
-                    placeholder="Storage hybrid impact"
-                    title={(r as any).storage_hybrid_impact ?? ""}
-                    onChange={syncTitle}
-                    onBlur={async (e) => {
-                      const val = e.currentTarget.value.trim();
-                      const current = (r as any).storage_hybrid_impact ?? "";
-                      if (val === current) return;
-                      try {
-                        const fresh = await updateStepMeta(r.id, { storage_hybrid_impact: val || null });
-                        applyFresh(fresh);
-                      } catch (err: any) {
-                        console.error(err);
-                        alert(`Failed to update storage hybrid impact.\n${err?.message ?? ""}`);
-                        e.currentTarget.value = current;
-                      }
-                    }}
-                    style={{
-                      width: "100%",
-                      minWidth: 180,
-                      padding: "6px 10px",
-                      borderRadius: 5,
-                      border: "1px solid #e5e7eb",
-                      fontSize: 13,
-                      boxSizing: "border-box",
-                    }}
-                    size={28}
-                  />
-                </td>
-
-                {/* Milestones / NTP Gates */}
-                <td style={td}>
-                  <input
-                    type="text"
-                    defaultValue={(r as any).milestones_ntp_gates ?? ""}
-                    placeholder="Milestones / NTP Gates"
-                    title={(r as any).milestones_ntp_gates ?? ""}
-                    onChange={syncTitle}
-                    onBlur={async (e) => {
-                      const val = e.currentTarget.value.trim();
-                      const current = (r as any).milestones_ntp_gates ?? "";
-                      if (val === current) return;
-                      try {
-                        const fresh = await updateStepMeta(r.id, { milestones_ntp_gates: val || null });
-                        applyFresh(fresh);
-                      } catch (err: any) {
-                        console.error(err);
-                        alert(`Failed to update milestones / NTP gates.\n${err?.message ?? ""}`);
-                        e.currentTarget.value = current;
-                      }
-                    }}
-                    style={{
-                      width: "100%",
-                      minWidth: 180,
-                      padding: "6px 10px",
-                      borderRadius: 5,
-                      border: "1px solid #e5e7eb",
-                      fontSize: 13,
-                      boxSizing: "border-box",
-                    }}
-                    size={30}
-                  />
-                </td>
                 {/* Dev Type */}
                 <td style={{ ...td, minWidth: 200 }}>
                   <DevTypeCell
@@ -1828,6 +1731,39 @@ export default function DevActivities() {
                       boxSizing: "border-box",
                     }}
                     size={28}
+                  />
+                </td>
+                {/* Owner */}
+                <td style={td}>
+                  <input
+                    type="text"
+                    defaultValue={(r as any).owner ?? ""}
+                    placeholder="Owner"
+                    title={(r as any).owner ?? ""}
+                    onChange={syncTitle}
+                    onBlur={async (e) => {
+                      const val = e.currentTarget.value.trim();
+                      const current = (r as any).owner ?? "";
+                      if (val === current) return;
+                      try {
+                        const fresh = await updateStepMeta(r.id, { owner: val || null });
+                        applyFresh(fresh);
+                      } catch (err: any) {
+                        console.error(err);
+                        alert(`Failed to update owner.\n${err?.message ?? ""}`);
+                        e.currentTarget.value = current;
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      minWidth: 160,
+                      padding: "6px 10px",
+                      borderRadius: 5,
+                      border: "1px solid #e5e7eb",
+                      fontSize: 13,
+                      boxSizing: "border-box",
+                    }}
+                    size={26}
                   />
                 </td>
                 <td style={td}>
@@ -2005,7 +1941,75 @@ export default function DevActivities() {
                     );
                   })}
                 </div>
-              </td>
+                </td>
+                {/* Storage Hybrid Impact */}
+                <td style={td}>
+                  <input
+                    type="text"
+                    defaultValue={(r as any).storage_hybrid_impact ?? ""}
+                    placeholder="Storage hybrid impact"
+                    title={(r as any).storage_hybrid_impact ?? ""}
+                    onChange={syncTitle}
+                    onBlur={async (e) => {
+                      const val = e.currentTarget.value.trim();
+                      const current = (r as any).storage_hybrid_impact ?? "";
+                      if (val === current) return;
+                      try {
+                        const fresh = await updateStepMeta(r.id, { storage_hybrid_impact: val || null });
+                        applyFresh(fresh);
+                      } catch (err: any) {
+                        console.error(err);
+                        alert(`Failed to update storage hybrid impact.\n${err?.message ?? ""}`);
+                        e.currentTarget.value = current;
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      minWidth: 180,
+                      padding: "6px 10px",
+                      borderRadius: 5,
+                      border: "1px solid #e5e7eb",
+                      fontSize: 13,
+                      boxSizing: "border-box",
+                    }}
+                    size={28}
+                  />
+                </td>
+
+                {/* Milestones / NTP Gates */}
+                <td style={td}>
+                  <input
+                    type="text"
+                    defaultValue={(r as any).milestones_ntp_gates ?? ""}
+                    placeholder="Milestones / NTP Gates"
+                    title={(r as any).milestones_ntp_gates ?? ""}
+                    onChange={syncTitle}
+                    onBlur={async (e) => {
+                      const val = e.currentTarget.value.trim();
+                      const current = (r as any).milestones_ntp_gates ?? "";
+                      if (val === current) return;
+                      try {
+                        const fresh = await updateStepMeta(r.id, { milestones_ntp_gates: val || null });
+                        applyFresh(fresh);
+                      } catch (err: any) {
+                        console.error(err);
+                        alert(`Failed to update milestones / NTP gates.\n${err?.message ?? ""}`);
+                        e.currentTarget.value = current;
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      minWidth: 180,
+                      padding: "6px 10px",
+                      borderRadius: 5,
+                      border: "1px solid #e5e7eb",
+                      fontSize: 13,
+                      boxSizing: "border-box",
+                    }}
+                    size={30}
+                  />
+                </td>
+
               <td style={{ ...td, whiteSpace: "nowrap", width: 100, minWidth: 100, textAlign: "center" }}>
                 {customIds.has(r.id) || (r.name || "").toLowerCase().includes("custom") ? (
                   <button
