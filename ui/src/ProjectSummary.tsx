@@ -7,10 +7,30 @@ import { useProject } from "./ProjectContext";
 import SaveAsPdfButton from "./SaveAsPdfButton";
 import logo from "../public/landcharge-logo.png";
 
-// Use former project_details options for project_type dropdown
-const PROJECT_TYPE_OPTIONS = ["", "GM_FIXED", "GM_TRACK", "BALLASTED", "ROOFTOP"];
+// Project type options map directly to the four template CSVs
+const PROJECT_TYPE_OPTIONS = [
+  "",
+  "BTM Rooftop",
+  "BTM Ground",
+  "FTM Rooftop Community Solar",
+  "FTM Ground Community Solar",
+];
 const OFFTAKE_STRUCTURE_OPTIONS = ["", "FTM_UTIL", "FTM_DIST", "BTM"];
 const STATE_OPTIONS = ["", "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"];
+const PROJECT_TYPE_SET = new Set(PROJECT_TYPE_OPTIONS.filter(Boolean));
+
+function deriveProjectType(p: Project): Project["project_type"] {
+  const detail = (p.project_details ?? "").toUpperCase();
+  const offtake = (p.offtake_structure ?? "").toUpperCase();
+  const isRooftop = detail.includes("ROOF");
+  const isBTM = offtake === "BTM";
+  const isFTM = offtake.startsWith("FTM");
+
+  if (isBTM) return isRooftop ? "BTM Rooftop" : "BTM Ground";
+  if (isFTM) return isRooftop ? "FTM Rooftop Community Solar" : "FTM Ground Community Solar";
+  if (isRooftop) return "FTM Rooftop Community Solar";
+  return "FTM Ground Community Solar";
+}
 
 export default function ProjectSummaryPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -19,9 +39,30 @@ export default function ProjectSummaryPage() {
   const navigate = useNavigate();
   const { selectProject, projectId: selectedProjectId, setCurrentProject } = useProject();
 
+  async function maybeRemapProjectTypes(rows: Project[]): Promise<Project[]> {
+    const updatedRows = [...rows];
+    await Promise.all(
+      rows.map(async (p, idx) => {
+        if (p.project_type && PROJECT_TYPE_SET.has(p.project_type)) {
+          return;
+        }
+        const nextType = deriveProjectType(p);
+        if (!nextType || nextType === p.project_type) return;
+        try {
+          const fresh = await updateProject(p.id, { project_type: nextType });
+          updatedRows[idx] = fresh;
+        } catch (e) {
+          console.warn(`Failed to remap project ${p.id} type`, e);
+        }
+      }),
+    );
+    return updatedRows;
+  }
+
   useEffect(() => {
     setLoading(true);
     fetchProjects()
+      .then((rows) => maybeRemapProjectTypes(rows))
       .then((rows) => setProjects(rows))
       .catch((e) => setErr(String(e)))
       .finally(() => setLoading(false));

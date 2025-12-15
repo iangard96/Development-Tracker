@@ -6,7 +6,14 @@ import { useProject } from "./ProjectContext";
 import SaveAsPdfButton from "./SaveAsPdfButton";
 import logo from "../public/landcharge-logo.png";
 
-const REQUIREMENT_BUCKETS = ["Financing", "Permitting/Compliance", "Engineering", "Interconnection", "Site Control"] as const;
+const REQUIREMENT_BUCKETS = [
+  "Financing",
+  "Permitting/Compliance",
+  "Engineering",
+  "Interconnection",
+  "Site Control",
+  "Construction/Execution",
+] as const;
 type RequirementBucket = (typeof REQUIREMENT_BUCKETS)[number];
 
 type GroupedRequirements = Record<RequirementBucket, DevStep[]>;
@@ -44,12 +51,20 @@ const tableContainer: React.CSSProperties = {
   overflowX: "auto",
 };
 
-function parseRequirement(raw: string | null | undefined): RequirementBucket[] {
-  if (!raw) return [];
+function isCheckedFlag(value: unknown): boolean {
+  if (value === undefined || value === null) return false;
+  const lower = String(value).trim().toLowerCase();
+  return ["x", "yes", "y", "1", "true"].includes(lower);
+}
+
+function parseRequirement(step: DevStep): RequirementBucket[] {
+  const raw = (step as any).requirement as string | null | undefined;
   const tokens = raw
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
+    ? raw
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
+    : [];
 
   const matched = new Set<RequirementBucket>();
   tokens.forEach((t) => {
@@ -67,7 +82,18 @@ function parseRequirement(raw: string | null | undefined): RequirementBucket[] {
     if (lower.includes("site control") || lower.includes("site-control")) {
       matched.add("Site Control");
     }
+    if (lower.includes("construction/execution") || lower.includes("construction / execution")) {
+      matched.add("Construction/Execution");
+    }
   });
+
+  if (isCheckedFlag((step as any).financing_flag)) matched.add("Financing");
+  if (isCheckedFlag((step as any).permitting_compliance_flag)) matched.add("Permitting/Compliance");
+  if (isCheckedFlag((step as any).engineering_flag)) matched.add("Engineering");
+  if (isCheckedFlag((step as any).interconnection_flag)) matched.add("Interconnection");
+  if (isCheckedFlag((step as any).site_control_flag)) matched.add("Site Control");
+  if (isCheckedFlag((step as any).construction_execution_flag)) matched.add("Construction/Execution");
+
   return Array.from(matched);
 }
 
@@ -111,9 +137,10 @@ export default function Requirements() {
       Engineering: [],
       Interconnection: [],
       "Site Control": [],
+      "Construction/Execution": [],
     };
     (steps ?? []).forEach((step) => {
-      const matches = parseRequirement((step as any).requirement);
+      const matches = parseRequirement(step);
       matches.forEach((bucket) => {
         base[bucket].push(step);
       });

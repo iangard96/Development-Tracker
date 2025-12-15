@@ -1,0 +1,78 @@
+Applicable,Risk Heatmap,Order,Status,Phase,Activity,Dev Type,Planned Spend ($),Actual Spend ($),Start Date,End Date,Duration (Days),Purpose / Related Activity,Agency,Owner,Responsible Individual,Process,Link,Site Control,Engineering,Interconnection,Due Diligence,Permitting / Compliance,Financing,Construction / Execution,Storage Hybrid Impact,Milestones / NTP Gates
+Yes,GREEN,,,Early,Project SPV / LLC Formation,Due Diligence,,,,,5,,,,,,,,,,X,,,,N,N
+Yes,RED,,,Early,Site Control Executed,Site Control,,,,,30,,,,,,,X,,,X,,,,N,Y
+Yes,GREEN,,,Early,Capacity Screening / Hosting Capacity Review,Due Diligence,,,,,7,,,,,,,X,,,X,,,,N,N
+Yes,GREEN,,,Early,FAA Notice Criteria Tool Review,Interconnection,,,,,14,,,,,,,X,,X,,,X,,Y,N
+Yes,GREEN,,,Early,Critical Issues / Fatal Flaw Analysis,Due Diligence,,,,,7,,,,,,,X,,,X,,,,N,N
+Yes,GREEN,,,Early,Community / Host Stakeholder Outreach,Due Diligence,,,,,14,,,,,,,X,,,X,,,,N,N
+Yes,YELLOW,,,Early,Initial Design (10%),Engineering,,,,,10,,,,,,,X,X,,,,,,N,N
+Yes,GREEN,,,Mid,Ownership & Cap Table Confirmed,Due Diligence,,,,,14,,,,,,,,,X,X,,,,N,N
+Yes,GREEN,,,Mid,Recording of Memorandum (if required),Site Control,,,,,14,,,,,,,X,,,,X,X,,N,N
+Yes,GREEN,,,Mid,Title Report (ground),Site Control,,,,,20,,,,,,,X,,,X,,,,N,N
+Yes,GREEN,,,Mid,Title Commitment / Pro Forma Policy,Site Control,,,,,20,,,,,,,X,,X,,,,,N,N
+Yes,GREEN,,,Mid,Landowner / Host Estoppel,Site Control,,,,,14,,,,,,,X,,X,,,,,N,N
+Yes,GREEN,,,Mid,E911 Address Assigned,Permitting / Compliance,,,,,5,,,,,,,,,,X,X,,,N,N
+Yes,GREEN,,,Mid,Preliminary Utility Coordination,Interconnection,,,,,14,,,,,,,,,X,X,,,,N,N
+Yes,GREEN,,,Mid,Energy Yield / PVSyst Production Report,Engineering,,,,,7,,,,,,,,X,,,,,,Y,N
+Yes,RED,,,Mid,30% Design (Permit / Utility Concept),Interconnection,,,,,20,,,,,,,,X,X,,X,,,N,N
+Yes,YELLOW,,,Mid,60% Design (IFR),Engineering,,,,,20,,,,,,,,X,X,,X,,,N,N
+Yes,GREEN,,,Mid,As-Built Drawings,Engineering,,,,,10,,,,,,,,X,,,,,,N,N
+Yes,RED,,,Mid,Interconnection Application Submitted & Deemed Complete,Interconnection,,,,,15,,,,,,,,X,X,,,,,Y,Y
+Conditional,GREEN,,,Mid,Feasibility Study (if applicable),Due Diligence,,,,,45,,,,,,,,X,,X,,,X,N,N
+Conditional,GREEN,,,Mid,System Impact Study (if applicable),Due Diligence,,,,,90,,,,,,,,X,,X,,,,N,N
+Yes,GREEN,,,Mid,Metering & Protection Requirements Approved,Interconnection,,,,,14,,,,,,,,,X,,,,,Y,N
+Yes,GREEN,,,Mid,BTM PPA / ESA / Lease Executed (if applicable),Site Control,,,,,14,,,,,,,X,,,X,,X,,N,N
+N/A,GREEN,,,Mid,Community Solar Program Application / REC Submission,Financing,,,,,14,,,,,,,,,,X,,X,,N,N
+N/A,GREEN,,,Mid,Subscriber Management Plan (FTM CS),Due Diligence,,,,,14,,,,,,,,,,X,,,X,N,N
+N/A,GREEN,,,Mid,Minimum Subscription Threshold Met (FTM CS),Financing,,,,,14,,,,,,,,,X,,,X,,N,N
+Yes,GREEN,,,Mid,REC Registration & Tracking Setup,Financing,,,,,14,,,,,,,,,X,,,X,,N,N
+Yes,GREEN,,,Mid,Incentive / Rebate Reservations Secured,Financing,,,,,14,,,,,,,,,X,,,X,,N,N
+Yes,YELLOW,,,Mid,Phase I Environmental Site Assessment,Due Diligence,,,,,30,,,,,,,X,,,X,,X,,N,N
+Yes,GREEN,,,Mid,Threatened & Endangered Species Review,Due Diligence,,,,,30,,,,,,,,,,X,,X,,N,N
+Yes,GREEN,,,Mid,Cultural Resources Review / SHPO Concurrence,Due Diligence,,,,,30,,,,,,,,,,X,,,,N,N
+Yes,GREEN,,,Mid,Unanticipated Discovery Plan,Due Diligence,,,,,14,,,,,,,,,,X,,X,,N,N
+Yes,YELLOW,,,Mid,Wetland Delineation,Due Diligence,,,,,30,,,,,,,,,,X,,X,,N,N
+Yes,YELLOW,,,Mid,Wetland Delineation Concurrence,Due Diligence,,,,,30,,,,,,,,,,X,,X,,N,N
+Yes,RED,,,Mid,Stormwater Pollution Prevention Plan (SWPPP),Permitting / Compliance,,,,,14,,,,,,,,,,X,X,,,N,N
+Yes,GREEN,,,Mid,Erosion & Sediment Control (E&S) Plans,Permitting / Compliance,,,,,14,,,,,,,,,,X,X,,,N,N
+Yes,GREEN,,,Mid,Base Flood Elevation / Floodplain Study,Due Diligence,,,,,14,,,,,,,,,,X,,,,N,N
+Conditional,GREEN,,,Mid,Noise Impact Assessment,Due Diligence,,,,,14,,,,,,,,,,X,,,,N,N
+Conditional,GREEN,,,Mid,Visual / Glare Assessment (if required),Due Diligence,,,,,14,,,,,,,,,,X,,,,N,N
+Yes,GREEN,,,Mid,ALTA Survey with Topography,Site Control,,,,,20,,,,,,,X,,,X,,,,N,N
+Yes,GREEN,,,Mid,Subsurface Utility Investigation / Utility Locates,Interconnection,,,,,14,,,,,,,,,X,,X,,,N,N
+Yes,GREEN,,,Mid,Geotechnical Investigation,Engineering,,,,,20,,,,,,,,X,,X,X,,,N,N
+Yes,GREEN,,,Mid,Pile Load / Pull Testing,Engineering,,,,,14,,,,,,,,X,,X,,,,N,N
+Yes,YELLOW,,,Mid,Drain Tile Investigation & Repair Plan,Engineering,,,,,15,,,,,,,,X,,X,,,,N,N
+Yes,GREEN,,,Mid,Agricultural Impact Mitigation Agreement (AIMA),Due Diligence,,,,,30,,,,,,,,,,X,,,,N,N
+Yes,GREEN,,,Mid,Farmland Preservation Coordination,Due Diligence,,,,,14,,,,,,,X,,,X,,,,N,N
+Yes,GREEN,,,Mid,Topsoil Segregation & Restoration Plan,Due Diligence,,,,,14,,,,,,,,,X,X,,,,N,N
+Yes,GREEN,,,Mid,Site Plan Approval,Due Diligence,,,,,60,,,,,,,,X,,X,,,,N,N
+Yes,GREEN,,,Mid,Fire Marshal / Fire Code Approval,Permitting / Compliance,,,,,14,,,,,,,,X,,X,X,,,Y,N
+Yes,GREEN,,,Mid,"Long-Lead Equipment Procured (Transformers, Switchgear)",Due Diligence,,,,,45,,,,,,,,X,,X,,,,N,N
+Yes,GREEN,,,Mid,Site Logistics & Laydown Plan,Construction / Execution,,,,,14,,,,,,,,,,X,,,X,N,N
+Yes,GREEN,,,Mid,Health & Safety Plan (OSHA / Site-Specific),Construction / Execution,,,,,7,,,,,,,,,,X,,,X,N,N
+Yes,YELLOW,,,Mid,Environmental Compliance Plan (SWPPP Implementation),Permitting / Compliance,,,,,30,,,,,,,,,,X,X,,,N,N
+Yes,GREEN,,,Mid,Performance / Acceptance Testing Criteria Defined,Due Diligence,,,,,14,,,,,,,,,,X,X,,,N,N
+Yes,GREEN,,,Mid,O&M Agreement Executed,Due Diligence,,,,,14,,,,,,,,,,X,,,,N,N
+Yes,GREEN,,,Mid,Vegetation Management / Maintenance Plan,Due Diligence,,,,,14,,,,,,,,,,X,X,,,N,N
+Yes,GREEN,,,Mid,Tax Credit Eligibility File Assembled,Financing,,,,,14,,,,,,,,,,,X,X,,N,N
+Yes,GREEN,,,Late,Utility Account Setup,Interconnection,,,,,5,,,,,,,,,X,,X,,,N,N
+Yes,YELLOW,,,Late,90% Design (IFC Draft),Engineering,,,,,15,,,,,,,,X,,,X,,,N,N
+Yes,YELLOW,,,Late,100% Design / Issued for Construction,Engineering,,,,,10,,,,,,,,X,,,X,,X,N,N
+Conditional,GREEN,,,Late,Facilities / Construction Study (if applicable),Construction / Execution,,,,,60,,,,,,,,,,,X,,X,N,N
+Yes,RED,,,Late,Interconnection Agreement Executed,Interconnection,,,,,30,,,,,,,,,X,,,,X,Y,Y
+Yes,RED,,,Late,Utility Make-Ready Scope & Cost Locked,Interconnection,,,,,14,,,,,,,,,X,X,,,,N,N
+Yes,RED,,,Late,Zoning / Land Use Approval,Permitting / Compliance,,,,,90,,,,,,,,,,,X,,X,N,Y
+Yes,RED,,,Late,Building Permit,Permitting / Compliance,,,,,30,,,,,,,,,,,X,,X,N,N
+Yes,RED,,,Late,Electrical Permit,Permitting / Compliance,,,,,21,,,,,,,,,,,X,,X,N,N
+Yes,RED,,,Late,Road Use / Crane / Traffic Permits,Permitting / Compliance,,,,,14,,,,,,,,,,X,X,,,N,N
+Yes,RED,,,Late,Decommissioning Plan Approved,Permitting / Compliance,,,,,21,,,,,,,,,,,X,,X,N,N
+Yes,GREEN,,,Late,Decommissioning Financial Assurance Posted,Permitting / Compliance,,,,,21,,,,,,,,,X,,X,,X,N,N
+Yes,RED,,,Late,EPC Contract Executed,Construction / Execution,,,,,30,,,,,,,,,,X,,,X,N,N
+Yes,GREEN,,,Late,Construction Schedule Baseline Approved,Construction / Execution,,,,,10,,,,,,,,,,X,,,X,N,N
+Yes,GREEN,,,Late,Commissioning Plan Approved,Construction / Execution,,,,,14,,,,,,,,,,X,,,X,Y,N
+Yes,GREEN,,,Late,Utility Witness Test Scheduled,Interconnection,,,,,10,,,,,,,,,X,X,,,X,N,N
+Yes,GREEN,,,Late,Builder’s Risk Insurance Bound,Due Diligence,,,,,10,,,,,,,,,,X,,,,N,N
+Yes,GREEN,,,Late,General Liability / WC / Auto Insurance,Due Diligence,,,,,10,,,,,,,,,,X,,,,N,N
+Yes,GREEN,,,Late,"Performance Security (Bond / LC / PG, if required)",Due Diligence,,,,,14,,,,,,,,,,X,,X,X,N,N
+Yes,RED,,,Late,Financing Ready for Construction Draws,Construction / Execution,,,,,30,,,,,,,,,,,,X,X,N,N

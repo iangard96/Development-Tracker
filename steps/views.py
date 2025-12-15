@@ -1,4 +1,10 @@
 # steps/views.py
+import csv
+from datetime import datetime
+from decimal import Decimal
+from pathlib import Path
+
+from django.conf import settings
 from django.db import connection, transaction
 from django.db.models import OuterRef, Subquery
 from rest_framework import viewsets, status
@@ -115,6 +121,204 @@ class ProjectIncentivesView(generics.RetrieveUpdateAPIView):
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by("id")
     serializer_class = ProjectSerializer
+
+    CSV_TEMPLATES = {
+        "BTM Rooftop": "BTM Rooftop.csv",
+        "BTM Ground": "BTM Ground.csv",
+        "FTM Rooftop Community Solar": "FTM Rooftop Community Solar.csv",
+        "FTM Ground Community Solar": "FTM Ground Community Solar.csv",
+    }
+
+    def _phase_to_int(self, value: str | None):
+        if value is None:
+            return None
+        lookup = {
+            "1": 1,
+            "pre dev": 1,
+            "early": 1,
+            "2": 2,
+            "dev": 2,
+            "mid": 2,
+            "3": 3,
+            "pre con": 3,
+            "late": 3,
+        }
+        key = str(value).strip().lower()
+        return lookup.get(key, None)
+
+    def _to_decimal(self, raw: str | None):
+        if raw is None:
+            return None
+        val = str(raw).replace(",", "").strip()
+        if val == "":
+            return None
+        try:
+            return Decimal(val)
+        except Exception:
+            return None
+
+    def _to_date(self, raw: str | None):
+        if raw is None:
+            return None
+        val = str(raw).strip()
+        if val == "":
+            return None
+        for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y"):
+            try:
+                return datetime.strptime(val, fmt).date()
+            except Exception:
+                continue
+        try:
+            dt = datetime.fromisoformat(val)
+            return dt.date()
+        except Exception:
+            return None
+
+    def _to_int(self, raw: str | None):
+        if raw is None:
+            return None
+        val = str(raw).strip()
+        if val == "":
+            return None
+        try:
+            return int(val)
+        except Exception:
+            return None
+
+    def _normalize_dev_type(self, raw: str | None):
+        if not raw:
+            return None
+        key = str(raw).strip().lower()
+        mapping = {
+            "permitting / compliance": "Permitting",
+            "permitting": "Permitting",
+            "due diligence": "Due Diligence",
+            "interconnection": "Interconnection",
+            "site control": "Site Control",
+            "engineering": "Engineering",
+            "financing": "Financing",
+            "construction / execution": "Construction / Execution",
+        }
+        return mapping.get(key, raw)
+
+    def _flag_value(self, raw: str | None):
+        if raw is None:
+            return None
+        val = str(raw).strip().lower()
+        if val in {"x", "yes", "y", "1", "true"}:
+            return "X"
+        if val == "n/a":
+            return "N/A"
+        if val == "n":
+            return "N"
+        return raw
+
+    def _derive_requirement_tags(self, row: dict):
+        tags: list[str] = []
+        if self._flag_value(row.get("Site Control")) == "X":
+            tags.append("Site Control")
+        if self._flag_value(row.get("Engineering")) == "X":
+            tags.append("Engineering")
+        if self._flag_value(row.get("Interconnection")) == "X":
+            tags.append("Interconnection")
+        if self._flag_value(row.get("Permitting / Compliance")) == "X":
+            tags.append("Permitting/Compliance")
+        if self._flag_value(row.get("Financing")) == "X":
+            tags.append("Financing")
+        if self._flag_value(row.get("Construction / Execution")) == "X":
+            tags.append("Construction/Execution")
+        return tags
+
+    def _bootstrap_from_csv(self, project: Project) -> list[int]:
+        """
+        Load default activities for a project type from CSV (if present).
+        Returns list of new step IDs or empty if no CSV match.
+        """
+        template_name = self.CSV_TEMPLATES.get(project.project_type or "")
+        if not template_name:
+            return []
+
+        csv_path = Path(settings.BASE_DIR) / template_name
+        if not csv_path.exists():
+            return []
+
+        inserted_ids: list[int] = []
+
+        with connection.cursor() as cur, open(csv_path, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            if not reader.fieldnames:
+                return []
+
+            # ensure serial is aligned
+            cur.execute(
+                '''
+                SELECT setval(
+                    pg_get_serial_sequence('"app"."DevTracker"', 'id'),
+                    COALESCE((SELECT MAX(id) FROM "app"."DevTracker"), 1)
+                );
+                '''
+            )
+
+            for idx, row in enumerate(reader, start=1):
+                tags = self._derive_requirement_tags(row)
+                requirement_val = ", ".join(tags) if tags else None
+
+                cols = [
+                    ("risk_heatmap", (row.get("Risk Heatmap") or "").strip() or None),
+                    ('"Development Steps"', (row.get("Activity") or "").strip() or f"Activity {idx}"),
+                    ("phase", self._phase_to_int(row.get("Phase"))),
+                    ("start_date", self._to_date(row.get("Start Date"))),
+                    ("end_date", self._to_date(row.get("End Date"))),
+                    ("status", (row.get("Status") or "").strip() or None),
+                    ("dev_type", self._normalize_dev_type(row.get("Dev Type"))),
+                    ("planned_spend", self._to_decimal(row.get("Planned Spend ($)"))),
+                    ("actual_spend", self._to_decimal(row.get("Actual Spend ($)"))),
+                    ("agency", (row.get("Agency") or "").strip() or None),
+                    ("owner", (row.get("Owner") or "").strip() or None),
+                    ("responsible_party", (row.get("Responsible Party") or "").strip() or None),
+                    ("responsible_individual", (row.get("Responsible Individual") or "").strip() or None),
+                    ("process", (row.get("Process") or "").strip() or None),
+                    ("link", (row.get("Link") or "").strip() or None),
+                    ("requirement", requirement_val),
+                    ("site_control_flag", self._flag_value(row.get("Site Control"))),
+                    ("engineering_flag", self._flag_value(row.get("Engineering"))),
+                    ("interconnection_flag", self._flag_value(row.get("Interconnection"))),
+                    ("permitting_compliance_flag", self._flag_value(row.get("Permitting / Compliance"))),
+                    ("financing_flag", self._flag_value(row.get("Financing"))),
+                    ("construction_execution_flag", self._flag_value(row.get("Construction / Execution"))),
+                    ("storage_hybrid_impact", (row.get("Storage Hybrid Impact") or "").strip() or None),
+                    ("milestones_ntp_gates", (row.get("Milestones / NTP Gates") or "").strip() or None),
+                    ("purpose_related_activity", self._to_int(row.get("Purpose / Related Activity"))),
+                    ("project_id", project.id),
+                ]
+
+                col_names = [c for c, _ in cols]
+                placeholders = ["%s"] * len(cols)
+                values = [v for _, v in cols]
+
+                cur.execute(
+                    f'''
+                    INSERT INTO "app"."DevTracker" ({", ".join(col_names)})
+                    VALUES ({", ".join(placeholders)})
+                    RETURNING id;
+                    ''',
+                    values,
+                )
+                new_id = cur.fetchone()[0]
+                inserted_ids.append(new_id)
+
+                order_value = row.get("Order")
+                try:
+                    seq_value = int(order_value) if order_value not in (None, "") else idx
+                except Exception:
+                    seq_value = idx
+                StepOrder.objects.update_or_create(
+                    project=project,
+                    step_id=new_id,
+                    defaults={"sequence": seq_value},
+                )
+
+        return inserted_ids
     
     @transaction.atomic
     def create(self, request, *args, **kwargs):
@@ -151,6 +355,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if existing.exists():
             ser = DevelopmentStepSerializer(existing, many=True)
             return Response(ser.data, status=status.HTTP_200_OK)
+
+        # 1b) Try CSV template for the new project types
+        try:
+            inserted = self._bootstrap_from_csv(project)
+            if inserted:
+                fresh = DevelopmentStep.objects.filter(project_id=project.id).order_by("id")
+                ser = DevelopmentStepSerializer(fresh, many=True)
+                return Response(ser.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            print("CSV bootstrap failed:", repr(e))
 
         try:
             with connection.cursor() as cur:

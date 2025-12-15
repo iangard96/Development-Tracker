@@ -45,6 +45,7 @@ class DevelopmentStep(models.Model):
     # IMPORTANT: AutoField so Django does NOT try to insert id=NULL
     id = models.AutoField(primary_key=True, db_column="id")
 
+    risk_heatmap = models.CharField(db_column="risk_heatmap", max_length=32, blank=True, null=True)
     name = models.TextField(db_column="Development Steps")
     phase = models.IntegerField(db_column="phase", blank=True, null=True)
     start_date = models.DateField(db_column="start_date", blank=True, null=True)
@@ -73,6 +74,7 @@ class DevelopmentStep(models.Model):
         null=True,
     )
     agency = models.CharField(db_column="agency", max_length=255, blank=True, null=True)
+    owner = models.CharField(db_column="owner", max_length=255, blank=True, null=True)
     responsible_party = models.CharField(
         db_column="responsible_party", max_length=255, blank=True, null=True
     )
@@ -82,6 +84,14 @@ class DevelopmentStep(models.Model):
     process = models.TextField(db_column="process", blank=True, null=True)
     link = models.TextField(db_column="link", blank=True, null=True)
     requirement = models.TextField(db_column="requirement", blank=True, null=True)
+    site_control_flag = models.CharField(db_column="site_control_flag", max_length=16, blank=True, null=True)
+    engineering_flag = models.CharField(db_column="engineering_flag", max_length=16, blank=True, null=True)
+    interconnection_flag = models.CharField(db_column="interconnection_flag", max_length=16, blank=True, null=True)
+    permitting_compliance_flag = models.CharField(db_column="permitting_compliance_flag", max_length=16, blank=True, null=True)
+    financing_flag = models.CharField(db_column="financing_flag", max_length=16, blank=True, null=True)
+    construction_execution_flag = models.CharField(db_column="construction_execution_flag", max_length=16, blank=True, null=True)
+    storage_hybrid_impact = models.CharField(db_column="storage_hybrid_impact", max_length=64, blank=True, null=True)
+    milestones_ntp_gates = models.CharField(db_column="milestones_ntp_gates", max_length=255, blank=True, null=True)
     purpose_related_activity = models.IntegerField(
         db_column="purpose_related_activity", blank=True, null=True
     )

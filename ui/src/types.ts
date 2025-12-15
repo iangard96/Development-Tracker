@@ -2,10 +2,19 @@
 
 export type StepStatus = "" | "Not Started" | "In Progress" | "Completed" | "Not Applicable";
 
-export type DevType = "" | "Interconnection" | "Permitting" | "Due Diligence";
+export type DevType =
+  | ""
+  | "Interconnection"
+  | "Permitting"
+  | "Due Diligence"
+  | "Site Control"
+  | "Engineering"
+  | "Financing"
+  | "Construction / Execution";
 
 export interface DevStep {
   id: number;
+  risk_heatmap?: string | null;
   name: string;
   phase: number | null;
   start_date: string | null;
@@ -26,6 +35,15 @@ export interface DevStep {
   process?: string | null;
   link?: string | null;
   requirement?: string | null;
+  site_control_flag?: string | null;
+  engineering_flag?: string | null;
+  interconnection_flag?: string | null;
+  permitting_compliance_flag?: string | null;
+  financing_flag?: string | null;
+  construction_execution_flag?: string | null;
+  storage_hybrid_impact?: string | null;
+  owner?: string | null;
+  milestones_ntp_gates?: string | null;
 }
 
 // Project record from steps_project table / ProjectSerializer
@@ -33,7 +51,12 @@ export type Project = {
   id: number;
   project_name: string;
   legal_name: string;
-  project_type: "GM" | "RT" | "OT" | null;
+  project_type:
+    | "BTM Rooftop"
+    | "BTM Ground"
+    | "FTM Rooftop Community Solar"
+    | "FTM Ground Community Solar"
+    | null;
   project_details: "GM_FIXED" | "GM_TRACK" | "BALLASTED" | "ROOFTOP" | null;
   offtake_structure: "FTM_UTIL" | "FTM_DIST" | "BTM" | null;
   size_ac_mw: number | null;

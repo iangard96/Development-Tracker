@@ -83,7 +83,14 @@ const requirementLabel: React.CSSProperties = {
 const requirementCheckbox: React.CSSProperties = {
   margin: 0,
 };
-const REQUIREMENT_OPTIONS = ["Engineering", "Permitting/Compliance", "Financing", "Interconnection", "Site Control"] as const;
+const REQUIREMENT_OPTIONS = [
+  "Engineering",
+  "Permitting/Compliance",
+  "Financing",
+  "Interconnection",
+  "Site Control",
+  "Construction/Execution",
+] as const;
 const sortBtn: React.CSSProperties = {
   background: "none",
   border: "none",
@@ -110,6 +117,12 @@ function normalizeForDateInput(value?: string | null): string {
 /** Keep the native title in sync so long text is visible on hover. */
 function syncTitle(e: React.ChangeEvent<HTMLInputElement>) {
   e.currentTarget.title = e.currentTarget.value;
+}
+
+function isCheckedFlag(value: unknown): boolean {
+  if (value === undefined || value === null) return false;
+  const lower = String(value).trim().toLowerCase();
+  return ["x", "yes", "y", "1", "true"].includes(lower);
 }
 
 /** Small reusable date cell that PATCHes one field and returns the fresh row. */
@@ -699,16 +712,28 @@ export default function DevActivities() {
     const map = new Map<number, Set<string>>();
     (rows ?? []).forEach((r) => {
       const raw = ((r as any).requirement ?? "") as string;
-      if (!raw) {
-        map.set(r.id, new Set());
-        return;
-      }
       const set = new Set(
         raw
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean),
       );
+      if (set.size === 0) {
+        const flagMap: Array<[keyof DevStep, string]> = [
+          ["site_control_flag", "Site Control"],
+          ["engineering_flag", "Engineering"],
+          ["interconnection_flag", "Interconnection"],
+          ["permitting_compliance_flag", "Permitting/Compliance"],
+          ["financing_flag", "Financing"],
+          ["construction_execution_flag", "Construction/Execution"],
+        ];
+        flagMap.forEach(([key, label]) => {
+          const val = (r as any)[key];
+          if (isCheckedFlag(val)) {
+            set.add(label);
+          }
+        });
+      }
       map.set(r.id, set);
     });
     return map;
@@ -1300,6 +1325,10 @@ export default function DevActivities() {
                   Activity {sortBy === "name" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                 </button>
               </th>
+              <th style={{ ...th, minWidth: 140 }}>Risk Heatmap</th>
+              <th style={{ ...th, minWidth: 160 }}>Owner</th>
+              <th style={{ ...th, minWidth: 180 }}>Storage Hybrid Impact</th>
+              <th style={{ ...th, minWidth: 180 }}>Milestones / NTP Gates</th>
               <th style={{ ...th, minWidth: 200 }}>Dev Type</th>
               <th style={{ ...th, minWidth: "140px" }}>
                 <button style={sortBtn} onClick={() => toggleSort("planned_spend")}>
@@ -1455,39 +1484,176 @@ export default function DevActivities() {
                       (r.name || "").toLowerCase().includes("custom");
                     if (!isCustom) return r.name;
                     return (
-                    <input
-                      type="text"
-                      defaultValue={r.name}
-                      onBlur={async (e) => {
-                        const val = e.currentTarget.value.trim();
-                        if (!val) {
-                          e.currentTarget.value = r.name;
-                          return;
-                        }
-                        if (val === r.name) return;
-                        try {
-                          const fresh = await updateStepMeta(r.id, { name: val });
-                          applyFresh(fresh);
-                        } catch (err: any) {
-                          console.error(err);
-                          alert(`Failed to update activity name.\n${err?.message ?? ""}`);
-                          e.currentTarget.value = r.name;
-                        }
-                      }}
-                      style={{
-                        width: "100%",
-                        minWidth: 260,
-                        padding: "8px 10px",
-                        borderRadius: 5,
-                        border: "1px solid #e5e7eb",
-                        fontSize: 13,
-                        boxSizing: "border-box",
-                      }}
-                    />
+                      <input
+                        type="text"
+                        defaultValue={r.name}
+                        onBlur={async (e) => {
+                          const val = e.currentTarget.value.trim();
+                          if (!val) {
+                            e.currentTarget.value = r.name;
+                            return;
+                          }
+                          if (val === r.name) return;
+                          try {
+                            const fresh = await updateStepMeta(r.id, { name: val });
+                            applyFresh(fresh);
+                          } catch (err: any) {
+                            console.error(err);
+                            alert(`Failed to update activity name.\n${err?.message ?? ""}`);
+                            e.currentTarget.value = r.name;
+                          }
+                        }}
+                        style={{
+                          width: "100%",
+                          minWidth: 260,
+                          padding: "8px 10px",
+                          borderRadius: 5,
+                          border: "1px solid #e5e7eb",
+                          fontSize: 13,
+                          boxSizing: "border-box",
+                        }}
+                      />
                     );
                   })()}
                 </td>
 
+
+
+                {/* Risk Heatmap */}
+                <td style={td}>
+                  <input
+                    type="text"
+                    defaultValue={(r as any).risk_heatmap ?? ""}
+                    placeholder="Heatmap"
+                    title={(r as any).risk_heatmap ?? ""}
+                    onChange={syncTitle}
+                    onBlur={async (e) => {
+                      const val = e.currentTarget.value.trim();
+                      const current = (r as any).risk_heatmap ?? "";
+                      if (val === current) return;
+                      try {
+                        const fresh = await updateStepMeta(r.id, { risk_heatmap: val || null });
+                        applyFresh(fresh);
+                      } catch (err: any) {
+                        console.error(err);
+                        alert(`Failed to update risk heatmap.\n${err?.message ?? ""}`);
+                        e.currentTarget.value = current;
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      minWidth: 140,
+                      padding: "6px 10px",
+                      borderRadius: 5,
+                      border: "1px solid #e5e7eb",
+                      fontSize: 13,
+                      boxSizing: "border-box",
+                    }}
+                    size={24}
+                  />
+                </td>
+
+                {/* Owner */}
+                <td style={td}>
+                  <input
+                    type="text"
+                    defaultValue={(r as any).owner ?? ""}
+                    placeholder="Owner"
+                    title={(r as any).owner ?? ""}
+                    onChange={syncTitle}
+                    onBlur={async (e) => {
+                      const val = e.currentTarget.value.trim();
+                      const current = (r as any).owner ?? "";
+                      if (val === current) return;
+                      try {
+                        const fresh = await updateStepMeta(r.id, { owner: val || null });
+                        applyFresh(fresh);
+                      } catch (err: any) {
+                        console.error(err);
+                        alert(`Failed to update owner.\n${err?.message ?? ""}`);
+                        e.currentTarget.value = current;
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      minWidth: 160,
+                      padding: "6px 10px",
+                      borderRadius: 5,
+                      border: "1px solid #e5e7eb",
+                      fontSize: 13,
+                      boxSizing: "border-box",
+                    }}
+                    size={26}
+                  />
+                </td>
+
+                {/* Storage Hybrid Impact */}
+                <td style={td}>
+                  <input
+                    type="text"
+                    defaultValue={(r as any).storage_hybrid_impact ?? ""}
+                    placeholder="Storage hybrid impact"
+                    title={(r as any).storage_hybrid_impact ?? ""}
+                    onChange={syncTitle}
+                    onBlur={async (e) => {
+                      const val = e.currentTarget.value.trim();
+                      const current = (r as any).storage_hybrid_impact ?? "";
+                      if (val === current) return;
+                      try {
+                        const fresh = await updateStepMeta(r.id, { storage_hybrid_impact: val || null });
+                        applyFresh(fresh);
+                      } catch (err: any) {
+                        console.error(err);
+                        alert(`Failed to update storage hybrid impact.\n${err?.message ?? ""}`);
+                        e.currentTarget.value = current;
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      minWidth: 180,
+                      padding: "6px 10px",
+                      borderRadius: 5,
+                      border: "1px solid #e5e7eb",
+                      fontSize: 13,
+                      boxSizing: "border-box",
+                    }}
+                    size={28}
+                  />
+                </td>
+
+                {/* Milestones / NTP Gates */}
+                <td style={td}>
+                  <input
+                    type="text"
+                    defaultValue={(r as any).milestones_ntp_gates ?? ""}
+                    placeholder="Milestones / NTP Gates"
+                    title={(r as any).milestones_ntp_gates ?? ""}
+                    onChange={syncTitle}
+                    onBlur={async (e) => {
+                      const val = e.currentTarget.value.trim();
+                      const current = (r as any).milestones_ntp_gates ?? "";
+                      if (val === current) return;
+                      try {
+                        const fresh = await updateStepMeta(r.id, { milestones_ntp_gates: val || null });
+                        applyFresh(fresh);
+                      } catch (err: any) {
+                        console.error(err);
+                        alert(`Failed to update milestones / NTP gates.\n${err?.message ?? ""}`);
+                        e.currentTarget.value = current;
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      minWidth: 180,
+                      padding: "6px 10px",
+                      borderRadius: 5,
+                      border: "1px solid #e5e7eb",
+                      fontSize: 13,
+                      boxSizing: "border-box",
+                    }}
+                    size={30}
+                  />
+                </td>
                 {/* Dev Type */}
                 <td style={{ ...td, minWidth: 200 }}>
                   <DevTypeCell
@@ -1798,6 +1964,14 @@ export default function DevActivities() {
                   {REQUIREMENT_OPTIONS.map((opt) => {
                     const selected = new Set(requirementSets.get(r.id) ?? []);
                     const checked = selected.has(opt);
+                    const flagPayloadKey: Record<string, keyof DevStep> = {
+                      "Engineering": "engineering_flag",
+                      "Permitting/Compliance": "permitting_compliance_flag",
+                      "Financing": "financing_flag",
+                      "Interconnection": "interconnection_flag",
+                      "Site Control": "site_control_flag",
+                      "Construction/Execution": "construction_execution_flag",
+                    };
                     return (
                       <label key={opt} style={requirementLabel}>
                         <input
@@ -1812,8 +1986,13 @@ export default function DevActivities() {
                               next.delete(opt);
                             }
                             const nextVal = Array.from(next).join(", ");
+                            const payload: any = { requirement: nextVal || null };
+                            const flagKey = flagPayloadKey[opt];
+                            if (flagKey) {
+                              payload[flagKey] = e.target.checked ? "X" : null;
+                            }
                             try {
-                              const fresh = await updateStepMeta(r.id, { requirement: nextVal || null });
+                              const fresh = await updateStepMeta(r.id, payload);
                               applyFresh(fresh);
                             } catch (err: any) {
                               console.error(err);
