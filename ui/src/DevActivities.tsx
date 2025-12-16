@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import type { DevStep, DevType } from "./types";
+import { getRequirementTemplateLookup, normalizeActivityName, type RequirementLabel } from "./requirementTemplates";
 import {
   fetchStepsForProject,
   updateStepDates,
@@ -91,6 +92,14 @@ const REQUIREMENT_OPTIONS = [
   "Site Control",
   "Construction/Execution",
 ] as const;
+const REQUIREMENT_FLAG_KEYS: Record<RequirementLabel, keyof DevStep> = {
+  Engineering: "engineering_flag",
+  "Permitting/Compliance": "permitting_compliance_flag",
+  Financing: "financing_flag",
+  Interconnection: "interconnection_flag",
+  "Site Control": "site_control_flag",
+  "Construction/Execution": "construction_execution_flag",
+};
 const sortBtn: React.CSSProperties = {
   background: "none",
   border: "none",
@@ -775,6 +784,7 @@ export default function DevActivities() {
   >({});
   const rowRefs = useRef<Record<number, HTMLTableRowElement | null>>({});
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
+  const seededRequirementDefaults = useRef<Set<number>>(new Set());
   const [highlighted, setHighlighted] = useState<Set<number>>(new Set());
   const [contactsMeta, setContactsMeta] = useState<
     { id: number; organization: string; name: string }
@@ -789,6 +799,10 @@ export default function DevActivities() {
     }, 200);
     return () => window.clearTimeout(handle);
   }, [searchInput]);
+
+  useEffect(() => {
+    seededRequirementDefaults.current = new Set();
+  }, [projectId]);
 
   const applyFresh = useCallback(
     (fresh: DevStep) =>
@@ -958,6 +972,43 @@ export default function DevActivities() {
     });
     return map;
   }, [rows]);
+
+  useEffect(() => {
+    if (!rows || !project?.project_type) return;
+    const templateLookup = getRequirementTemplateLookup(project.project_type);
+    if (!templateLookup) return;
+
+    const pendingSeeds = rows
+      .map((row) => {
+        if (seededRequirementDefaults.current.has(row.id)) return null;
+        const existing = requirementSets.get(row.id);
+        if (existing && existing.size > 0) return null;
+        const key = normalizeActivityName(row.name ?? "");
+        const reqs = templateLookup.get(key);
+        if (!reqs || reqs.size === 0) return null;
+        return { row, reqs };
+      })
+      .filter(Boolean) as { row: DevStep; reqs: Set<RequirementLabel> }[];
+
+    if (pendingSeeds.length === 0) return;
+
+    (async () => {
+      for (const { row, reqs } of pendingSeeds) {
+        const requirementValue = Array.from(reqs).join(", ");
+        const payload: Partial<DevStep> = { requirement: requirementValue || null };
+        Object.entries(REQUIREMENT_FLAG_KEYS).forEach(([label, key]) => {
+          payload[key] = reqs.has(label as RequirementLabel) ? "X" : null;
+        });
+        try {
+          const fresh = await updateStepMeta(row.id, payload);
+          applyFresh(fresh);
+          seededRequirementDefaults.current.add(row.id);
+        } catch (err) {
+          console.warn("Failed to seed requirements from template", row.id, err);
+        }
+      }
+    })();
+  }, [applyFresh, project?.project_type, requirementSets, rows]);
 
   const sorted = useMemo(() => {
     const list = [...deferredFiltered];
@@ -2093,14 +2144,6 @@ export default function DevActivities() {
                     {["Engineering", "Permitting/Compliance", "Financing"].map((opt) => {
                       const selected = new Set(requirementSets.get(r.id) ?? []);
                       const checked = selected.has(opt);
-                      const flagPayloadKey: Record<string, keyof DevStep> = {
-                        "Engineering": "engineering_flag",
-                        "Permitting/Compliance": "permitting_compliance_flag",
-                        "Financing": "financing_flag",
-                        "Interconnection": "interconnection_flag",
-                        "Site Control": "site_control_flag",
-                        "Construction/Execution": "construction_execution_flag",
-                      };
                       return (
                         <label key={opt} style={requirementLabel}>
                           <input
@@ -2116,7 +2159,7 @@ export default function DevActivities() {
                               }
                               const nextVal = Array.from(next).join(", ");
                               const payload: any = { requirement: nextVal || null };
-                              const flagKey = flagPayloadKey[opt];
+                              const flagKey = REQUIREMENT_FLAG_KEYS[opt as RequirementLabel];
                               if (flagKey) {
                                 payload[flagKey] = e.target.checked ? "X" : null;
                               }
@@ -2138,14 +2181,6 @@ export default function DevActivities() {
                     {["Interconnection", "Site Control", "Construction/Execution"].map((opt) => {
                       const selected = new Set(requirementSets.get(r.id) ?? []);
                       const checked = selected.has(opt);
-                      const flagPayloadKey: Record<string, keyof DevStep> = {
-                        "Engineering": "engineering_flag",
-                        "Permitting/Compliance": "permitting_compliance_flag",
-                        "Financing": "financing_flag",
-                        "Interconnection": "interconnection_flag",
-                        "Site Control": "site_control_flag",
-                        "Construction/Execution": "construction_execution_flag",
-                      };
                       return (
                         <label key={opt} style={requirementLabel}>
                           <input
@@ -2161,7 +2196,7 @@ export default function DevActivities() {
                               }
                               const nextVal = Array.from(next).join(", ");
                               const payload: any = { requirement: nextVal || null };
-                              const flagKey = flagPayloadKey[opt];
+                              const flagKey = REQUIREMENT_FLAG_KEYS[opt as RequirementLabel];
                               if (flagKey) {
                                 payload[flagKey] = e.target.checked ? "X" : null;
                               }
