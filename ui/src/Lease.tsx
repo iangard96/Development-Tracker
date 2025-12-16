@@ -197,84 +197,8 @@ export default function Lease() {
         </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <Card title="Lease Template">
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-            <input type="file" accept=".doc,.docx,.odt,.pdf" />
-            <button
-              type="button"
-              onClick={() => alert("Wire this to backend lease merge/template storage.")}
-              style={ghostButton}
-            >
-              Upload template
-            </button>
-            <button
-              type="button"
-              onClick={() => alert("Stub download of current template.")}
-              style={ghostButton}
-            >
-              Download template
-            </button>
-          </div>
-          <p style={{ fontSize: 12, color: "#6b7280", marginTop: 8 }}>
-            Use merge fields like <code>{"{owner_name}"}</code>, <code>{"{apn}"}</code>, <code>{"{base_rent}"}</code>, <code>{"{escalator_pct}"}</code> to auto-fill.
-          </p>
-        </Card>
-
-        <Card title="Schedule of Payments" action={
-          <button
-            type="button"
-            onClick={() => {
-              const csv = ["Period,Year,Amount"];
-              payments.forEach((p) => csv.push([p.period, p.year, p.amount.toFixed(2)].join(",")));
-              const blob = new Blob([csv.join("\n")], { type: "text/csv" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = "payment-schedule.csv";
-              a.click();
-              URL.revokeObjectURL(url);
-            }}
-            style={ghostButton}
-          >
-            Export CSV
-          </button>
-        }>
-          <div style={{ fontSize: 13, color: "#374151", marginBottom: 8 }}>
-            Base rent escalated {lease.escalatorPct}%/{lease.frequency.toLowerCase()} over {lease.termYears} years.
-            Total (incl. option/construction) ≈ ${totalPayments.toLocaleString(undefined, { maximumFractionDigits: 0 })}.
-          </div>
-          <div style={{ maxHeight: 260, overflow: "auto", border: "1px solid #e5e7eb", borderRadius: 8 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-              <thead style={{ background: "#f9fafb", position: "sticky", top: 0 }}>
-                <tr>
-                  <th style={th}>Period</th>
-                  <th style={th}>Year</th>
-                  <th style={th}>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.slice(0, 240).map((p) => (
-                  <tr key={p.period} style={{ borderTop: "1px solid #e5e7eb" }}>
-                    <td style={td}>{p.period}</td>
-                    <td style={td}>{p.year}</td>
-                    <td style={td}>${p.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                  </tr>
-                ))}
-                {payments.length > 240 && (
-                  <tr>
-                    <td style={td} colSpan={3}>
-                      … ({payments.length - 240} more periods)
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      </div>
-
-      <div style={{ marginTop: 16 }}>
+      {/* Lease details moved to the top for quick access */}
+      <div style={{ marginTop: 12 }}>
         <Card title="Lease Details">
           <div style={formGridCols2}>
             <LabeledInput
@@ -397,6 +321,84 @@ export default function Lease() {
           </div>
         </Card>
       </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <Card title="Lease Template">
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <input type="file" accept=".doc,.docx,.odt,.pdf" />
+            <button
+              type="button"
+              onClick={() => alert("Wire this to backend lease merge/template storage.")}
+              style={ghostButton}
+            >
+              Upload template
+            </button>
+            <button
+              type="button"
+              onClick={() => alert("Stub download of current template.")}
+              style={ghostButton}
+            >
+              Download template
+            </button>
+          </div>
+          <p style={{ fontSize: 12, color: "#6b7280", marginTop: 8 }}>
+            Use merge fields like <code>{"{owner_name}"}</code>, <code>{"{apn}"}</code>, <code>{"{base_rent}"}</code>, <code>{"{escalator_pct}"}</code> to auto-fill.
+          </p>
+        </Card>
+
+        <Card title="Schedule of Payments" action={
+          <button
+            type="button"
+            onClick={() => {
+              const csv = ["Period,Year,Amount"];
+              payments.forEach((p) => csv.push([p.period, p.year, p.amount.toFixed(2)].join(",")));
+              const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "payment-schedule.csv";
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            style={ghostButton}
+          >
+            Export CSV
+          </button>
+        }>
+          <div style={{ fontSize: 13, color: "#374151", marginBottom: 8 }}>
+            Base rent escalated {lease.escalatorPct}%/{lease.frequency.toLowerCase()} over {lease.termYears} years.
+            Total (incl. option/construction) ≈ ${totalPayments.toLocaleString(undefined, { maximumFractionDigits: 0 })}.
+          </div>
+          <div style={{ maxHeight: 260, overflow: "auto", border: "1px solid #e5e7eb", borderRadius: 8 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <thead style={{ background: "#f9fafb", position: "sticky", top: 0 }}>
+                <tr>
+                  <th style={th}>Period</th>
+                  <th style={th}>Year</th>
+                  <th style={th}>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payments.slice(0, 240).map((p) => (
+                  <tr key={p.period} style={{ borderTop: "1px solid #e5e7eb" }}>
+                    <td style={td}>{p.period}</td>
+                    <td style={td}>{p.year}</td>
+                    <td style={td}>${p.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                  </tr>
+                ))}
+                {payments.length > 240 && (
+                  <tr>
+                    <td style={td} colSpan={3}>
+                      … ({payments.length - 240} more periods)
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+
     </div>
   );
 }
