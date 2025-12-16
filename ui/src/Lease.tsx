@@ -197,8 +197,7 @@ export default function Lease() {
         </div>
       </div>
 
-      {/* Lease details moved to the top for quick access */}
-      <div style={{ marginTop: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 12 }}>
         <Card title="Lease Details">
           <div style={formGridCols2}>
             <LabeledInput
@@ -320,9 +319,7 @@ export default function Lease() {
             )}
           </div>
         </Card>
-      </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <Card title="Lease Template">
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
             <input type="file" accept=".doc,.docx,.odt,.pdf" />
