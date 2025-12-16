@@ -43,7 +43,13 @@ export type RequirementTemplateEntry = {
 };
 
 export function normalizeActivityName(name: string) {
-  return name.trim().toLowerCase();
+  return name
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/\//g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
 function toRequirementEntries(rawRows: RawRow[]): RequirementTemplateEntry[] {
@@ -67,7 +73,10 @@ const REQUIREMENT_TEMPLATES: Record<TemplateKey, RequirementTemplateEntry[]> = {
 };
 
 export function getRequirementTemplateLookup(projectType: string | null | undefined) {
-  const key = (projectType ?? "") as TemplateKey;
+  const requested = (projectType ?? "").trim().toLowerCase();
+  const key = (Object.keys(REQUIREMENT_TEMPLATES).find(
+    (k) => k.toLowerCase() === requested,
+  ) ?? "") as TemplateKey;
   if (!REQUIREMENT_TEMPLATES[key]) return null;
   const map = new Map<string, Set<RequirementLabel>>();
   REQUIREMENT_TEMPLATES[key].forEach((row) => {

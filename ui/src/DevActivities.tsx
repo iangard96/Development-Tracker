@@ -984,7 +984,16 @@ export default function DevActivities() {
         const existing = requirementSets.get(row.id);
         if (existing && existing.size > 0) return null;
         const key = normalizeActivityName(row.name ?? "");
-        const reqs = templateLookup.get(key);
+        let reqs = templateLookup.get(key);
+        if (!reqs || reqs.size === 0) {
+          // loosen matching: try partial contains
+          for (const [k, v] of templateLookup.entries()) {
+            if (k.includes(key) || key.includes(k)) {
+              reqs = v;
+              break;
+            }
+          }
+        }
         if (!reqs || reqs.size === 0) return null;
         return { row, reqs };
       })
