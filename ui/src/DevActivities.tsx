@@ -1526,14 +1526,10 @@ export default function DevActivities() {
 
                 {/* Risk Heatmap */}
                 <td style={td}>
-                  <input
-                    type="text"
+                  <select
                     defaultValue={(r as any).risk_heatmap ?? ""}
-                    placeholder="Heatmap"
-                    title={(r as any).risk_heatmap ?? ""}
-                    onChange={syncTitle}
-                    onBlur={async (e) => {
-                      const val = e.currentTarget.value.trim();
+                    onChange={async (e) => {
+                      const val = e.currentTarget.value;
                       const current = (r as any).risk_heatmap ?? "";
                       if (val === current) return;
                       try {
@@ -1553,9 +1549,17 @@ export default function DevActivities() {
                       border: "1px solid #e5e7eb",
                       fontSize: 13,
                       boxSizing: "border-box",
+                      background:
+                        "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+                      backgroundSize: "10px",
+                      paddingRight: 24,
                     }}
-                    size={24}
-                  />
+                  >
+                    <option value="">--</option>
+                    <option value="Red">Red</option>
+                    <option value="Yellow">Yellow</option>
+                    <option value="Green">Green</option>
+                  </select>
                 </td>
                 {/* Dev Type */}
                 <td style={{ ...td, minWidth: 200 }}>
