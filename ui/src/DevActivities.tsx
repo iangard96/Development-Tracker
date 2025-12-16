@@ -8,7 +8,12 @@ import {
   useState,
 } from "react";
 import type { DevStep, DevType } from "./types";
-import { getRequirementTemplateLookup, normalizeActivityName, type RequirementLabel } from "./requirementTemplates";
+import {
+  findRequirementsForActivity,
+  getRequirementTemplateLookup,
+  normalizeActivityName,
+  type RequirementLabel,
+} from "./requirementTemplates";
 import {
   fetchStepsForProject,
   updateStepDates,
@@ -983,17 +988,7 @@ export default function DevActivities() {
         if (seededRequirementDefaults.current.has(row.id)) return null;
         const existing = requirementSets.get(row.id);
         if (existing && existing.size > 0) return null;
-        const key = normalizeActivityName(row.name ?? "");
-        let reqs = templateLookup.get(key);
-        if (!reqs || reqs.size === 0) {
-          // loosen matching: try partial contains
-          for (const [k, v] of templateLookup.entries()) {
-            if (k.includes(key) || key.includes(k)) {
-              reqs = v;
-              break;
-            }
-          }
-        }
+        const reqs = findRequirementsForActivity(templateLookup, row.name ?? "");
         if (!reqs || reqs.size === 0) return null;
         return { row, reqs };
       })

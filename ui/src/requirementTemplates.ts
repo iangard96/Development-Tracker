@@ -84,3 +84,37 @@ export function getRequirementTemplateLookup(projectType: string | null | undefi
   });
   return map;
 }
+
+function tokenSet(str: string) {
+  return new Set(
+    str
+      .split(" ")
+      .filter(Boolean),
+  );
+}
+
+export function findRequirementsForActivity(
+  lookup: Map<string, Set<RequirementLabel>>,
+  activityName: string,
+): Set<RequirementLabel> | null {
+  const norm = normalizeActivityName(activityName);
+  if (lookup.has(norm)) return lookup.get(norm)!;
+
+  // 1) Fast partial checks
+  for (const [k, v] of lookup.entries()) {
+    if (k.includes(norm) || norm.includes(k)) return v;
+  }
+
+  // 2) Token overlap heuristic
+  const targetTokens = tokenSet(norm);
+  let best: { score: number; reqs: Set<RequirementLabel> } | null = null;
+  for (const [k, v] of lookup.entries()) {
+    const otherTokens = tokenSet(k);
+    const shared = [...targetTokens].filter((t) => otherTokens.has(t));
+    const score = shared.length / Math.max(1, targetTokens.size);
+    if (score > 0.5 && (!best || score > best.score)) {
+      best = { score, reqs: v };
+    }
+  }
+  return best?.reqs ?? null;
+}
