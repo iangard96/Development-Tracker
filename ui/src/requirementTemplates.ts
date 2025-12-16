@@ -73,11 +73,40 @@ const REQUIREMENT_TEMPLATES: Record<TemplateKey, RequirementTemplateEntry[]> = {
 };
 
 export function getRequirementTemplateLookup(projectType: string | null | undefined) {
-  const requested = (projectType ?? "").trim().toLowerCase();
-  const key = (Object.keys(REQUIREMENT_TEMPLATES).find(
-    (k) => k.toLowerCase() === requested,
-  ) ?? "") as TemplateKey;
-  if (!REQUIREMENT_TEMPLATES[key]) return null;
+  const requestedRaw = (projectType ?? "").trim();
+  const requested = requestedRaw.toLowerCase();
+
+  const tokenScore = (a: string, b: string) => {
+    const tok = (s: string) =>
+      s
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter(Boolean);
+    const aTok = tok(a);
+    const bTok = tok(b);
+    if (!aTok.length || !bTok.length) return 0;
+    const aSet = new Set(aTok);
+    const shared = bTok.filter((t) => aSet.has(t)).length;
+    return shared / Math.max(aTok.length, bTok.length);
+  };
+
+  const availableKeys = Object.keys(REQUIREMENT_TEMPLATES) as TemplateKey[];
+  let key =
+    (availableKeys.find((k) => k.toLowerCase() === requested) as TemplateKey | undefined) ??
+    (availableKeys.find((k) => requested.includes(k.toLowerCase())) as TemplateKey | undefined);
+
+  if (!key) {
+    let best: { key: TemplateKey; score: number } | null = null;
+    availableKeys.forEach((k) => {
+      const score = tokenScore(k, requestedRaw);
+      if (score > 0.5 && (!best || score > best.score)) {
+        best = { key: k, score };
+      }
+    });
+    key = best?.key;
+  }
+
+  if (!key || !REQUIREMENT_TEMPLATES[key]) return null;
   const map = new Map<string, Set<RequirementLabel>>();
   REQUIREMENT_TEMPLATES[key].forEach((row) => {
     map.set(normalizeActivityName(row.activity), new Set(row.requirements));
