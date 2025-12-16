@@ -102,6 +102,17 @@ const sortBtn: React.CSSProperties = {
   cursor: "pointer",
 };
 
+<<<<<<< HEAD
+=======
+const HEATMAP_OPTIONS = [
+  { label: "Red", value: "Red", color: "#ef4444" },
+  { label: "Yellow", value: "Yellow", color: "#f59e0b" },
+  { label: "Green", value: "Green", color: "#10b981" },
+] as const;
+
+const OWNER_OPTIONS = ["Internal", "Consultant", "External", "EPC"] as const;
+
+>>>>>>> 81d6aad8 (Update phase labels, heatmap UI, and owner/responsible fields)
 /** Convert whatever we have to what <input type="date"> expects (YYYY-MM-DD). */
 function normalizeForDateInput(value?: string | null): string {
   if (!value) return "";
@@ -413,6 +424,7 @@ function ResponsiblePartyCell({
   step: DevStep;
   onSaved: (fresh: DevStep) => void;
 }) {
+<<<<<<< HEAD
   async function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const raw = e.target.value;
     const nextVal = raw === "" ? null : raw;
@@ -429,33 +441,196 @@ function ResponsiblePartyCell({
       // revert on failure
       onSaved({ ...(step as any), responsible_party: prevVal } as DevStep);
       alert(`Failed to update responsible party.\n${err?.message ?? ""}`);
+=======
+  const current = (step as any).responsible_party ?? "";
+
+  async function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
+    const val = e.currentTarget.value.trim();
+    const next = val || null;
+    if (next === (current || null)) return;
+
+    try {
+      const fresh = await updateStepMeta(step.id, { responsible_party: next });
+      onSaved(fresh);
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to update responsible party.\n${err?.message ?? ""}`);
+      e.currentTarget.value = current;
+    }
+  }
+
+  return (
+    <input
+      type="text"
+      defaultValue={current}
+      placeholder="Responsible Party"
+      title={current}
+      onChange={syncTitle}
+      onBlur={handleBlur}
+      style={{
+        width: "100%",
+        minWidth: 160,
+        padding: "6px 10px",
+        border: "1px solid #e5e7eb",
+        borderRadius: 5,
+        fontSize: 13,
+        boxSizing: "border-box",
+      }}
+    />
+  );
+}
+
+function OwnerCell({
+  step,
+  onSaved,
+}: {
+  step: DevStep;
+  onSaved: (fresh: DevStep) => void;
+}) {
+  const current = (step as any).owner ?? "";
+  const displayOptions = [...OWNER_OPTIONS];
+  if (current && !displayOptions.includes(current as any)) {
+    displayOptions.push(current as any);
+  }
+
+  async function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const val = e.target.value;
+    const next = val || null;
+    const prev = (step as any).owner ?? null;
+    if ((prev || null) === next) return;
+
+    // Keep UI responsive
+    onSaved({ ...(step as any), owner: next } as DevStep);
+
+    try {
+      const fresh = await updateStepMeta(step.id, { owner: next });
+      onSaved(fresh);
+    } catch (err: any) {
+      console.error(err);
+      onSaved({ ...(step as any), owner: prev } as DevStep);
+      alert(`Failed to update owner.\n${err?.message ?? ""}`);
+>>>>>>> 81d6aad8 (Update phase labels, heatmap UI, and owner/responsible fields)
     }
   }
 
   return (
     <select
+<<<<<<< HEAD
       value={(step as any).responsible_party ?? ""}
+=======
+      value={current ?? ""}
+>>>>>>> 81d6aad8 (Update phase labels, heatmap UI, and owner/responsible fields)
       onChange={onChange}
       style={{
         padding: "6px 10px",
         border: "1px solid #e5e7eb",
         borderRadius: 5,
+<<<<<<< HEAD
         background: "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+=======
+        background:
+          "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+>>>>>>> 81d6aad8 (Update phase labels, heatmap UI, and owner/responsible fields)
         backgroundSize: "10px",
         paddingRight: 24,
         fontSize: 13,
         color: "#1f2937",
         cursor: "pointer",
         appearance: "none" as any,
+<<<<<<< HEAD
       }}
     >
       <option value="">Select</option>
       <option value="Internal">Internal</option>
       <option value="3rd Party Contracted">3rd Party Contracted</option>
+=======
+        minWidth: 160,
+      }}
+    >
+      <option value="">Select</option>
+      {displayOptions.map((opt) => (
+        <option key={opt} value={opt}>
+          {opt}
+        </option>
+      ))}
+>>>>>>> 81d6aad8 (Update phase labels, heatmap UI, and owner/responsible fields)
     </select>
   );
 }
 
+<<<<<<< HEAD
+=======
+function HeatmapCell({
+  step,
+  onSaved,
+}: {
+  step: DevStep;
+  onSaved: (fresh: DevStep) => void;
+}) {
+  const current = ((step as any).risk_heatmap ?? "") as string;
+
+  async function handleSelect(value: string | null) {
+    const next = value || null;
+    const prev = (step as any).risk_heatmap ?? null;
+    if ((prev || null) === next) return;
+
+    // keep UI responsive
+    onSaved({ ...(step as any), risk_heatmap: next } as DevStep);
+
+    try {
+      const fresh = await updateStepMeta(step.id, { risk_heatmap: next });
+      onSaved(fresh);
+    } catch (err: any) {
+      console.error(err);
+      onSaved({ ...(step as any), risk_heatmap: prev } as DevStep);
+      alert(`Failed to update risk heatmap.\n${err?.message ?? ""}`);
+    }
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      {HEATMAP_OPTIONS.map((opt) => {
+        const isActive =
+          current.toLowerCase() === opt.value.toLowerCase();
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => handleSelect(opt.value)}
+            title={`${opt.label} risk`}
+            aria-pressed={isActive}
+            style={{
+              width: 32,
+              height: 24,
+              borderRadius: 6,
+              border: isActive ? "2px solid #111827" : "1px solid #d1d5db",
+              background: opt.color,
+              cursor: "pointer",
+              boxShadow: isActive ? "0 0 0 2px #e5e7eb" : undefined,
+            }}
+          />
+        );
+      })}
+      <button
+        type="button"
+        onClick={() => handleSelect(null)}
+        style={{
+          padding: "4px 8px",
+          borderRadius: 6,
+          border: "1px solid #d1d5db",
+          background: "#ffffff",
+          cursor: "pointer",
+          fontSize: 12,
+          color: "#374151",
+        }}
+      >
+        Clear
+      </button>
+    </div>
+  );
+}
+
+>>>>>>> 81d6aad8 (Update phase labels, heatmap UI, and owner/responsible fields)
 /** Spend cell with deferred save (type freely, save on blur) */
 function SpendCell({
   id,
@@ -1290,9 +1465,15 @@ export default function DevActivities() {
             }}
           >
             <option value="ALL">All</option>
+<<<<<<< HEAD
             <option value={1}>Pre Dev</option>
             <option value={2}>Dev</option>
             <option value={3}>Pre Con</option>
+=======
+            <option value={1}>Early</option>
+            <option value={2}>Mid</option>
+            <option value={3}>Late</option>
+>>>>>>> 81d6aad8 (Update phase labels, heatmap UI, and owner/responsible fields)
           </select>
         </label>
       </div>
@@ -1430,11 +1611,19 @@ export default function DevActivities() {
                     const phaseVal = (r as any).phase ?? null;
                     const phaseLabel =
                       phaseVal === 1
+<<<<<<< HEAD
                         ? "Pre Dev"
                         : phaseVal === 2
                           ? "Dev"
                           : phaseVal === 3
                             ? "Pre Con"
+=======
+                        ? "Early"
+                        : phaseVal === 2
+                          ? "Mid"
+                          : phaseVal === 3
+                            ? "Late"
+>>>>>>> 81d6aad8 (Update phase labels, heatmap UI, and owner/responsible fields)
                             : "--";
 
                     if (!isCustom) {
@@ -1473,9 +1662,15 @@ export default function DevActivities() {
                         }}
                       >
                         <option value="">--</option>
+<<<<<<< HEAD
                         <option value="1">Pre Dev</option>
                         <option value="2">Dev</option>
                         <option value="3">Pre Con</option>
+=======
+                        <option value="1">Early</option>
+                        <option value="2">Mid</option>
+                        <option value="3">Late</option>
+>>>>>>> 81d6aad8 (Update phase labels, heatmap UI, and owner/responsible fields)
                       </select>
                     );
                   })()}
@@ -1525,6 +1720,7 @@ export default function DevActivities() {
 
 
                 {/* Risk Heatmap */}
+<<<<<<< HEAD
                 <td style={td}>
                   <select
                     defaultValue={(r as any).risk_heatmap ?? ""}
@@ -1560,6 +1756,10 @@ export default function DevActivities() {
                     <option value="Yellow">Yellow</option>
                     <option value="Green">Green</option>
                   </select>
+=======
+                <td style={{ ...td, minWidth: 160 }}>
+                  <HeatmapCell step={r} onSaved={applyFresh} />
+>>>>>>> 81d6aad8 (Update phase labels, heatmap UI, and owner/responsible fields)
                 </td>
                 {/* Dev Type */}
                 <td style={{ ...td, minWidth: 200 }}>
@@ -1739,6 +1939,7 @@ export default function DevActivities() {
                 </td>
                 {/* Owner */}
                 <td style={td}>
+<<<<<<< HEAD
                   <input
                     type="text"
                     defaultValue={(r as any).owner ?? ""}
@@ -1769,6 +1970,9 @@ export default function DevActivities() {
                     }}
                     size={26}
                   />
+=======
+                  <OwnerCell step={r} onSaved={applyFresh} />
+>>>>>>> 81d6aad8 (Update phase labels, heatmap UI, and owner/responsible fields)
                 </td>
                 <td style={td}>
                   <ResponsiblePartyCell

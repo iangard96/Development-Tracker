@@ -105,9 +105,15 @@ function sortSteps(list: DevStep[]): DevStep[] {
 }
 
 function phaseLabel(phase: number | null | undefined): string {
+<<<<<<< HEAD
   if (phase === 1) return "Pre Dev";
   if (phase === 2) return "Dev";
   if (phase === 3) return "Pre Con";
+=======
+  if (phase === 1) return "Early";
+  if (phase === 2) return "Mid";
+  if (phase === 3) return "Late";
+>>>>>>> 81d6aad8 (Update phase labels, heatmap UI, and owner/responsible fields)
   return "";
 }
 
