@@ -99,8 +99,7 @@ export function findRequirementsForActivity(
 ): Set<RequirementLabel> | null {
   const norm = normalizeActivityName(activityName);
   if (lookup.has(norm)) {
-    const res = lookup.get(norm)!;
-    if (res.size > 0) return res;
+    return lookup.get(norm)!;
   }
 
   // 1) Fast partial checks

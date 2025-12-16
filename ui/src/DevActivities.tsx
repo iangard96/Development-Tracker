@@ -983,25 +983,34 @@ export default function DevActivities() {
     const templateLookup = getRequirementTemplateLookup(project.project_type);
     if (!templateLookup) return;
 
+    const setsEqual = (a: Set<string>, b: Set<string>) => {
+      if (a.size !== b.size) return false;
+      for (const val of a) {
+        if (!b.has(val)) return false;
+      }
+      return true;
+    };
+
     const pendingSeeds = rows
       .map((row) => {
         if (seededRequirementDefaults.current.has(row.id)) return null;
-        const existing = requirementSets.get(row.id);
-        if (existing && existing.size > 0) return null;
-        const reqs = findRequirementsForActivity(templateLookup, row.name ?? "");
-        if (!reqs || reqs.size === 0) return null;
-        return { row, reqs };
+        const templateReqs = findRequirementsForActivity(templateLookup, row.name ?? "");
+        if (!templateReqs) return null; // no template entry
+        const currentReqs = new Set(requirementSets.get(row.id) ?? []);
+        const templateReqStrings = new Set(Array.from(templateReqs).map((r) => r));
+        if (setsEqual(templateReqStrings, currentReqs)) return null; // already in sync
+        return { row, templateReqs: templateReqStrings };
       })
-      .filter(Boolean) as { row: DevStep; reqs: Set<RequirementLabel> }[];
+      .filter(Boolean) as { row: DevStep; templateReqs: Set<RequirementLabel> }[];
 
     if (pendingSeeds.length === 0) return;
 
     (async () => {
-      for (const { row, reqs } of pendingSeeds) {
-        const requirementValue = Array.from(reqs).join(", ");
+      for (const { row, templateReqs } of pendingSeeds) {
+        const requirementValue = Array.from(templateReqs).join(", ");
         const payload: Partial<DevStep> = { requirement: requirementValue || null };
         Object.entries(REQUIREMENT_FLAG_KEYS).forEach(([label, key]) => {
-          payload[key] = reqs.has(label as RequirementLabel) ? "X" : null;
+          payload[key] = templateReqs.has(label as RequirementLabel) ? "X" : null;
         });
         try {
           const fresh = await updateStepMeta(row.id, payload);
