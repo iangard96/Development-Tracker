@@ -577,6 +577,7 @@ function HeatmapCell({
         }}
         aria-haspopup="listbox"
         aria-expanded={open}
+        title={currentOpt ? `${currentOpt.label} risk` : "Select risk heatmap"}
       >
         <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
           <span
@@ -590,7 +591,7 @@ function HeatmapCell({
               boxShadow: currentOpt ? "0 0 0 1px #e5e7eb inset" : undefined,
             }}
           />
-          <span>{currentLabel}</span>
+          <span style={{ fontSize: 0 }}>{currentLabel}</span>
         </span>
         <span aria-hidden="true" style={{ color: "#6b7280" }}>
           ▾
@@ -649,7 +650,7 @@ function HeatmapCell({
                     border: "1px solid #d1d5db",
                   }}
                 />
-                <span>{opt.label}</span>
+                <span style={{ fontSize: 0 }}>{opt.label}</span>
               </button>
             );
           })}
