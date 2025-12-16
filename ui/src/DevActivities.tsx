@@ -1767,7 +1767,20 @@ export default function DevActivities() {
 
 
                 {/* Risk Heatmap */}
-                <td style={{ ...td, minWidth: 160 }}>
+                <td
+                  style={{
+                    ...td,
+                    minWidth: 160,
+                    background: (() => {
+                      const match = HEATMAP_OPTIONS.find(
+                        (opt) =>
+                          ((r as any).risk_heatmap ?? "")
+                            .toLowerCase() === opt.value.toLowerCase(),
+                      );
+                      return match ? `${match.color}1a` : undefined;
+                    })(),
+                  }}
+                >
                   <HeatmapCell step={r} onSaved={applyFresh} />
                 </td>
                 {/* Dev Type */}
