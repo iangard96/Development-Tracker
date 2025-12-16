@@ -1900,52 +1900,99 @@ export default function DevActivities() {
                   ) : null}
                 </td>
               <td style={requirementTd}>
-                <div style={requirementList}>
-                  {REQUIREMENT_OPTIONS.map((opt) => {
-                    const selected = new Set(requirementSets.get(r.id) ?? []);
-                    const checked = selected.has(opt);
-                    const flagPayloadKey: Record<string, keyof DevStep> = {
-                      "Engineering": "engineering_flag",
-                      "Permitting/Compliance": "permitting_compliance_flag",
-                      "Financing": "financing_flag",
-                      "Interconnection": "interconnection_flag",
-                      "Site Control": "site_control_flag",
-                      "Construction/Execution": "construction_execution_flag",
-                    };
-                    return (
-                      <label key={opt} style={requirementLabel}>
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          style={requirementCheckbox}
-                          onChange={async (e) => {
-                            const next = new Set(selected);
-                            if (e.target.checked) {
-                              next.add(opt);
-                            } else {
-                              next.delete(opt);
-                            }
-                            const nextVal = Array.from(next).join(", ");
-                            const payload: any = { requirement: nextVal || null };
-                            const flagKey = flagPayloadKey[opt];
-                            if (flagKey) {
-                              payload[flagKey] = e.target.checked ? "X" : null;
-                            }
-                            try {
-                              const fresh = await updateStepMeta(r.id, payload);
-                              applyFresh(fresh);
-                            } catch (err: any) {
-                              console.error(err);
-                              alert(`Failed to update requirement.\n${err?.message ?? ""}`);
-                            }
-                          }}
-                        />
-                        <span>{opt}</span>
-                      </label>
-                    );
-                  })}
+                <div style={{ display: "flex", gap: 18, alignItems: "flex-start" }}>
+                  <div style={requirementList}>
+                    {["Engineering", "Permitting/Compliance", "Financing"].map((opt) => {
+                      const selected = new Set(requirementSets.get(r.id) ?? []);
+                      const checked = selected.has(opt);
+                      const flagPayloadKey: Record<string, keyof DevStep> = {
+                        "Engineering": "engineering_flag",
+                        "Permitting/Compliance": "permitting_compliance_flag",
+                        "Financing": "financing_flag",
+                        "Interconnection": "interconnection_flag",
+                        "Site Control": "site_control_flag",
+                        "Construction/Execution": "construction_execution_flag",
+                      };
+                      return (
+                        <label key={opt} style={requirementLabel}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            style={requirementCheckbox}
+                            onChange={async (e) => {
+                              const next = new Set(selected);
+                              if (e.target.checked) {
+                                next.add(opt);
+                              } else {
+                                next.delete(opt);
+                              }
+                              const nextVal = Array.from(next).join(", ");
+                              const payload: any = { requirement: nextVal || null };
+                              const flagKey = flagPayloadKey[opt];
+                              if (flagKey) {
+                                payload[flagKey] = e.target.checked ? "X" : null;
+                              }
+                              try {
+                                const fresh = await updateStepMeta(r.id, payload);
+                                applyFresh(fresh);
+                              } catch (err: any) {
+                                console.error(err);
+                                alert(`Failed to update requirement.\n${err?.message ?? ""}`);
+                              }
+                            }}
+                          />
+                          <span>{opt}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <div style={requirementList}>
+                    {["Interconnection", "Site Control", "Construction/Execution"].map((opt) => {
+                      const selected = new Set(requirementSets.get(r.id) ?? []);
+                      const checked = selected.has(opt);
+                      const flagPayloadKey: Record<string, keyof DevStep> = {
+                        "Engineering": "engineering_flag",
+                        "Permitting/Compliance": "permitting_compliance_flag",
+                        "Financing": "financing_flag",
+                        "Interconnection": "interconnection_flag",
+                        "Site Control": "site_control_flag",
+                        "Construction/Execution": "construction_execution_flag",
+                      };
+                      return (
+                        <label key={opt} style={requirementLabel}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            style={requirementCheckbox}
+                            onChange={async (e) => {
+                              const next = new Set(selected);
+                              if (e.target.checked) {
+                                next.add(opt);
+                              } else {
+                                next.delete(opt);
+                              }
+                              const nextVal = Array.from(next).join(", ");
+                              const payload: any = { requirement: nextVal || null };
+                              const flagKey = flagPayloadKey[opt];
+                              if (flagKey) {
+                                payload[flagKey] = e.target.checked ? "X" : null;
+                              }
+                              try {
+                                const fresh = await updateStepMeta(r.id, payload);
+                                applyFresh(fresh);
+                              } catch (err: any) {
+                                console.error(err);
+                                alert(`Failed to update requirement.\n${err?.message ?? ""}`);
+                              }
+                            }}
+                          />
+                          <span>{opt}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
-                </td>
+              </td>
                 {/* Storage Hybrid Impact */}
                 <td style={td}>
                   <input
