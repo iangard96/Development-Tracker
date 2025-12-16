@@ -556,13 +556,7 @@ function HeatmapCell({
   const swatchColor = currentOpt ? currentOpt.color : "#e5e7eb";
 
   return (
-    <div
-      style={{ position: "relative", minWidth: 160 }}
-      onBlurCapture={() => {
-        // close after focus leaves the control
-        window.setTimeout(() => setOpen(false), 0);
-      }}
-    >
+    <div style={{ position: "relative", minWidth: 160 }}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
