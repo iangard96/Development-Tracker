@@ -1530,8 +1530,25 @@ export default function DevActivities() {
                   transition: "background 0.3s ease",
                 }}
               >
-                <td style={{ ...td, width: 70, cursor: canReorder ? "grab" : "default", userSelect: "none" }}>
-                  <span aria-hidden="true">Γÿ░</span>
+                <td
+                  style={{ ...td, width: 70, cursor: canReorder ? "grab" : "default", userSelect: "none" }}
+                  title={canReorder ? "Drag to reorder" : "Reset filters/sorting to reorder"}
+                >
+                  <svg
+                    width={16}
+                    height={16}
+                    viewBox="0 0 16 16"
+                    aria-hidden="true"
+                    focusable="false"
+                    style={{ display: "block", color: "#9ca3af" }}
+                  >
+                    <path
+                      d="M3 4.5h10M3 8h10M3 11.5h10"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                    />
+                  </svg>
                 </td>
 
                 {/* Status */}
@@ -2218,4 +2235,3 @@ export default function DevActivities() {
     </div>
   );
 }
-
