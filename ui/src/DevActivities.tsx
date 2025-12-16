@@ -1317,44 +1317,44 @@ export default function DevActivities() {
               <th style={{ ...th, width: 70 }}>Order</th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("status")}>
-                  Status {sortBy === "status" ? (sortDir === "asc" ? "?" : "?") : ""}
+                  Status {sortBy === "status" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                 </button>
               </th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("phase")}>
-                  Phase {sortBy === "phase" ? (sortDir === "asc" ? "?" : "?") : ""}
+                  Phase {sortBy === "phase" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                 </button>
               </th>
               <th style={{ ...th, ...stickyActivity }}>
                 <button style={sortBtn} onClick={() => toggleSort("name")}>
-                  Activity {sortBy === "name" ? (sortDir === "asc" ? "?" : "?") : ""}
+                  Activity {sortBy === "name" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                 </button>
               </th>
               <th style={{ ...th, minWidth: 140 }}>Risk Heatmap</th>
               <th style={{ ...th, minWidth: 200 }}>Dev Type</th>
               <th style={{ ...th, minWidth: "140px" }}>
                 <button style={sortBtn} onClick={() => toggleSort("planned_spend")}>
-                  Planned Spend ($) {sortBy === "planned_spend" ? (sortDir === "asc" ? "?" : "?") : ""}
+                  Planned Spend ($) {sortBy === "planned_spend" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                 </button>
               </th>
               <th style={{ ...th, minWidth: "140px" }}>
                 <button style={sortBtn} onClick={() => toggleSort("actual_spend")}>
-                  Actual Spend ($) {sortBy === "actual_spend" ? (sortDir === "asc" ? "?" : "?") : ""}
+                  Actual Spend ($) {sortBy === "actual_spend" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                 </button>
               </th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("start_date")}>
-                  Start Date {sortBy === "start_date" ? (sortDir === "asc" ? "?" : "?") : ""}
+                  Start Date {sortBy === "start_date" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                 </button>
               </th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("end_date")}>
-                  End Date {sortBy === "end_date" ? (sortDir === "asc" ? "?" : "?") : ""}
+                  End Date {sortBy === "end_date" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                 </button>
               </th>
               <th style={th}>
                 <button style={sortBtn} onClick={() => toggleSort("duration_days")}>
-                  Duration (Days) {sortBy === "duration_days" ? (sortDir === "asc" ? "?" : "?") : ""}
+                  Duration (Days) {sortBy === "duration_days" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                 </button>
               </th>
               <th style={th}>Purpose / Related Activity</th>
