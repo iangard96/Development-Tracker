@@ -100,9 +100,23 @@ export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
             justifyContent: "space-around",
             alignItems: "flex-start",
             gap: 24,
+            marginBottom: 16,
           }}
         >
-          {gauges.map((g) => (
+          {gauges.slice(0, 3).map((g) => (
+            <DonutGauge key={g.requirementLabel} label={g.requirementLabel} pct={g.pct} />
+          ))}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "space-around",
+            alignItems: "flex-start",
+            gap: 24,
+          }}
+        >
+          {gauges.slice(3).map((g) => (
             <DonutGauge key={g.requirementLabel} label={g.requirementLabel} pct={g.pct} />
           ))}
         </div>
