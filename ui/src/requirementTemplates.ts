@@ -122,11 +122,5 @@ export function findRequirementsForActivity(
     }
   }
   if (best?.reqs) return best.reqs;
-
-  // 3) Keyword-based fallback for rows with no template flags
-  const inferred: RequirementLabel[] = [];
-  if (norm.includes("insurance")) {
-    inferred.push("Financing", "Construction/Execution");
-  }
-  return inferred.length ? new Set(inferred) : null;
+  return null;
 }
