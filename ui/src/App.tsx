@@ -6,6 +6,7 @@ import Dashboard from "./Dashboard";
 import DevActivities from "./DevActivities";
 import ProjectContacts from "./ProjectContacts";
 import Requirements from "./Requirements";
+import Permitting from "./Permitting";
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="activities" element={<DevActivities />} />
+          <Route path="permitting" element={<Permitting />} />
           <Route path="requirements" element={<Requirements />} />
           <Route path="contacts" element={<ProjectContacts />} />
         </Route>

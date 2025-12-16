@@ -109,6 +109,16 @@ function LayoutInner() {
                 Development Activities
               </NavLink>
               <NavLink
+                to="permitting"
+                style={({ isActive }) => ({
+                  fontSize: 14,
+                  textDecoration: isActive ? "underline" : "none",
+                  fontWeight: isActive ? 600 : 400,
+                })}
+              >
+                Permitting
+              </NavLink>
+              <NavLink
                 to="requirements"
                 style={({ isActive }) => ({
                   fontSize: 14,
@@ -157,6 +167,19 @@ function LayoutInner() {
                   fontSize: 10,
                 })}
                 title="Development Activities"
+              >
+                ...
+              </NavLink>
+              <NavLink
+                to="permitting"
+                style={({ isActive }) => ({
+                  display: "flex",
+                  gap: 2,
+                  textDecoration: "none",
+                  opacity: isActive ? 1 : 0.5,
+                  fontSize: 10,
+                })}
+                title="Permitting"
               >
                 ...
               </NavLink>
