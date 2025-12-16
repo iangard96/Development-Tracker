@@ -29,6 +29,7 @@ export default function NavBar({ collapsed, setCollapsed }: { collapsed: boolean
     { to: "/project_summary", label: "Project Portfolio", title: "Project Portfolio", icon: "S" },
     { to: "/dashboard", label: "Project Dashboard", title: "Project Dashboard", icon: "D" },
     { to: "/development", label: "Development Activities", title: "Development Activities", icon: "A" },
+    { to: "/permitting", label: "Permitting", title: "Permitting", icon: "P" },
     { to: "/requirements", label: "Requirements", title: "Requirements", icon: "R" },
     { to: "/economics", label: "Economics", title: "Economics", icon: "E" },
     { to: "/lease", label: "Lease Info", title: "Lease Info", icon: "L" },

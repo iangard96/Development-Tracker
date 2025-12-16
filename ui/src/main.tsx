@@ -11,6 +11,7 @@ import ProjectContacts from "./ProjectContacts";
 import Requirements from "./Requirements";
 import Lease from "./Lease";
 import Economics from "./Economics";
+import Permitting from "./Permitting";
 import "./index.css";
 import "./Layout.css";
 
@@ -52,6 +53,7 @@ function AppShell() {
           {/* All project-scoped pages with context */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/development" element={<DevActivities />} />
+          <Route path="/permitting" element={<Permitting />} />
           <Route path="/requirements" element={<Requirements />} />
           <Route path="/lease" element={<Lease />} />
           <Route path="/economics" element={<Economics />} />
