@@ -528,6 +528,7 @@ function HeatmapCell({
   onSaved: (fresh: DevStep) => void;
 }) {
   const current = ((step as any).risk_heatmap ?? "") as string;
+  const [open, setOpen] = useState(false);
 
   async function handleSelect(value: string | null) {
     const next = value || null;
@@ -545,47 +546,136 @@ function HeatmapCell({
       onSaved({ ...(step as any), risk_heatmap: prev } as DevStep);
       alert(`Failed to update risk heatmap.\n${err?.message ?? ""}`);
     }
+    setOpen(false);
   }
 
+  const currentOpt = HEATMAP_OPTIONS.find(
+    (opt) => opt.value.toLowerCase() === current.toLowerCase(),
+  );
+  const currentLabel = currentOpt ? currentOpt.label : "Select";
+  const swatchColor = currentOpt ? currentOpt.color : "#e5e7eb";
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      {HEATMAP_OPTIONS.map((opt) => {
-        const isActive =
-          current.toLowerCase() === opt.value.toLowerCase();
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => handleSelect(opt.value)}
-            title={`${opt.label} risk`}
-            aria-pressed={isActive}
-            style={{
-              width: 32,
-              height: 24,
-              borderRadius: 6,
-              border: isActive ? "2px solid #111827" : "1px solid #d1d5db",
-              background: opt.color,
-              cursor: "pointer",
-              boxShadow: isActive ? "0 0 0 2px #e5e7eb" : undefined,
-            }}
-          />
-        );
-      })}
+    <div
+      style={{ position: "relative", minWidth: 160 }}
+      onBlurCapture={() => {
+        // close after focus leaves the control
+        window.setTimeout(() => setOpen(false), 0);
+      }}
+    >
       <button
         type="button"
-        onClick={() => handleSelect(null)}
+        onClick={() => setOpen((v) => !v)}
         style={{
-          padding: "4px 8px",
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+          padding: "8px 10px",
           borderRadius: 6,
           border: "1px solid #d1d5db",
           background: "#ffffff",
           cursor: "pointer",
-          fontSize: 12,
-          color: "#374151",
+          fontSize: 13,
+          color: "#111827",
         }}
+        aria-haspopup="listbox"
+        aria-expanded={open}
       >
-        Clear
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <span
+            aria-hidden="true"
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: 6,
+              background: swatchColor,
+              border: "1px solid #d1d5db",
+              boxShadow: currentOpt ? "0 0 0 1px #e5e7eb inset" : undefined,
+            }}
+          />
+          <span>{currentLabel}</span>
+        </span>
+        <span aria-hidden="true" style={{ color: "#6b7280" }}>
+          ▾
+        </span>
       </button>
+
+      {open && (
+        <div
+          role="listbox"
+          style={{
+            position: "absolute",
+            zIndex: 10,
+            marginTop: 6,
+            minWidth: "100%",
+            background: "#ffffff",
+            border: "1px solid #e5e7eb",
+            borderRadius: 8,
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.08)",
+            padding: 8,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          {HEATMAP_OPTIONS.map((opt) => {
+            const isActive =
+              current.toLowerCase() === opt.value.toLowerCase();
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => handleSelect(opt.value)}
+                role="option"
+                aria-selected={isActive}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  gap: 10,
+                  padding: "8px 10px",
+                  borderRadius: 6,
+                  border: isActive ? "2px solid #111827" : "1px solid #e5e7eb",
+                  background: "#ffffff",
+                  cursor: "pointer",
+                  color: "#111827",
+                  boxShadow: isActive ? "0 0 0 2px #e5e7eb" : undefined,
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: 6,
+                    background: opt.color,
+                    border: "1px solid #d1d5db",
+                  }}
+                />
+                <span>{opt.label}</span>
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => handleSelect(null)}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 6,
+              border: "1px solid #e5e7eb",
+              background: "#f9fafb",
+              cursor: "pointer",
+              fontSize: 13,
+              color: "#374151",
+              textAlign: "left",
+            }}
+          >
+            Clear
+          </button>
+        </div>
+      )}
     </div>
   );
 }
