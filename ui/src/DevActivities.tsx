@@ -574,11 +574,12 @@ function HeatmapCell({
           gap: 10,
           padding: "8px 10px",
           borderRadius: 6,
-          border: "1px solid #d1d5db",
-          background: "#ffffff",
+          border: currentOpt ? "1px solid #d1d5db" : "1px solid #d1d5db",
+          background: currentOpt ? swatchColor : "#ffffff",
           cursor: "pointer",
           fontSize: 13,
-          color: "#111827",
+          color: currentOpt ? "#ffffff" : "#111827",
+          boxShadow: currentOpt ? "0 1px 2px rgba(0,0,0,0.08) inset" : undefined,
         }}
         aria-haspopup="listbox"
         aria-expanded={open}
