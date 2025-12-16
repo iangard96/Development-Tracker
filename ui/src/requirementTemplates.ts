@@ -98,11 +98,16 @@ export function findRequirementsForActivity(
   activityName: string,
 ): Set<RequirementLabel> | null {
   const norm = normalizeActivityName(activityName);
-  if (lookup.has(norm)) return lookup.get(norm)!;
+  if (lookup.has(norm)) {
+    const res = lookup.get(norm)!;
+    if (res.size > 0) return res;
+  }
 
   // 1) Fast partial checks
   for (const [k, v] of lookup.entries()) {
-    if (k.includes(norm) || norm.includes(k)) return v;
+    if (k.includes(norm) || norm.includes(k)) {
+      if (v.size > 0) return v;
+    }
   }
 
   // 2) Token overlap heuristic
@@ -112,9 +117,16 @@ export function findRequirementsForActivity(
     const otherTokens = tokenSet(k);
     const shared = [...targetTokens].filter((t) => otherTokens.has(t));
     const score = shared.length / Math.max(1, targetTokens.size);
-    if (score > 0.5 && (!best || score > best.score)) {
+    if (score > 0.5 && v.size > 0 && (!best || score > best.score)) {
       best = { score, reqs: v };
     }
   }
-  return best?.reqs ?? null;
+  if (best?.reqs) return best.reqs;
+
+  // 3) Keyword-based fallback for rows with no template flags
+  const inferred: RequirementLabel[] = [];
+  if (norm.includes("insurance")) {
+    inferred.push("Financing", "Construction/Execution");
+  }
+  return inferred.length ? new Set(inferred) : null;
 }
