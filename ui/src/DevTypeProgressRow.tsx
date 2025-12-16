@@ -6,16 +6,46 @@ import {
   ResponsiveContainer,
   PolarAngleAxis,
 } from "recharts";
-import type { DevStep, DevType } from "./types";
+import type { DevStep } from "./types";
 
-const DEV_TYPES: { key: DevType; label: string }[] = [
-  { key: "Due Diligence", label: "Due Diligence" },
-  { key: "Interconnection", label: "Interconnection" },
-  { key: "Permitting", label: "Permitting" },
+const REQUIREMENTS: Array<{ label: string; flagKey: keyof DevStep }> = [
+  { label: "Engineering", flagKey: "engineering_flag" },
+  { label: "Permitting/Compliance", flagKey: "permitting_compliance_flag" },
+  { label: "Financing", flagKey: "financing_flag" },
+  { label: "Interconnection", flagKey: "interconnection_flag" },
+  { label: "Site Control", flagKey: "site_control_flag" },
+  { label: "Construction/Execution", flagKey: "construction_execution_flag" },
 ];
 
+function isCheckedFlag(value: unknown): boolean {
+  if (value === undefined || value === null) return false;
+  const lower = String(value).trim().toLowerCase();
+  return ["x", "yes", "y", "1", "true"].includes(lower);
+}
+
+function requirementSetForStep(step: DevStep): Set<string> {
+  const raw = ((step as any).requirement ?? "") as string;
+  const set = new Set(
+    raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+  );
+
+  if (set.size === 0) {
+    REQUIREMENTS.forEach((req) => {
+      const val = (step as any)[req.flagKey];
+      if (isCheckedFlag(val)) {
+        set.add(req.label);
+      }
+    });
+  }
+
+  return set;
+}
+
 type GaugeRow = {
-  devTypeLabel: string;
+  requirementLabel: string;
   pct: number; // 0-100
 };
 
@@ -23,19 +53,31 @@ export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
   const safeSteps = Array.isArray(steps) ? steps : [];
 
   const gauges = useMemo<GaugeRow[]>(() => {
-    return DEV_TYPES.map(({ key, label }) => {
-      const group = safeSteps.filter((s) => s.development_type === key);
+    const requirementSets = new Map<number, Set<string>>();
+    safeSteps.forEach((s) => {
+      requirementSets.set(s.id, requirementSetForStep(s));
+    });
 
-      if (!group.length) {
-        return { devTypeLabel: label, pct: 0 };
+    return REQUIREMENTS.map(({ label }) => {
+      let total = 0;
+      let completed = 0;
+
+      safeSteps.forEach((step) => {
+        const reqs = requirementSets.get(step.id);
+        if (reqs?.has(label)) {
+          total += 1;
+          if ((step.status ?? "") === "Completed") {
+            completed += 1;
+          }
+        }
+      });
+
+      if (total === 0) {
+        return { requirementLabel: label, pct: 0 };
       }
 
-      const completed = group.filter(
-        (s) => (s.status ?? "") === "Completed",
-      ).length;
-
-      const pct = Math.round((completed / group.length) * 100);
-      return { devTypeLabel: label, pct };
+      const pct = Math.round((completed / total) * 100);
+      return { requirementLabel: label, pct };
     });
   }, [safeSteps]);
 
@@ -61,7 +103,7 @@ export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
           }}
         >
           {gauges.map((g) => (
-            <DonutGauge key={g.devTypeLabel} label={g.devTypeLabel} pct={g.pct} />
+            <DonutGauge key={g.requirementLabel} label={g.requirementLabel} pct={g.pct} />
           ))}
         </div>
       </div>

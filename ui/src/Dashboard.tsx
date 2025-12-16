@@ -262,8 +262,8 @@ export default function Dashboard() {
           </div>
         </>
       )}
-      {/* 1. Top row: 3 circular gauges (should also use project-scoped data internally) */}
-      <ChartErrorBoundary title="Development type progress">
+      {/* 1. Top row: 6 requirement gauges (should also use project-scoped data internally) */}
+      <ChartErrorBoundary title="Requirement progress">
         <DevTypeProgressRow steps={safeSteps} />
       </ChartErrorBoundary>
 
