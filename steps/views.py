@@ -146,6 +146,7 @@ class ProjectFinanceRunView(APIView):
             return _num(group.get(key), default)
 
         incentives = getattr(project, "incentives", None)
+        economics = getattr(project, "economics", None)
         system = payload.get("system", {}) or {}
         production = payload.get("production", {}) or {}
         revenue = payload.get("revenue", {}) or {}
@@ -179,7 +180,8 @@ class ProjectFinanceRunView(APIView):
         opex_escalator = _from_group(opex, "escalator_pct", opex.get("escalatorPct", ppa_escalator))
 
         # Lease
-        lease_cost = _from_group(lease, "annual", lease.get("leaseCost", 12000))
+        lease_cost_default = lease.get("leaseCost", economics.base_rent if economics and economics.base_rent is not None else 12000)
+        lease_cost = _from_group(lease, "annual", lease_cost_default)
         lease_escalator = _from_group(lease, "escalator_pct", lease.get("escalatorPct", ppa_escalator))
 
         # Debt
@@ -193,16 +195,30 @@ class ProjectFinanceRunView(APIView):
         # Tax & incentives
         itc_pct = _from_group(inc, "itc_pct", inc.get("itcEligiblePct", incentives.itc_eligible_pct if incentives and incentives.itc_eligible_pct is not None else 0))
         discount_rate = _from_group(analysis, "discount_rate_pct", analysis.get("discountRatePct", 8)) / 100
-        term_years = int(analysis.get("term_years") or analysis.get("analysis_period_years") or 25)
+        # Default analysis term to lease term (if available) or 25 years
+        lease_term_years = None
+        if economics and economics.term_years:
+            lease_term_years = economics.term_years
+        elif economics and economics.lease_start and economics.lease_end:
+            delta_days = (economics.lease_end - economics.lease_start).days
+            if delta_days > 0:
+                lease_term_years = max(1, int(round(delta_days / 365)))
+
+        term_years = int(
+            analysis.get("term_years")
+            or analysis.get("analysis_period_years")
+            or lease_term_years
+            or 25
+        )
         salvage_pct_capex = _from_group(analysis, "salvage_pct_capex", analysis.get("salvagePctCapex", 0)) / 100
 
         itc_credit = (itc_pct / 100) * total_capex
         net_upfront = total_capex - itc_credit - closing_costs
 
-        escalator = ppa_escalator / 100
-        deg = degradation_pct / 100
-        lease_escal = lease_escalator / 100
-        opex_escal = opex_escalator / 100
+        escalator = float(ppa_escalator) / 100
+        deg = float(degradation_pct) / 100
+        lease_escal = float(lease_escalator) / 100
+        opex_escal = float(opex_escalator) / 100
 
         revenue_series: List[float] = []
         rec_series: List[float] = []
@@ -213,31 +229,30 @@ class ProjectFinanceRunView(APIView):
         net_cash_unlevered: List[float] = []
 
         # Simple annuity debt service (level P&I) ignoring moratorium/sculpting
-        loan_principal = total_capex * (debt_pct / 100)
+        loan_principal = float(total_capex) * (float(debt_pct) / 100)
         annual_rate = float(debt_interest / 100)
         annuity_factor = ((1 + annual_rate) ** debt_tenor - 1) / (annual_rate * (1 + annual_rate) ** debt_tenor) if (annual_rate > 0 and debt_tenor > 0) else None
         annual_debt_service = float(loan_principal / annuity_factor) if annuity_factor else 0.0
-        fee_amount = float(loan_principal * (upfront_fee_pct / 100))
+        fee_amount = float(loan_principal * (float(upfront_fee_pct) / 100))
         net_upfront_with_fees = net_upfront + fee_amount
 
         for i in range(term_years):
-            yield_year = year1_mwh * Decimal((1 - deg) ** i)
-            price_year = (ppa_price + rec_price) * Decimal((1 + escalator) ** i)
-            rec_component_price = rec_price * Decimal((1 + escalator) ** i) if (rec_term_years == 0 or i < rec_term_years) else Decimal(0)
-            ppa_component_price = ppa_price * Decimal((1 + escalator) ** i)
+            yield_year = float(year1_mwh) * ((1 - deg) ** i)
+            rec_component_price = float(rec_price) * ((1 + escalator) ** i) if (rec_term_years == 0 or i < rec_term_years) else 0.0
+            ppa_component_price = float(ppa_price) * ((1 + escalator) ** i)
 
-            rev_energy = float((yield_year * ppa_component_price).quantize(Decimal("0.01")))
-            rev_rec = float((yield_year * rec_component_price).quantize(Decimal("0.01")))
+            rev_energy = round(yield_year * ppa_component_price, 2)
+            rev_rec = round(yield_year * rec_component_price, 2)
             revenue_series.append(rev_energy)
             rec_series.append(rev_rec)
 
-            opex_kw = float(-(opex_per_kw_yr * capacity_kw * Decimal((1 + opex_escal) ** i)).quantize(Decimal("0.01")))
-            opex_fixed = float(-(opex_fixed_annual * Decimal((1 + opex_escal) ** i)).quantize(Decimal("0.01")))
-            opex_variable = float(-(opex_variable_per_mwh * yield_year).quantize(Decimal("0.01")))
+            opex_kw = round(-(float(opex_per_kw_yr) * float(capacity_kw) * ((1 + opex_escal) ** i)), 2)
+            opex_fixed = round(-(float(opex_fixed_annual) * ((1 + opex_escal) ** i)), 2)
+            opex_variable = round(-(float(opex_variable_per_mwh) * yield_year), 2)
             opex_total = opex_kw + opex_fixed + opex_variable
             opex_series.append(opex_total)
 
-            lease_val = float(-(lease_cost * Decimal((1 + lease_escal) ** i)).quantize(Decimal("0.01")))
+            lease_val = round(-(float(lease_cost) * ((1 + lease_escal) ** i)), 2)
             lease_series.append(lease_val)
 
             cash_before_debt = rev_energy + rev_rec + opex_total + lease_val
@@ -249,8 +264,9 @@ class ProjectFinanceRunView(APIView):
 
         # Salvage at end
         if term_years > 0 and salvage_pct_capex > 0:
-            net_cash_levered[-1] += float(total_capex * salvage_pct_capex)
-            net_cash_unlevered[-1] += float(total_capex * salvage_pct_capex)
+            salvage_val = float(total_capex) * float(salvage_pct_capex)
+            net_cash_levered[-1] += salvage_val
+            net_cash_unlevered[-1] += salvage_val
 
         def npv(cfs: List[float], rate: float) -> float:
             total = 0.0

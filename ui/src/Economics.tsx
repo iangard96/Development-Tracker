@@ -486,8 +486,19 @@ export default function Economics() {
           </div>
         </div>
 
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, gap: 12, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 12, color: "#6b7280" }}>Cash Flow (per year)</div>
+          <button
+            type="button"
+            style={ghostButton}
+            onClick={() => exportCashflowCsv(cashFlowRows)}
+          >
+            Export CSV
+          </button>
+        </div>
+
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 14 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
             <thead>
               <tr>
                 <th style={tableHeaderCell}></th>
@@ -597,6 +608,26 @@ function formatMaybeCurrency(value: number | null, suffix = "") {
 function formatMaybeNumber(value: number | null) {
   if (value == null) return "--";
   return `${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+}
+
+function exportCashflowCsv(rows: CashFlowRow[]) {
+  if (!rows || rows.length === 0) return;
+  const years = Math.max(...rows.map((r) => r.values.length));
+  const header = ["Label", ...Array.from({ length: years }, (_, i) => `Year ${i + 1}`)];
+  const lines = [header.join(",")];
+  rows.forEach((row) => {
+    const padded = [...row.values];
+    while (padded.length < years) padded.push(0);
+    lines.push([row.label, ...padded].join(","));
+  });
+  const csv = lines.join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "cashflows.csv";
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 const formGridCols2: React.CSSProperties = {
