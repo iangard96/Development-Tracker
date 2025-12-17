@@ -130,20 +130,71 @@ export type ProjectIncentives = {
   meta: Record<string, unknown>;
 };
 
-export type ProjectFinanceRunInputs = {
-  capacity_kw?: number;
+export type ProjectFinanceSystemInput = {
+  dc_kw?: number;
+  ac_kw?: number;
   capex_per_w?: number;
+  total_capex?: number;
+};
+
+export type ProjectFinanceProductionInput = {
+  year1_mwh?: number;
+  degradation_pct?: number;
+};
+
+export type ProjectFinanceRevenueInput = {
+  ppa_price_mwh?: number;
+  ppa_escalator_pct?: number;
+  rec_price_mwh?: number;
+  rec_term_years?: number | null;
+};
+
+export type ProjectFinanceOpexInput = {
+  fixed_per_kw_yr?: number;
+  fixed_annual?: number;
+  variable_per_mwh?: number;
   escalator_pct?: number;
-  opex_per_kw_yr?: number;
-  lease_cost?: number;
-  misc_cost?: number;
-  ppa_price?: number;
-  rec_price?: number;
-  itc_eligible_pct?: number;
-  pvsyst_deg_pct?: number;
-  pvsyst_yield_mwh?: number;
+};
+
+export type ProjectFinanceLeaseInput = {
+  annual?: number;
+  escalator_pct?: number;
+};
+
+export type ProjectFinanceDebtInput = {
+  debt_pct?: number;
+  interest_pct?: number;
+  tenor_years?: number;
+  dscr_target?: number;
+  upfront_fee_pct?: number;
+  closing_costs?: number;
+};
+
+export type ProjectFinanceIncentivesInput = {
+  itc_pct?: number;
+  itc_basis_reduction_pct?: number | null;
+  ptc_per_kwh?: number;
+  ptc_term_years?: number;
+  ptc_escalator_pct?: number;
+};
+
+export type ProjectFinanceAnalysisInput = {
+  term_years?: number;
   discount_rate_pct?: number;
-  base_yield_mwh?: number;
+  inflation_pct?: number;
+  salvage_pct_capex?: number;
+};
+
+export type ProjectFinanceRunInputs = {
+  system?: ProjectFinanceSystemInput;
+  production?: ProjectFinanceProductionInput;
+  revenue?: ProjectFinanceRevenueInput;
+  opex?: ProjectFinanceOpexInput;
+  land_lease?: ProjectFinanceLeaseInput;
+  lease?: ProjectFinanceLeaseInput;
+  debt?: ProjectFinanceDebtInput;
+  incentives?: ProjectFinanceIncentivesInput;
+  analysis?: ProjectFinanceAnalysisInput;
 };
 
 export type ProjectFinanceRunOutputs = {
@@ -152,6 +203,8 @@ export type ProjectFinanceRunOutputs = {
   ppa_price: number | null;
   npv: number | null;
   itc_credit?: number | null;
+  npv_unlevered?: number | null;
+  min_dscr?: number | null;
 };
 
 export type ProjectFinanceRunCashflow = {

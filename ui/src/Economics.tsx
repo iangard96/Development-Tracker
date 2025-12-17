@@ -24,16 +24,30 @@ type EconomicsBlock = {
 };
 
 type ModelInputs = {
+  capacityKw: number | "";
   capexPerW: number | "";
+  capexTotal: number | "";
   escalatorPct: number | "";
+  ppaEscalatorPct: number | "";
   opexPerKwYr: number | "";
+  opexEscalatorPct: number | "";
+  opexFixedAnnual: number | "";
+  opexVariablePerMwh: number | "";
   leaseCost: number | "";
+  leaseEscalatorPct: number | "";
   miscCost: number | "";
   ppaPrice: number | "";
   recPrice: number | "";
   itcEligiblePct: number | "";
   pvsystYieldMWh: number | "";
   pvsystDegPct: number | "";
+  recTermYears: number | "";
+  debtPct: number | "";
+  debtRatePct: number | "";
+  debtTenorYears: number | "";
+  discountRatePct: number | "";
+  termYears: number | "";
+  salvagePctCapex: number | "";
 };
 
 type ModelOutputs = {
@@ -42,6 +56,7 @@ type ModelOutputs = {
   ppaPrice: number | null;
   npv: number | null;
   itcCredit: number | null;
+  minDscr: number | null;
 };
 
 type CashFlowRow = {
@@ -64,16 +79,30 @@ export default function Economics() {
     opexPerKwYr: null,
   });
   const [modelInputs, setModelInputs] = useState<ModelInputs>({
+    capacityKw: 1000,
     capexPerW: 1.75,
+    capexTotal: "",
     escalatorPct: 2,
+    ppaEscalatorPct: 2,
     opexPerKwYr: 18,
+    opexEscalatorPct: 2,
+    opexFixedAnnual: 0,
+    opexVariablePerMwh: 0,
     leaseCost: 12000,
+    leaseEscalatorPct: 0,
     miscCost: 5000,
     ppaPrice: 55,
     recPrice: 0,
     itcEligiblePct: 30,
     pvsystYieldMWh: 2200,
     pvsystDegPct: 0.5,
+    recTermYears: "",
+    debtPct: 0,
+    debtRatePct: 0,
+    debtTenorYears: "",
+    discountRatePct: 8,
+    termYears: 25,
+    salvagePctCapex: 0,
   });
   const [modelOutputs, setModelOutputs] = useState<ModelOutputs>({
     leveredIrr: null,
@@ -81,6 +110,7 @@ export default function Economics() {
     ppaPrice: null,
     npv: null,
     itcCredit: null,
+    minDscr: null,
   });
   const [cashFlowRows, setCashFlowRows] = useState<CashFlowRow[]>([
     {
@@ -137,6 +167,9 @@ export default function Economics() {
           itcEligiblePct: inc.itc_eligible_pct ?? prev.itcEligiblePct ?? 30,
           pvsystYieldMWh: inc.pvsyst_yield_mwh ?? prev.pvsystYieldMWh ?? 2200,
           pvsystDegPct: inc.pvsyst_deg_pct ?? prev.pvsystDegPct ?? 0.5,
+          ppaPrice: inc.ppa_price ?? prev.ppaPrice,
+          ppaEscalatorPct: inc.ppa_esc_pct ?? prev.ppaEscalatorPct ?? prev.escalatorPct,
+          recTermYears: inc.rec_tenor_years ?? prev.recTermYears ?? "",
         }));
       })
       .catch((e) => setError(String(e)))
@@ -180,18 +213,48 @@ export default function Economics() {
     setRunLoading(true);
     setRunError(null);
     try {
+      const miscAnnual = modelInputs.miscCost === "" ? 0 : Number(modelInputs.miscCost);
+      const fixedAnnual =
+        (modelInputs.opexFixedAnnual === "" ? 0 : Number(modelInputs.opexFixedAnnual)) + miscAnnual;
       const payload = {
-        capex_per_w: modelInputs.capexPerW === "" ? undefined : Number(modelInputs.capexPerW),
-        escalator_pct: modelInputs.escalatorPct === "" ? undefined : Number(modelInputs.escalatorPct),
-        opex_per_kw_yr: modelInputs.opexPerKwYr === "" ? undefined : Number(modelInputs.opexPerKwYr),
-        lease_cost: modelInputs.leaseCost === "" ? undefined : Number(modelInputs.leaseCost),
-        misc_cost: modelInputs.miscCost === "" ? undefined : Number(modelInputs.miscCost),
-        ppa_price: modelInputs.ppaPrice === "" ? undefined : Number(modelInputs.ppaPrice),
-        rec_price: modelInputs.recPrice === "" ? undefined : Number(modelInputs.recPrice),
-        itc_eligible_pct: modelInputs.itcEligiblePct === "" ? undefined : Number(modelInputs.itcEligiblePct),
-        pvsyst_deg_pct: modelInputs.pvsystDegPct === "" ? undefined : Number(modelInputs.pvsystDegPct),
-        pvsyst_yield_mwh: modelInputs.pvsystYieldMWh === "" ? undefined : Number(modelInputs.pvsystYieldMWh),
-        base_yield_mwh: modelInputs.pvsystYieldMWh === "" ? undefined : Number(modelInputs.pvsystYieldMWh),
+        system: {
+          dc_kw: modelInputs.capacityKw === "" ? undefined : Number(modelInputs.capacityKw),
+          capex_per_w: modelInputs.capexPerW === "" ? undefined : Number(modelInputs.capexPerW),
+          total_capex: modelInputs.capexTotal === "" ? undefined : Number(modelInputs.capexTotal),
+        },
+        production: {
+          year1_mwh: modelInputs.pvsystYieldMWh === "" ? undefined : Number(modelInputs.pvsystYieldMWh),
+          degradation_pct: modelInputs.pvsystDegPct === "" ? undefined : Number(modelInputs.pvsystDegPct),
+        },
+        revenue: {
+          ppa_price_mwh: modelInputs.ppaPrice === "" ? undefined : Number(modelInputs.ppaPrice),
+          ppa_escalator_pct: modelInputs.ppaEscalatorPct === "" ? undefined : Number(modelInputs.ppaEscalatorPct ?? modelInputs.escalatorPct),
+          rec_price_mwh: modelInputs.recPrice === "" ? undefined : Number(modelInputs.recPrice),
+          rec_term_years: modelInputs.recTermYears === "" ? undefined : Number(modelInputs.recTermYears),
+        },
+        opex: {
+          fixed_per_kw_yr: modelInputs.opexPerKwYr === "" ? undefined : Number(modelInputs.opexPerKwYr),
+          fixed_annual: fixedAnnual === 0 ? undefined : fixedAnnual,
+          variable_per_mwh: modelInputs.opexVariablePerMwh === "" ? undefined : Number(modelInputs.opexVariablePerMwh),
+          escalator_pct: modelInputs.opexEscalatorPct === "" ? undefined : Number(modelInputs.opexEscalatorPct),
+        },
+        land_lease: {
+          annual: modelInputs.leaseCost === "" ? undefined : Number(modelInputs.leaseCost),
+          escalator_pct: modelInputs.leaseEscalatorPct === "" ? undefined : Number(modelInputs.leaseEscalatorPct),
+        },
+        debt: {
+          debt_pct: modelInputs.debtPct === "" ? undefined : Number(modelInputs.debtPct),
+          interest_pct: modelInputs.debtRatePct === "" ? undefined : Number(modelInputs.debtRatePct),
+          tenor_years: modelInputs.debtTenorYears === "" ? undefined : Number(modelInputs.debtTenorYears),
+        },
+        incentives: {
+          itc_pct: modelInputs.itcEligiblePct === "" ? undefined : Number(modelInputs.itcEligiblePct),
+        },
+        analysis: {
+          term_years: modelInputs.termYears === "" ? undefined : Number(modelInputs.termYears),
+          discount_rate_pct: modelInputs.discountRatePct === "" ? undefined : Number(modelInputs.discountRatePct),
+          salvage_pct_capex: modelInputs.salvagePctCapex === "" ? undefined : Number(modelInputs.salvagePctCapex),
+        },
       };
       const run = await runProjectFinanceModel(projectId, payload);
       setModelOutputs({
@@ -200,6 +263,7 @@ export default function Economics() {
         ppaPrice: run.outputs.ppa_price,
         npv: run.outputs.npv,
         itcCredit: run.outputs.itc_credit ?? null,
+        minDscr: run.outputs.min_dscr ?? null,
       });
       setCashFlowRows(run.cashflows || []);
     } catch (e: any) {
@@ -373,12 +437,24 @@ export default function Economics() {
         </button>
       }>
           <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, alignItems: "start" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
             <LabeledInput
               label="$ / W"
               type="number"
               value={modelInputs.capexPerW}
               onChange={(v) => handleModelInputChange("capexPerW", v)}
+            />
+            <LabeledInput
+              label="Total CapEx ($)"
+              type="number"
+              value={modelInputs.capexTotal}
+              onChange={(v) => handleModelInputChange("capexTotal", v)}
+            />
+            <LabeledInput
+              label="Capacity (kW)"
+              type="number"
+              value={modelInputs.capacityKw}
+              onChange={(v) => handleModelInputChange("capacityKw", v)}
             />
             <LabeledInput
               label="Escalator (%)"
@@ -411,10 +487,22 @@ export default function Economics() {
               onChange={(v) => handleModelInputChange("ppaPrice", v)}
             />
             <LabeledInput
+              label="PPA Escalator (%)"
+              type="number"
+              value={modelInputs.ppaEscalatorPct}
+              onChange={(v) => handleModelInputChange("ppaEscalatorPct", v)}
+            />
+            <LabeledInput
               label="REC Price ($/MWh)"
               type="number"
               value={modelInputs.recPrice}
               onChange={(v) => handleModelInputChange("recPrice", v)}
+            />
+            <LabeledInput
+              label="REC Term (yrs)"
+              type="number"
+              value={modelInputs.recTermYears}
+              onChange={(v) => handleModelInputChange("recTermYears", v)}
             />
             <LabeledInput
               label="ITC Eligible (%)"
@@ -434,6 +522,66 @@ export default function Economics() {
               value={modelInputs.pvsystDegPct}
               onChange={(v) => handleModelInputChange("pvsystDegPct", v)}
             />
+            <LabeledInput
+              label="O&M Escalator (%)"
+              type="number"
+              value={modelInputs.opexEscalatorPct}
+              onChange={(v) => handleModelInputChange("opexEscalatorPct", v)}
+            />
+            <LabeledInput
+              label="Fixed Opex ($/yr)"
+              type="number"
+              value={modelInputs.opexFixedAnnual}
+              onChange={(v) => handleModelInputChange("opexFixedAnnual", v)}
+            />
+            <LabeledInput
+              label="Variable Opex ($/MWh)"
+              type="number"
+              value={modelInputs.opexVariablePerMwh}
+              onChange={(v) => handleModelInputChange("opexVariablePerMwh", v)}
+            />
+            <LabeledInput
+              label="Lease Escalator (%)"
+              type="number"
+              value={modelInputs.leaseEscalatorPct}
+              onChange={(v) => handleModelInputChange("leaseEscalatorPct", v)}
+            />
+            <LabeledInput
+              label="Debt % of CapEx"
+              type="number"
+              value={modelInputs.debtPct}
+              onChange={(v) => handleModelInputChange("debtPct", v)}
+            />
+            <LabeledInput
+              label="Debt Rate (%)"
+              type="number"
+              value={modelInputs.debtRatePct}
+              onChange={(v) => handleModelInputChange("debtRatePct", v)}
+            />
+            <LabeledInput
+              label="Debt Tenor (yrs)"
+              type="number"
+              value={modelInputs.debtTenorYears}
+              onChange={(v) => handleModelInputChange("debtTenorYears", v)}
+            />
+            <LabeledInput
+              label="Analysis Term (yrs)"
+              type="number"
+              value={modelInputs.termYears}
+              onChange={(v) => handleModelInputChange("termYears", v)}
+            />
+            <LabeledInput
+              label="Discount Rate (%)"
+              type="number"
+              value={modelInputs.discountRatePct}
+              onChange={(v) => handleModelInputChange("discountRatePct", v)}
+            />
+            <LabeledInput
+              label="Salvage (% of CapEx)"
+              type="number"
+              value={modelInputs.salvagePctCapex}
+              onChange={(v) => handleModelInputChange("salvagePctCapex", v)}
+            />
           </div>
 
           <div style={{ display: "grid", gap: 10 }}>
@@ -442,6 +590,7 @@ export default function Economics() {
             <Stat label="Modeled PPA" value={formatMaybeCurrency(modelOutputs.ppaPrice, "/MWh")} />
             <Stat label="NPV" value={formatMaybeCurrency(modelOutputs.npv)} />
             <Stat label="ITC Credit" value={formatMaybeCurrency(modelOutputs.itcCredit)} />
+            <Stat label="Min DSCR" value={formatMaybeNumber(modelOutputs.minDscr)} />
             {runError && <div style={{ fontSize: 12, color: "crimson" }}>{runError}</div>}
           </div>
         </div>
@@ -552,6 +701,11 @@ function formatMaybePercent(value: number | null) {
 function formatMaybeCurrency(value: number | null, suffix = "") {
   if (value == null) return "--";
   return `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}${suffix}`;
+}
+
+function formatMaybeNumber(value: number | null) {
+  if (value == null) return "--";
+  return `${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
 const formGridCols2: React.CSSProperties = {
