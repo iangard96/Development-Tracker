@@ -405,7 +405,118 @@ class PermitRequirementViewSet(viewsets.ModelViewSet):
                 | models.Q(requirements__icontains=search)
                 | models.Q(comments__icontains=search)
             )
+        # If no permits exist for this project, try seeding from the template CSV
+        if project_id and not qs.exists():
+            try:
+                project = Project.objects.get(pk=project_id)
+                self._bootstrap_from_template(project)
+                qs = super().get_queryset().filter(project_id=project_id)
+                if level:
+                    qs = qs.filter(level__iexact=level)
+                if search:
+                    qs = qs.filter(
+                        models.Q(required_permit__icontains=search)
+                        | models.Q(agency__icontains=search)
+                        | models.Q(status__icontains=search)
+                        | models.Q(responsible_party__icontains=search)
+                        | models.Q(responsible_individual__icontains=search)
+                        | models.Q(requirements__icontains=search)
+                        | models.Q(comments__icontains=search)
+                    )
+            except Exception:
+                pass
         return qs.order_by("level", "id")
+
+    def _bootstrap_from_template(self, project: Project) -> int:
+        """
+        Seed permit rows from the template CSV in the project root.
+        """
+        csv_path = Path(settings.BASE_DIR) / "Copy of Charter Steel - Development Tracker.xlsx - Permitting.csv"
+        if not csv_path.exists():
+            return 0
+
+        def to_date(raw: str | None):
+            if raw is None:
+                return None
+            val = str(raw).strip()
+            if val == "":
+                return None
+            for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y"):
+                try:
+                    return datetime.strptime(val, fmt).date()
+                except Exception:
+                    continue
+            try:
+                dt = datetime.fromisoformat(val)
+                return dt.date()
+            except Exception:
+                return None
+
+        current_level = ""
+        created = 0
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            reader = csv.reader(f)
+            header_found = False
+            header_map = {}
+            for row in reader:
+                if not row:
+                    continue
+                # detect header
+                if not header_found and "AGENCY" in [c.strip().upper() for c in row]:
+                    header_found = True
+                    header_map = {c.strip().upper(): idx for idx, c in enumerate(row)}
+                    continue
+                if not header_found:
+                    continue
+
+                first = row[0].strip().upper() if len(row) > 0 else ""
+                if first in {"FEDERAL", "STATE", "LOCAL"}:
+                    current_level = first.title()
+                    continue
+
+                # skip if no agency/permit
+                agency_val = row[header_map.get("AGENCY", 1)] if header_map.get("AGENCY") is not None and len(row) > header_map.get("AGENCY", 1) else ""
+                permit_val = row[header_map.get("REQUIRED PERMIT OR CONCURRENCE", 2)] if header_map.get("REQUIRED PERMIT OR CONCURRENCE") is not None and len(row) > header_map.get("REQUIRED PERMIT OR CONCURRENCE", 2) else ""
+                if not agency_val and not permit_val:
+                    continue
+
+                def get(col_name: str) -> str:
+                    idx = header_map.get(col_name)
+                    if idx is None or idx >= len(row):
+                        return ""
+                    return (row[idx] or "").strip()
+
+                start_date = to_date(get("START DATE"))
+                completion_date = to_date(get("COMPLETION DATE"))
+                turnaround_raw = get("TURNAROUND  (DAYS)")
+                try:
+                    turnaround_days = int(str(turnaround_raw).replace(",", "")) if turnaround_raw else None
+                except Exception:
+                    turnaround_days = None
+
+                PermitRequirement.objects.create(
+                    project=project,
+                    level=current_level,
+                    applicable=get("APPLICABLE"),
+                    agency=agency_val,
+                    required_permit=permit_val,
+                    includes=get("INCLUDES"),
+                    cup_condition=get("CUP CONDITION LINE ITEM"),
+                    responsible_party=get("RESPONSIBLE PARTY"),
+                    responsible_individual=get("RESPONSIBLE INDIVIDUAL"),
+                    status=get("STATUS"),
+                    fee=get("FEE"),
+                    start_date=start_date,
+                    turnaround_days=turnaround_days,
+                    completion_date=completion_date,
+                    agency_contact=get("AGENCY CONTACT"),
+                    agency_phone=get("AGENCY CONTACT PHONE 1"),
+                    requirements=get("REQUIREMENTS"),
+                    approval_doc_link=get("APPROVAL DOC (DB LINK)"),
+                    comments=get("COMMENTS"),
+                )
+                created += 1
+        return created
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by("id")
