@@ -213,7 +213,10 @@ class ProjectFinanceRunView(APIView):
         salvage_pct_capex = _from_group(analysis, "salvage_pct_capex", analysis.get("salvagePctCapex", 0)) / 100
 
         itc_credit = (itc_pct / 100) * total_capex
-        net_upfront = total_capex - itc_credit - closing_costs
+        total_capex_val = float(total_capex)
+        itc_credit_val = float(itc_credit)
+        closing_costs_val = float(closing_costs)
+        net_upfront = total_capex_val - itc_credit_val - closing_costs_val
 
         escalator = float(ppa_escalator) / 100
         deg = float(degradation_pct) / 100
@@ -229,7 +232,7 @@ class ProjectFinanceRunView(APIView):
         net_cash_unlevered: List[float] = []
 
         # Simple annuity debt service (level P&I) ignoring moratorium/sculpting
-        loan_principal = float(total_capex) * (float(debt_pct) / 100)
+        loan_principal = total_capex_val * (float(debt_pct) / 100)
         annual_rate = float(debt_interest / 100)
         annuity_factor = ((1 + annual_rate) ** debt_tenor - 1) / (annual_rate * (1 + annual_rate) ** debt_tenor) if (annual_rate > 0 and debt_tenor > 0) else None
         annual_debt_service = float(loan_principal / annuity_factor) if annuity_factor else 0.0
