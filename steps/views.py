@@ -157,44 +157,44 @@ class ProjectFinanceRunView(APIView):
         inc = payload.get("incentives", {}) or {}
         analysis = payload.get("analysis", {}) or {}
 
-        capacity_kw = _from_group(system, "dc_kw", system.get("capacity_kw", 1000))
-        capex_per_w = _from_group(system, "capex_per_w", system.get("capexPerW", 1.75))
-        total_capex = _from_group(system, "total_capex", 0)
+        capacity_kw = float(_from_group(system, "dc_kw", system.get("capacity_kw", 1000)))
+        capex_per_w = float(_from_group(system, "capex_per_w", system.get("capexPerW", 1.75)))
+        total_capex = float(_from_group(system, "total_capex", 0))
         if total_capex <= 0:
             total_capex = capex_per_w * capacity_kw * 1000
 
         # Revenue inputs
-        ppa_price = _from_group(revenue, "ppa_price_mwh", revenue.get("ppaPrice", 55))
-        ppa_escalator = _from_group(revenue, "ppa_escalator_pct", revenue.get("ppaEscPct", 2))
-        rec_price = _from_group(revenue, "rec_price_mwh", revenue.get("recPrice", incentives.rec_price if incentives and incentives.rec_price is not None else 0))
+        ppa_price = float(_from_group(revenue, "ppa_price_mwh", revenue.get("ppaPrice", 55)))
+        ppa_escalator = float(_from_group(revenue, "ppa_escalator_pct", revenue.get("ppaEscPct", 2)))
+        rec_price = float(_from_group(revenue, "rec_price_mwh", revenue.get("recPrice", incentives.rec_price if incentives and incentives.rec_price is not None else 0)))
         rec_term_years = int(revenue.get("rec_term_years") or 0) if isinstance(revenue.get("rec_term_years"), (int, float, str)) else 0
 
         # Production
-        year1_mwh = _from_group(production, "year1_mwh", production.get("pvsyst_yield_mwh", incentives.pvsyst_yield_mwh if incentives and incentives.pvsyst_yield_mwh is not None else 2200))
-        degradation_pct = _from_group(production, "degradation_pct", production.get("pvsyst_deg_pct", incentives.pvsyst_deg_pct if incentives and incentives.pvsyst_deg_pct is not None else 0.5))
+        year1_mwh = float(_from_group(production, "year1_mwh", production.get("pvsyst_yield_mwh", incentives.pvsyst_yield_mwh if incentives and incentives.pvsyst_yield_mwh is not None else 2200)))
+        degradation_pct = float(_from_group(production, "degradation_pct", production.get("pvsyst_deg_pct", incentives.pvsyst_deg_pct if incentives and incentives.pvsyst_deg_pct is not None else 0.5)))
 
         # Opex
-        opex_per_kw_yr = _from_group(opex, "fixed_per_kw_yr", opex.get("opexPerKwYr", 18))
-        opex_fixed_annual = _from_group(opex, "fixed_annual", opex.get("fixedAnnual", 0))
-        opex_variable_per_mwh = _from_group(opex, "variable_per_mwh", opex.get("variablePerMwh", 0))
-        opex_escalator = _from_group(opex, "escalator_pct", opex.get("escalatorPct", ppa_escalator))
+        opex_per_kw_yr = float(_from_group(opex, "fixed_per_kw_yr", opex.get("opexPerKwYr", 18)))
+        opex_fixed_annual = float(_from_group(opex, "fixed_annual", opex.get("fixedAnnual", 0)))
+        opex_variable_per_mwh = float(_from_group(opex, "variable_per_mwh", opex.get("variablePerMwh", 0)))
+        opex_escalator = float(_from_group(opex, "escalator_pct", opex.get("escalatorPct", ppa_escalator)))
 
         # Lease
         lease_cost_default = lease.get("leaseCost", economics.base_rent if economics and economics.base_rent is not None else 12000)
-        lease_cost = _from_group(lease, "annual", lease_cost_default)
-        lease_escalator = _from_group(lease, "escalator_pct", lease.get("escalatorPct", ppa_escalator))
+        lease_cost = float(_from_group(lease, "annual", lease_cost_default))
+        lease_escalator = float(_from_group(lease, "escalator_pct", lease.get("escalatorPct", ppa_escalator)))
 
         # Debt
-        debt_pct = _from_group(debt, "debt_pct", debt.get("debtPct", 0))
-        debt_interest = _from_group(debt, "interest_pct", debt.get("interestPct", 0))
+        debt_pct = float(_from_group(debt, "debt_pct", debt.get("debtPct", 0)))
+        debt_interest = float(_from_group(debt, "interest_pct", debt.get("interestPct", 0)))
         debt_tenor = int(debt.get("tenor_years") or debt.get("tenor") or 0)
-        dscr_target = _from_group(debt, "dscr_target", debt.get("dscrTarget", 0))
-        upfront_fee_pct = _from_group(debt, "upfront_fee_pct", debt.get("upfrontFeePct", 0))
-        closing_costs = _from_group(debt, "closing_costs", debt.get("closingCosts", 0))
+        dscr_target = float(_from_group(debt, "dscr_target", debt.get("dscrTarget", 0)))
+        upfront_fee_pct = float(_from_group(debt, "upfront_fee_pct", debt.get("upfrontFeePct", 0)))
+        closing_costs = float(_from_group(debt, "closing_costs", debt.get("closingCosts", 0)))
 
         # Tax & incentives
-        itc_pct = _from_group(inc, "itc_pct", inc.get("itcEligiblePct", incentives.itc_eligible_pct if incentives and incentives.itc_eligible_pct is not None else 0))
-        discount_rate = _from_group(analysis, "discount_rate_pct", analysis.get("discountRatePct", 8)) / 100
+        itc_pct = float(_from_group(inc, "itc_pct", inc.get("itcEligiblePct", incentives.itc_eligible_pct if incentives and incentives.itc_eligible_pct is not None else 0)))
+        discount_rate = float(_from_group(analysis, "discount_rate_pct", analysis.get("discountRatePct", 8))) / 100
         # Default analysis term to lease term (if available) or 25 years
         lease_term_years = None
         if economics and economics.term_years:
@@ -210,18 +210,15 @@ class ProjectFinanceRunView(APIView):
             or lease_term_years
             or 25
         )
-        salvage_pct_capex = _from_group(analysis, "salvage_pct_capex", analysis.get("salvagePctCapex", 0)) / 100
+        salvage_pct_capex = float(_from_group(analysis, "salvage_pct_capex", analysis.get("salvagePctCapex", 0))) / 100
 
         itc_credit = (itc_pct / 100) * total_capex
-        total_capex_val = float(total_capex)
-        itc_credit_val = float(itc_credit)
-        closing_costs_val = float(closing_costs)
-        net_upfront = total_capex_val - itc_credit_val - closing_costs_val
+        net_upfront = total_capex - itc_credit - closing_costs
 
-        escalator = float(ppa_escalator) / 100
-        deg = float(degradation_pct) / 100
-        lease_escal = float(lease_escalator) / 100
-        opex_escal = float(opex_escalator) / 100
+        escalator = ppa_escalator / 100
+        deg = degradation_pct / 100
+        lease_escal = lease_escalator / 100
+        opex_escal = opex_escalator / 100
 
         revenue_series: List[float] = []
         rec_series: List[float] = []
