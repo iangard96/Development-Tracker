@@ -22,6 +22,27 @@ type EconomicsBlock = {
   opexPerKwYr: number | null;
 };
 
+type ModelInputs = {
+  capexPerW: number | "";
+  escalatorPct: number | "";
+  opexPerKwYr: number | "";
+  leaseCost: number | "";
+  miscCost: number | "";
+  ppaPrice: number | "";
+};
+
+type ModelOutputs = {
+  leveredIrr: number | null;
+  unleveredIrr: number | null;
+  ppaPrice: number | null;
+  npv: number | null;
+};
+
+type CashFlowRow = {
+  label: string;
+  values: number[];
+};
+
 export default function Economics() {
   const { projectId, project } = useProject();
   const [econ, setEcon] = useState<EconomicsBlock>({
@@ -36,6 +57,38 @@ export default function Economics() {
     capexPerKw: null,
     opexPerKwYr: null,
   });
+  const [modelInputs, setModelInputs] = useState<ModelInputs>({
+    capexPerW: 1.75,
+    escalatorPct: 2,
+    opexPerKwYr: 18,
+    leaseCost: 12000,
+    miscCost: 5000,
+    ppaPrice: 55,
+  });
+  const [modelOutputs, setModelOutputs] = useState<ModelOutputs>({
+    leveredIrr: null,
+    unleveredIrr: null,
+    ppaPrice: null,
+    npv: null,
+  });
+  const [cashFlowRows, setCashFlowRows] = useState<CashFlowRow[]>([
+    {
+      label: "Revenue",
+      values: [120000, 122400, 124848, 127345, 129892],
+    },
+    {
+      label: "Opex",
+      values: [-18000, -18360, -18727, -19101, -19483],
+    },
+    {
+      label: "Lease",
+      values: [-12000, -12000, -12000, -12000, -12000],
+    },
+    {
+      label: "Net Cash",
+      values: [90000, 92040, 94000, 96344, 98409],
+    },
+  ]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +148,53 @@ export default function Economics() {
     }
   }
 
+  function handleModelInputChange<K extends keyof ModelInputs>(key: K, value: string) {
+    setModelInputs((prev) => ({
+      ...prev,
+      [key]: value === "" ? "" : Number(value),
+    }));
+  }
+
+  function handleRunModel() {
+    const capacityKw = 1000; // simple 1 MW placeholder until backend model is wired
+    const capexPerWVal = modelInputs.capexPerW === "" ? 0 : Number(modelInputs.capexPerW);
+    const totalCapex = capexPerWVal * capacityKw * 1000;
+
+    const ppaVal = modelInputs.ppaPrice === "" ? 0 : Number(modelInputs.ppaPrice);
+    const escalator = modelInputs.escalatorPct === "" ? 0 : Number(modelInputs.escalatorPct) / 100;
+    const opexPerKwVal = modelInputs.opexPerKwYr === "" ? 0 : Number(modelInputs.opexPerKwYr);
+    const leaseVal = modelInputs.leaseCost === "" ? 0 : Number(modelInputs.leaseCost);
+    const miscVal = modelInputs.miscCost === "" ? 0 : Number(modelInputs.miscCost);
+
+    const baseYield = econ.pvsystYieldMWh ?? 2200; // placeholder if no production set yet
+    const revenueYear1 = baseYield * (ppaVal || 55);
+    const revenueSeries = Array.from({ length: 5 }, (_, i) => revenueYear1 * Math.pow(1 + escalator, i));
+    const opexSeries = Array.from({ length: 5 }, (_, i) => -(opexPerKwVal * capacityKw * Math.pow(1 + escalator, i)));
+    const leaseSeries = Array.from({ length: 5 }, () => -leaseVal);
+    const miscSeries = Array.from({ length: 5 }, () => -miscVal);
+    const netCash = revenueSeries.map((rev, i) => rev + opexSeries[i] + leaseSeries[i] + miscSeries[i]);
+
+    const discountRate = 0.08;
+    const npv = netCash.reduce((acc, val, idx) => acc + val / Math.pow(1 + discountRate, idx + 1), -totalCapex);
+    const avgNet = netCash.reduce((a, b) => a + b, 0) / netCash.length;
+    const irrApprox = totalCapex > 0 ? (avgNet / totalCapex) * 100 : null;
+
+    setModelOutputs({
+      leveredIrr: irrApprox != null ? Number((irrApprox * 0.9).toFixed(1)) : null,
+      unleveredIrr: irrApprox != null ? Number(irrApprox.toFixed(1)) : null,
+      ppaPrice: ppaVal || 55,
+      npv: Number(npv.toFixed(0)),
+    });
+
+    setCashFlowRows([
+      { label: "Revenue", values: revenueSeries.map((v) => Math.round(v)) },
+      { label: "Opex", values: opexSeries.map((v) => Math.round(v)) },
+      { label: "Lease", values: leaseSeries.map((v) => Math.round(v)) },
+      { label: "Misc", values: miscSeries.map((v) => Math.round(v)) },
+      { label: "Net Cash", values: netCash.map((v) => Math.round(v)) },
+    ]);
+  }
+
   if (!projectId) {
     return (
       <div className="page-root" style={{ color: "#6b7280", fontSize: 14 }}>
@@ -122,7 +222,7 @@ export default function Economics() {
           <p style={{ margin: "0 0 6px", color: "#6b7280", fontSize: 13 }}>
             Incentives, production, and a lightweight financial snapshot.
           </p>
-          {loading && <div style={{ fontSize: 12, color: "#6b7280" }}>Loading economics…</div>}
+          {loading && <div style={{ fontSize: 12, color: "#6b7280" }}>Loading economics???</div>}
           {error && <div style={{ fontSize: 12, color: "crimson" }}>{error}</div>}
         </div>
         <div className="print-hidden" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -247,6 +347,83 @@ export default function Economics() {
           </p>
         </Card>
       </div>
+
+      <Card title="Financial Model Sandbox" action={
+        <button type="button" style={ghostButton} onClick={handleRunModel}>
+          Run
+        </button>
+      }>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, alignItems: "start" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+            <LabeledInput
+              label="$ / W"
+              type="number"
+              value={modelInputs.capexPerW}
+              onChange={(v) => handleModelInputChange("capexPerW", v)}
+            />
+            <LabeledInput
+              label="Escalator (%)"
+              type="number"
+              value={modelInputs.escalatorPct}
+              onChange={(v) => handleModelInputChange("escalatorPct", v)}
+            />
+            <LabeledInput
+              label="O&M ($/kW/yr)"
+              type="number"
+              value={modelInputs.opexPerKwYr}
+              onChange={(v) => handleModelInputChange("opexPerKwYr", v)}
+            />
+            <LabeledInput
+              label="Lease ($/yr)"
+              type="number"
+              value={modelInputs.leaseCost}
+              onChange={(v) => handleModelInputChange("leaseCost", v)}
+            />
+            <LabeledInput
+              label="Misc ($/yr)"
+              type="number"
+              value={modelInputs.miscCost}
+              onChange={(v) => handleModelInputChange("miscCost", v)}
+            />
+            <LabeledInput
+              label="PPA Price ($/MWh)"
+              type="number"
+              value={modelInputs.ppaPrice}
+              onChange={(v) => handleModelInputChange("ppaPrice", v)}
+            />
+          </div>
+
+          <div style={{ display: "grid", gap: 10 }}>
+            <Stat label="Levered IRR" value={formatMaybePercent(modelOutputs.leveredIrr)} />
+            <Stat label="Unlevered IRR" value={formatMaybePercent(modelOutputs.unleveredIrr)} />
+            <Stat label="Modeled PPA" value={formatMaybeCurrency(modelOutputs.ppaPrice, "/MWh")} />
+            <Stat label="NPV" value={formatMaybeCurrency(modelOutputs.npv)} />
+          </div>
+        </div>
+
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 14 }}>
+            <thead>
+              <tr>
+                <th style={tableHeaderCell}></th>
+                {[1, 2, 3, 4, 5].map((year) => (
+                  <th key={year} style={tableHeaderCell}>Year {year}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {cashFlowRows.map((row) => (
+                <tr key={row.label}>
+                  <td style={tableRowHeader}>{row.label}</td>
+                  {row.values.map((val, idx) => (
+                    <td key={idx} style={tableCell}>${val.toLocaleString()}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -322,6 +499,16 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
+function formatMaybePercent(value: number | null) {
+  if (value == null) return "--";
+  return `${value.toFixed(1)}%`;
+}
+
+function formatMaybeCurrency(value: number | null, suffix = "") {
+  if (value == null) return "--";
+  return `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}${suffix}`;
+}
+
 const formGridCols2: React.CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
@@ -346,4 +533,32 @@ const ghostButton: React.CSSProperties = {
   fontWeight: 600,
   color: "#111827",
   cursor: "pointer",
+};
+
+const tableHeaderCell: React.CSSProperties = {
+  textAlign: "right",
+  padding: "8px 10px",
+  borderBottom: "1px solid #e5e7eb",
+  fontSize: 12,
+  color: "#6b7280",
+  whiteSpace: "nowrap",
+};
+
+const tableRowHeader: React.CSSProperties = {
+  padding: "8px 10px",
+  borderBottom: "1px solid #e5e7eb",
+  textAlign: "left",
+  fontSize: 12,
+  color: "#374151",
+  fontWeight: 600,
+  whiteSpace: "nowrap",
+};
+
+const tableCell: React.CSSProperties = {
+  padding: "8px 10px",
+  borderBottom: "1px solid #f3f4f6",
+  textAlign: "right",
+  fontSize: 12,
+  color: "#111827",
+  whiteSpace: "nowrap",
 };
