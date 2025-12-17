@@ -502,20 +502,28 @@ export default function Economics() {
             <thead>
               <tr>
                 <th style={tableHeaderCell}></th>
-                {[1, 2, 3, 4, 5].map((year) => (
-                  <th key={year} style={tableHeaderCell}>Year {year}</th>
+                {Array.from({ length: Math.max(...cashFlowRows.map((r) => r.values.length || 0), 0) }, (_, i) => (
+                  <th key={i} style={tableHeaderCell}>Year {i + 1}</th>
                 ))}
+                <th style={tableHeaderCell}>Total</th>
               </tr>
             </thead>
             <tbody>
-              {cashFlowRows.map((row) => (
-                <tr key={row.label}>
-                  <td style={tableRowHeader}>{row.label}</td>
-                  {row.values.map((val, idx) => (
-                    <td key={idx} style={tableCell}>${val.toLocaleString()}</td>
-                  ))}
-                </tr>
-              ))}
+              {cashFlowRows.map((row) => {
+                const total = row.values.reduce((acc, v) => acc + v, 0);
+                const maxYears = Math.max(...cashFlowRows.map((r) => r.values.length || 0), row.values.length);
+                const padded = [...row.values];
+                while (padded.length < maxYears) padded.push(0);
+                return (
+                  <tr key={row.label}>
+                    <td style={tableRowHeader}>{row.label}</td>
+                    {padded.map((val, idx) => (
+                      <td key={idx} style={tableCell}>${val.toLocaleString()}</td>
+                    ))}
+                    <td style={tableCell}>${total.toLocaleString()}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
