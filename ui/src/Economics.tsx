@@ -501,7 +501,7 @@ export default function Economics() {
           <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
             <thead>
               <tr>
-                <th style={tableHeaderCell}></th>
+                <th style={tableHeaderSticky}></th>
                 {Array.from({ length: Math.max(...cashFlowRows.map((r) => r.values.length || 0), 0) }, (_, i) => (
                   <th key={i} style={tableHeaderCell}>Year {i + 1}</th>
                 ))}
@@ -673,6 +673,15 @@ const tableHeaderCell: React.CSSProperties = {
   whiteSpace: "nowrap",
 };
 
+const tableHeaderSticky: React.CSSProperties = {
+  ...tableHeaderCell,
+  position: "sticky",
+  left: 0,
+  background: "#f9fafb",
+  zIndex: 2,
+  textAlign: "left",
+};
+
 const tableRowHeader: React.CSSProperties = {
   padding: "8px 10px",
   borderBottom: "1px solid #e5e7eb",
@@ -681,6 +690,10 @@ const tableRowHeader: React.CSSProperties = {
   color: "#374151",
   fontWeight: 600,
   whiteSpace: "nowrap",
+  position: "sticky",
+  left: 0,
+  background: "#f9fafb",
+  zIndex: 1,
 };
 
 const tableCell: React.CSSProperties = {
