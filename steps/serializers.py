@@ -7,6 +7,7 @@ from .models import (
     ProjectEconomics,
     ProjectIncentives,
     ProjectFinanceRun,
+    PermitRequirement,
 )
 
 
@@ -267,3 +268,31 @@ class ProjectFinanceRunSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "created_at", "project"]
+
+
+class PermitRequirementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PermitRequirement
+        fields = [
+            "id",
+            "project",
+            "level",
+            "applicable",
+            "agency",
+            "required_permit",
+            "includes",
+            "cup_condition",
+            "responsible_party",
+            "responsible_individual",
+            "status",
+            "fee",
+            "start_date",
+            "turnaround_days",
+            "completion_date",
+            "agency_contact",
+            "agency_phone",
+            "requirements",
+            "approval_doc_link",
+            "comments",
+        ]
+        read_only_fields = ["id"]

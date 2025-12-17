@@ -8,12 +8,14 @@ from .views import (
     ProjectEconomicsView,
     ProjectIncentivesView,
     ProjectFinanceRunView,
+    PermitRequirementViewSet,
 )
 
 router = DefaultRouter()
 router.register(r"development-steps", DevelopmentStepViewSet, basename="development-steps")
 router.register(r"projects", ProjectViewSet, basename="projects")
 router.register(r"project-contacts", ProjectContactViewSet, basename="project-contacts")
+router.register(r"permit-requirements", PermitRequirementViewSet, basename="permit-requirements")
 
 urlpatterns = [
     path("", include(router.urls)),

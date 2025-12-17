@@ -230,3 +230,33 @@ class ProjectFinanceRun(models.Model):
 
     class Meta:
         db_table = "steps_project_finance_run"
+
+
+class PermitRequirement(models.Model):
+    """
+    Permitting requirements per project (federal/state/local).
+    """
+
+    id = models.AutoField(primary_key=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="permits")
+    level = models.CharField(max_length=16, blank=True, default="")  # Federal | State | Local
+    applicable = models.CharField(max_length=8, blank=True, default="")
+    agency = models.CharField(max_length=255, blank=True, default="")
+    required_permit = models.CharField(max_length=255, blank=True, default="")
+    includes = models.CharField(max_length=255, blank=True, default="")
+    cup_condition = models.CharField(max_length=255, blank=True, default="")
+    responsible_party = models.CharField(max_length=255, blank=True, default="")
+    responsible_individual = models.CharField(max_length=255, blank=True, default="")
+    status = models.CharField(max_length=128, blank=True, default="")
+    fee = models.CharField(max_length=128, blank=True, default="")
+    start_date = models.DateField(null=True, blank=True)
+    turnaround_days = models.IntegerField(null=True, blank=True)
+    completion_date = models.DateField(null=True, blank=True)
+    agency_contact = models.CharField(max_length=255, blank=True, default="")
+    agency_phone = models.CharField(max_length=255, blank=True, default="")
+    requirements = models.TextField(blank=True, default="")
+    approval_doc_link = models.TextField(blank=True, default="")
+    comments = models.TextField(blank=True, default="")
+
+    class Meta:
+        db_table = "steps_permit_requirement"

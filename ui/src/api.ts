@@ -5,6 +5,7 @@ import type {
   ProjectFinanceRun,
   ProjectFinanceRunInputs,
   ProjectIncentives,
+  PermitRequirement,
 } from "./types";
 
 const API = (() => {
@@ -347,4 +348,50 @@ export async function runProjectFinanceModel(
     body: JSON.stringify(payload),
   });
   return jsonOrThrow(r, "finance run failed");
+}
+
+/* ---------- Permit Requirements ---------- */
+
+export async function fetchPermitRequirements(
+  projectId: number,
+  level?: string,
+  search?: string,
+): Promise<PermitRequirement[]> {
+  const params = new URLSearchParams();
+  params.append("project", String(projectId));
+  if (level) params.append("level", level);
+  if (search) params.append("search", search);
+  const r = await fetch(`${API}/permit-requirements/?${params.toString()}`);
+  const data = await jsonOrThrow(r, "permits fetch failed");
+  return normalizeResults<PermitRequirement>(data);
+}
+
+export async function createPermitRequirement(
+  payload: Partial<PermitRequirement>,
+): Promise<PermitRequirement> {
+  const body: any = { ...payload };
+  delete body.id;
+  const r = await fetch(`${API}/permit-requirements/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return jsonOrThrow(r, "permit create failed");
+}
+
+export async function updatePermitRequirement(
+  id: number,
+  payload: Partial<PermitRequirement>,
+): Promise<PermitRequirement> {
+  const r = await fetch(`${API}/permit-requirements/${id}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return jsonOrThrow(r, "permit update failed");
+}
+
+export async function deletePermitRequirement(id: number): Promise<void> {
+  const r = await fetch(`${API}/permit-requirements/${id}/`, { method: "DELETE" });
+  await jsonOrThrow(r, "permit delete failed");
 }

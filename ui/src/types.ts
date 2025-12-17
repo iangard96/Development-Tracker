@@ -221,3 +221,26 @@ export type ProjectFinanceRun = {
   run_by: string;
   created_at: string;
 };
+
+export type PermitRequirement = {
+  id: number;
+  project: number;
+  level: "Federal" | "State" | "Local" | "" | string;
+  applicable: string;
+  agency: string;
+  required_permit: string;
+  includes: string;
+  cup_condition: string;
+  responsible_party: string;
+  responsible_individual: string;
+  status: string;
+  fee: string;
+  start_date: string | null;
+  turnaround_days: number | null;
+  completion_date: string | null;
+  agency_contact: string;
+  agency_phone: string;
+  requirements: string;
+  approval_doc_link: string;
+  comments: string;
+};

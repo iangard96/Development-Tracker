@@ -22,6 +22,7 @@ from .models import (
     ProjectIncentives,
     StepOrder,
     ProjectFinanceRun,
+    PermitRequirement,
 )
 from .serializers import (
     DevelopmentStepSerializer,
@@ -30,6 +31,7 @@ from .serializers import (
     ProjectEconomicsSerializer,
     ProjectIncentivesSerializer,
     ProjectFinanceRunSerializer,
+    PermitRequirementSerializer,
 )
 
 
@@ -377,6 +379,33 @@ class ProjectFinanceRunView(APIView):
         data = self.serializer_class(run).data
         return Response(data, status=status.HTTP_201_CREATED)
 
+
+class PermitRequirementViewSet(viewsets.ModelViewSet):
+    queryset = PermitRequirement.objects.all().order_by("id")
+    serializer_class = PermitRequirementSerializer
+    filterset_fields = ["project", "level"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        project_id = self.request.query_params.get("project") or self.request.query_params.get("project_id")
+        level = self.request.query_params.get("level")
+        if project_id:
+            qs = qs.filter(project_id=project_id)
+        if level:
+            qs = qs.filter(level__iexact=level)
+        search = self.request.query_params.get("search")
+        if search:
+            search = search.strip()
+            qs = qs.filter(
+                models.Q(required_permit__icontains=search)
+                | models.Q(agency__icontains=search)
+                | models.Q(status__icontains=search)
+                | models.Q(responsible_party__icontains=search)
+                | models.Q(responsible_individual__icontains=search)
+                | models.Q(requirements__icontains=search)
+                | models.Q(comments__icontains=search)
+            )
+        return qs.order_by("level", "id")
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by("id")
