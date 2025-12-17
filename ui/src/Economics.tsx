@@ -30,6 +30,10 @@ type ModelInputs = {
   leaseCost: number | "";
   miscCost: number | "";
   ppaPrice: number | "";
+  recPrice: number | "";
+  itcEligiblePct: number | "";
+  pvsystYieldMWh: number | "";
+  pvsystDegPct: number | "";
 };
 
 type ModelOutputs = {
@@ -66,6 +70,10 @@ export default function Economics() {
     leaseCost: 12000,
     miscCost: 5000,
     ppaPrice: 55,
+    recPrice: 0,
+    itcEligiblePct: 30,
+    pvsystYieldMWh: 2200,
+    pvsystDegPct: 0.5,
   });
   const [modelOutputs, setModelOutputs] = useState<ModelOutputs>({
     leveredIrr: null,
@@ -123,6 +131,13 @@ export default function Economics() {
           capexPerKw: inc.capex_per_kw,
           opexPerKwYr: inc.opex_per_kw_yr,
         });
+        setModelInputs((prev) => ({
+          ...prev,
+          recPrice: inc.rec_price ?? prev.recPrice ?? 0,
+          itcEligiblePct: inc.itc_eligible_pct ?? prev.itcEligiblePct ?? 30,
+          pvsystYieldMWh: inc.pvsyst_yield_mwh ?? prev.pvsystYieldMWh ?? 2200,
+          pvsystDegPct: inc.pvsyst_deg_pct ?? prev.pvsystDegPct ?? 0.5,
+        }));
       })
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
@@ -172,10 +187,11 @@ export default function Economics() {
         lease_cost: modelInputs.leaseCost === "" ? undefined : Number(modelInputs.leaseCost),
         misc_cost: modelInputs.miscCost === "" ? undefined : Number(modelInputs.miscCost),
         ppa_price: modelInputs.ppaPrice === "" ? undefined : Number(modelInputs.ppaPrice),
-        rec_price: econ.recPrice ?? undefined,
-        itc_eligible_pct: econ.itcEligiblePct ?? undefined,
-        pvsyst_deg_pct: econ.pvsystDegradationPct ?? undefined,
-        base_yield_mwh: econ.pvsystYieldMWh ?? undefined,
+        rec_price: modelInputs.recPrice === "" ? undefined : Number(modelInputs.recPrice),
+        itc_eligible_pct: modelInputs.itcEligiblePct === "" ? undefined : Number(modelInputs.itcEligiblePct),
+        pvsyst_deg_pct: modelInputs.pvsystDegPct === "" ? undefined : Number(modelInputs.pvsystDegPct),
+        pvsyst_yield_mwh: modelInputs.pvsystYieldMWh === "" ? undefined : Number(modelInputs.pvsystYieldMWh),
+        base_yield_mwh: modelInputs.pvsystYieldMWh === "" ? undefined : Number(modelInputs.pvsystYieldMWh),
       };
       const run = await runProjectFinanceModel(projectId, payload);
       setModelOutputs({
@@ -356,7 +372,7 @@ export default function Economics() {
           {runLoading ? "Running..." : "Run"}
         </button>
       }>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, alignItems: "start" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, alignItems: "start" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
             <LabeledInput
               label="$ / W"
@@ -393,6 +409,30 @@ export default function Economics() {
               type="number"
               value={modelInputs.ppaPrice}
               onChange={(v) => handleModelInputChange("ppaPrice", v)}
+            />
+            <LabeledInput
+              label="REC Price ($/MWh)"
+              type="number"
+              value={modelInputs.recPrice}
+              onChange={(v) => handleModelInputChange("recPrice", v)}
+            />
+            <LabeledInput
+              label="ITC Eligible (%)"
+              type="number"
+              value={modelInputs.itcEligiblePct}
+              onChange={(v) => handleModelInputChange("itcEligiblePct", v)}
+            />
+            <LabeledInput
+              label="Net Yield (MWh/yr)"
+              type="number"
+              value={modelInputs.pvsystYieldMWh}
+              onChange={(v) => handleModelInputChange("pvsystYieldMWh", v)}
+            />
+            <LabeledInput
+              label="Degradation (%/yr)"
+              type="number"
+              value={modelInputs.pvsystDegPct}
+              onChange={(v) => handleModelInputChange("pvsystDegPct", v)}
             />
           </div>
 
