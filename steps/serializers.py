@@ -1,6 +1,13 @@
 # steps/serializers.py
 from rest_framework import serializers
-from .models import DevelopmentStep, Project, ProjectContact, ProjectEconomics, ProjectIncentives
+from .models import (
+    DevelopmentStep,
+    Project,
+    ProjectContact,
+    ProjectEconomics,
+    ProjectIncentives,
+    ProjectFinanceRun,
+)
 
 
 class DevelopmentStepSerializer(serializers.ModelSerializer):
@@ -245,3 +252,18 @@ class ProjectIncentivesSerializer(serializers.ModelSerializer):
             "meta",
         ]
         read_only_fields = ["id"]
+
+
+class ProjectFinanceRunSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectFinanceRun
+        fields = [
+            "id",
+            "project",
+            "inputs",
+            "outputs",
+            "cashflows",
+            "run_by",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at", "project"]

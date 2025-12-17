@@ -7,6 +7,7 @@ from .views import (
     ProjectContactViewSet,
     ProjectEconomicsView,
     ProjectIncentivesView,
+    ProjectFinanceRunView,
 )
 
 router = DefaultRouter()
@@ -18,4 +19,5 @@ urlpatterns = [
     path("", include(router.urls)),
     path("projects/<int:project_id>/economics/", ProjectEconomicsView.as_view(), name="project-economics"),
     path("projects/<int:project_id>/incentives/", ProjectIncentivesView.as_view(), name="project-incentives"),
+    path("projects/<int:project_id>/finance/run/", ProjectFinanceRunView.as_view(), name="project-finance-run"),
 ]

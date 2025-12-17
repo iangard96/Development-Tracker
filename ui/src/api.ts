@@ -1,6 +1,11 @@
 // ui/src/api.ts
 import type { DevStep, Project, DevType, ProjectContact } from "./types";
-import type { ProjectEconomics, ProjectIncentives } from "./types";
+import type {
+  ProjectEconomics,
+  ProjectFinanceRun,
+  ProjectFinanceRunInputs,
+  ProjectIncentives,
+} from "./types";
 
 const API = (() => {
   const fromEnv = import.meta.env.VITE_API_URL;
@@ -328,4 +333,18 @@ export async function reorderSteps(projectId: number, order: number[]): Promise<
     body: JSON.stringify({ project: projectId, order }),
   });
   await jsonOrThrow(r, "reorder failed");
+}
+
+/* ---------- Finance Runs ---------- */
+
+export async function runProjectFinanceModel(
+  projectId: number,
+  payload: Partial<ProjectFinanceRunInputs>,
+): Promise<ProjectFinanceRun> {
+  const r = await fetch(`${API}/projects/${projectId}/finance/run/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return jsonOrThrow(r, "finance run failed");
 }

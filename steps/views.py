@@ -11,6 +11,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import generics
+from rest_framework.views import APIView
 
 from .models import (
     DevelopmentStep,
@@ -19,6 +20,7 @@ from .models import (
     ProjectEconomics,
     ProjectIncentives,
     StepOrder,
+    ProjectFinanceRun,
 )
 from .serializers import (
     DevelopmentStepSerializer,
@@ -26,6 +28,7 @@ from .serializers import (
     ProjectContactSerializer,
     ProjectEconomicsSerializer,
     ProjectIncentivesSerializer,
+    ProjectFinanceRunSerializer,
 )
 
 
@@ -116,6 +119,114 @@ class ProjectIncentivesView(generics.RetrieveUpdateAPIView):
         project = generics.get_object_or_404(Project, pk=project_id)
         obj, _ = ProjectIncentives.objects.get_or_create(project=project)
         return obj
+
+
+class ProjectFinanceRunView(APIView):
+    """
+    Synchronous financial model run endpoint.
+    Accepts inputs, runs a placeholder calc, stores inputs/outputs, and returns the run.
+    """
+
+    serializer_class = ProjectFinanceRunSerializer
+
+    def post(self, request, project_id):
+        project = generics.get_object_or_404(Project, pk=project_id)
+        payload = request.data or {}
+
+        def _num(key: str, default: Decimal | int | float = 0):
+            raw = payload.get(key, default)
+            if raw in (None, ""):
+                return Decimal(default)
+            try:
+                return Decimal(str(raw))
+            except Exception:
+                return Decimal(default)
+
+        incentives = getattr(project, "incentives", None)
+        capacity_kw = _num("capacity_kw", 1000)
+        capex_per_w = _num("capex_per_w", payload.get("capexPerW", 1.75))
+        escalator_pct = _num("escalator_pct", payload.get("escalatorPct", 2))
+        opex_per_kw_yr = _num("opex_per_kw_yr", payload.get("opexPerKwYr", 18))
+        lease_cost = _num("lease_cost", payload.get("leaseCost", 12000))
+        misc_cost = _num("misc_cost", payload.get("miscCost", 5000))
+        ppa_price = _num("ppa_price", payload.get("ppaPrice", 55))
+        rec_price = _num("rec_price", payload.get("recPrice", incentives.rec_price if incentives and incentives.rec_price is not None else 0))
+        itc_pct = _num("itc_eligible_pct", payload.get("itcEligiblePct", incentives.itc_eligible_pct if incentives and incentives.itc_eligible_pct is not None else 0))
+        pvsyst_deg_pct = _num("pvsyst_deg_pct", payload.get("pvsystDegradationPct", incentives.pvsyst_deg_pct if incentives and incentives.pvsyst_deg_pct is not None else 0.5))
+        discount_rate = _num("discount_rate", 8) / 100
+
+        base_yield = _num("pvsyst_yield_mwh", payload.get("pvsyst_yield_mwh", incentives.pvsyst_yield_mwh if incentives and incentives.pvsyst_yield_mwh is not None else 2200))
+
+        total_capex = capex_per_w * capacity_kw * 1000
+        itc_credit = (itc_pct / 100) * total_capex
+        net_upfront = total_capex - itc_credit
+        escalator = escalator_pct / 100
+        deg = pvsyst_deg_pct / 100
+
+        revenue_series: list[float] = []
+        opex_series: list[float] = []
+        lease_series: list[float] = []
+        misc_series: list[float] = []
+        net_cash: list[float] = []
+
+        for i in range(5):
+            yield_year = base_yield * Decimal((1 - deg) ** i)
+            price_year = (ppa_price + rec_price) * Decimal((1 + escalator) ** i)
+            rev = float((yield_year * price_year).quantize(Decimal("0.01")))
+            opex = float(-(opex_per_kw_yr * capacity_kw * Decimal((1 + escalator) ** i)).quantize(Decimal("0.01")))
+            lease = float(-lease_cost)
+            misc = float(-misc_cost)
+            revenue_series.append(rev)
+            opex_series.append(opex)
+            lease_series.append(lease)
+            misc_series.append(misc)
+            net_cash.append(rev + opex + lease + misc)
+
+        npv = float(sum(val / float((1 + discount_rate) ** (idx + 1)) for idx, val in enumerate(net_cash)) - float(net_upfront))
+        avg_net = sum(net_cash) / len(net_cash) if net_cash else 0
+        irr_approx = (avg_net / float(net_upfront)) * 100 if net_upfront else None
+
+        outputs = {
+            "levered_irr": round(irr_approx * 0.9, 1) if irr_approx is not None else None,
+            "unlevered_irr": round(irr_approx, 1) if irr_approx is not None else None,
+            "ppa_price": float(ppa_price),
+            "npv": round(npv, 0),
+            "itc_credit": float(itc_credit),
+        }
+
+        cashflows = [
+            {"label": "Revenue", "values": revenue_series},
+            {"label": "Opex", "values": opex_series},
+            {"label": "Lease", "values": lease_series},
+            {"label": "Misc", "values": misc_series},
+            {"label": "Net Cash", "values": net_cash},
+        ]
+
+        inputs = {
+            "capacity_kw": float(capacity_kw),
+            "capex_per_w": float(capex_per_w),
+            "escalator_pct": float(escalator_pct),
+            "opex_per_kw_yr": float(opex_per_kw_yr),
+            "lease_cost": float(lease_cost),
+            "misc_cost": float(misc_cost),
+            "ppa_price": float(ppa_price),
+            "rec_price": float(rec_price),
+            "itc_eligible_pct": float(itc_pct),
+            "pvsyst_deg_pct": float(pvsyst_deg_pct),
+            "discount_rate_pct": float(discount_rate * 100),
+            "base_yield_mwh": float(base_yield),
+        }
+
+        run = ProjectFinanceRun.objects.create(
+            project=project,
+            inputs=inputs,
+            outputs=outputs,
+            cashflows=cashflows,
+            run_by=str(request.user) if request.user and request.user.is_authenticated else "",
+        )
+
+        data = self.serializer_class(run).data
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
 class ProjectViewSet(viewsets.ModelViewSet):

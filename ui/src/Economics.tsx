@@ -4,6 +4,7 @@ import { useProject } from "./ProjectContext";
 import {
   fetchProjectIncentives,
   updateProjectIncentives,
+  runProjectFinanceModel,
 } from "./api";
 import type { ProjectIncentives } from "./types";
 import logo from "../public/landcharge-logo.png";
@@ -36,6 +37,7 @@ type ModelOutputs = {
   unleveredIrr: number | null;
   ppaPrice: number | null;
   npv: number | null;
+  itcCredit: number | null;
 };
 
 type CashFlowRow = {
@@ -70,6 +72,7 @@ export default function Economics() {
     unleveredIrr: null,
     ppaPrice: null,
     npv: null,
+    itcCredit: null,
   });
   const [cashFlowRows, setCashFlowRows] = useState<CashFlowRow[]>([
     {
@@ -92,6 +95,8 @@ export default function Economics() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [runLoading, setRunLoading] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
 
   const annualRevenue = useMemo(() => {
     const prod = econ.pvsystYieldMWh ?? 0;
@@ -155,44 +160,37 @@ export default function Economics() {
     }));
   }
 
-  function handleRunModel() {
-    const capacityKw = 1000; // simple 1 MW placeholder until backend model is wired
-    const capexPerWVal = modelInputs.capexPerW === "" ? 0 : Number(modelInputs.capexPerW);
-    const totalCapex = capexPerWVal * capacityKw * 1000;
-
-    const ppaVal = modelInputs.ppaPrice === "" ? 0 : Number(modelInputs.ppaPrice);
-    const escalator = modelInputs.escalatorPct === "" ? 0 : Number(modelInputs.escalatorPct) / 100;
-    const opexPerKwVal = modelInputs.opexPerKwYr === "" ? 0 : Number(modelInputs.opexPerKwYr);
-    const leaseVal = modelInputs.leaseCost === "" ? 0 : Number(modelInputs.leaseCost);
-    const miscVal = modelInputs.miscCost === "" ? 0 : Number(modelInputs.miscCost);
-
-    const baseYield = econ.pvsystYieldMWh ?? 2200; // placeholder if no production set yet
-    const revenueYear1 = baseYield * (ppaVal || 55);
-    const revenueSeries = Array.from({ length: 5 }, (_, i) => revenueYear1 * Math.pow(1 + escalator, i));
-    const opexSeries = Array.from({ length: 5 }, (_, i) => -(opexPerKwVal * capacityKw * Math.pow(1 + escalator, i)));
-    const leaseSeries = Array.from({ length: 5 }, () => -leaseVal);
-    const miscSeries = Array.from({ length: 5 }, () => -miscVal);
-    const netCash = revenueSeries.map((rev, i) => rev + opexSeries[i] + leaseSeries[i] + miscSeries[i]);
-
-    const discountRate = 0.08;
-    const npv = netCash.reduce((acc, val, idx) => acc + val / Math.pow(1 + discountRate, idx + 1), -totalCapex);
-    const avgNet = netCash.reduce((a, b) => a + b, 0) / netCash.length;
-    const irrApprox = totalCapex > 0 ? (avgNet / totalCapex) * 100 : null;
-
-    setModelOutputs({
-      leveredIrr: irrApprox != null ? Number((irrApprox * 0.9).toFixed(1)) : null,
-      unleveredIrr: irrApprox != null ? Number(irrApprox.toFixed(1)) : null,
-      ppaPrice: ppaVal || 55,
-      npv: Number(npv.toFixed(0)),
-    });
-
-    setCashFlowRows([
-      { label: "Revenue", values: revenueSeries.map((v) => Math.round(v)) },
-      { label: "Opex", values: opexSeries.map((v) => Math.round(v)) },
-      { label: "Lease", values: leaseSeries.map((v) => Math.round(v)) },
-      { label: "Misc", values: miscSeries.map((v) => Math.round(v)) },
-      { label: "Net Cash", values: netCash.map((v) => Math.round(v)) },
-    ]);
+  async function handleRunModel() {
+    if (!projectId) return;
+    setRunLoading(true);
+    setRunError(null);
+    try {
+      const payload = {
+        capex_per_w: modelInputs.capexPerW === "" ? undefined : Number(modelInputs.capexPerW),
+        escalator_pct: modelInputs.escalatorPct === "" ? undefined : Number(modelInputs.escalatorPct),
+        opex_per_kw_yr: modelInputs.opexPerKwYr === "" ? undefined : Number(modelInputs.opexPerKwYr),
+        lease_cost: modelInputs.leaseCost === "" ? undefined : Number(modelInputs.leaseCost),
+        misc_cost: modelInputs.miscCost === "" ? undefined : Number(modelInputs.miscCost),
+        ppa_price: modelInputs.ppaPrice === "" ? undefined : Number(modelInputs.ppaPrice),
+        rec_price: econ.recPrice ?? undefined,
+        itc_eligible_pct: econ.itcEligiblePct ?? undefined,
+        pvsyst_deg_pct: econ.pvsystDegradationPct ?? undefined,
+        base_yield_mwh: econ.pvsystYieldMWh ?? undefined,
+      };
+      const run = await runProjectFinanceModel(projectId, payload);
+      setModelOutputs({
+        leveredIrr: run.outputs.levered_irr,
+        unleveredIrr: run.outputs.unlevered_irr,
+        ppaPrice: run.outputs.ppa_price,
+        npv: run.outputs.npv,
+        itcCredit: run.outputs.itc_credit ?? null,
+      });
+      setCashFlowRows(run.cashflows || []);
+    } catch (e: any) {
+      setRunError(String(e));
+    } finally {
+      setRunLoading(false);
+    }
   }
 
   if (!projectId) {
@@ -349,8 +347,13 @@ export default function Economics() {
       </div>
 
       <Card title="Financial Model Sandbox" action={
-        <button type="button" style={ghostButton} onClick={handleRunModel}>
-          Run
+        <button
+          type="button"
+          style={{ ...ghostButton, opacity: runLoading ? 0.6 : 1 }}
+          onClick={handleRunModel}
+          disabled={runLoading || !projectId}
+        >
+          {runLoading ? "Running..." : "Run"}
         </button>
       }>
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, alignItems: "start" }}>
@@ -398,6 +401,8 @@ export default function Economics() {
             <Stat label="Unlevered IRR" value={formatMaybePercent(modelOutputs.unleveredIrr)} />
             <Stat label="Modeled PPA" value={formatMaybeCurrency(modelOutputs.ppaPrice, "/MWh")} />
             <Stat label="NPV" value={formatMaybeCurrency(modelOutputs.npv)} />
+            <Stat label="ITC Credit" value={formatMaybeCurrency(modelOutputs.itcCredit)} />
+            {runError && <div style={{ fontSize: 12, color: "crimson" }}>{runError}</div>}
           </div>
         </div>
 

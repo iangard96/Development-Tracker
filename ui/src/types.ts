@@ -129,3 +129,42 @@ export type ProjectIncentives = {
   opex_per_kw_yr: number | null;
   meta: Record<string, unknown>;
 };
+
+export type ProjectFinanceRunInputs = {
+  capacity_kw?: number;
+  capex_per_w?: number;
+  escalator_pct?: number;
+  opex_per_kw_yr?: number;
+  lease_cost?: number;
+  misc_cost?: number;
+  ppa_price?: number;
+  rec_price?: number;
+  itc_eligible_pct?: number;
+  pvsyst_deg_pct?: number;
+  pvsyst_yield_mwh?: number;
+  discount_rate_pct?: number;
+  base_yield_mwh?: number;
+};
+
+export type ProjectFinanceRunOutputs = {
+  levered_irr: number | null;
+  unlevered_irr: number | null;
+  ppa_price: number | null;
+  npv: number | null;
+  itc_credit?: number | null;
+};
+
+export type ProjectFinanceRunCashflow = {
+  label: string;
+  values: number[];
+};
+
+export type ProjectFinanceRun = {
+  id: number;
+  project: number;
+  inputs: ProjectFinanceRunInputs;
+  outputs: ProjectFinanceRunOutputs;
+  cashflows: ProjectFinanceRunCashflow[];
+  run_by: string;
+  created_at: string;
+};

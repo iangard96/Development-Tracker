@@ -213,3 +213,20 @@ class StepOrder(models.Model):
     class Meta:
         db_table = "steps_step_order"
         unique_together = ("project", "step_id")
+
+
+class ProjectFinanceRun(models.Model):
+    """
+    Stores each financial model run request/response for a project.
+    """
+
+    id = models.AutoField(primary_key=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="finance_runs")
+    inputs = models.JSONField(default=dict, blank=True)
+    outputs = models.JSONField(default=dict, blank=True)
+    cashflows = models.JSONField(default=list, blank=True)
+    run_by = models.CharField(max_length=255, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "steps_project_finance_run"
