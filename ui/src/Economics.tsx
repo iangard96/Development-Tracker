@@ -678,8 +678,9 @@ const tableHeaderSticky: React.CSSProperties = {
   position: "sticky",
   left: 0,
   background: "#f9fafb",
-  zIndex: 2,
+  zIndex: 3,
   textAlign: "left",
+  boxShadow: "2px 0 2px rgba(0,0,0,0.04)",
 };
 
 const tableRowHeader: React.CSSProperties = {
@@ -692,8 +693,9 @@ const tableRowHeader: React.CSSProperties = {
   whiteSpace: "nowrap",
   position: "sticky",
   left: 0,
-  background: "#f9fafb",
-  zIndex: 1,
+  background: "#fff",
+  zIndex: 2,
+  boxShadow: "2px 0 2px rgba(0,0,0,0.04)",
 };
 
 const tableCell: React.CSSProperties = {
