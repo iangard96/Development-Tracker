@@ -58,7 +58,6 @@ export default function Dashboard() {
   const [steps, setSteps] = useState<DevStep[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  // Always call hooks (useMemo) on every render to avoid hook order issues
   const permittingSteps = useMemo(
     () =>
       (steps ?? []).filter(
@@ -81,7 +80,259 @@ export default function Dashboard() {
   const redRiskSteps = useMemo(() => {
     return (steps ?? []).filter((s) => {
       const heat = ((s as any).risk_heatmap ?? "").toString().toLowerCase();
-      const status = (m.status ?? "").toString();
+      const status = (s.status ?? "").toString();
+      const isRed = heat === "red";
+      const isCompleted = status === "Completed";
+      return isRed && !isCompleted;
+    });
+  }, [steps]);
+
+  useEffect(() => {
+    if (!projectId) {
+      setSteps(null);
+      setErr(null);
+      return;
+    }
+
+    setSteps(null);
+    setErr(null);
+    fetchStepsForProject(projectId)
+      .then((rows: DevStep[]) => setSteps(rows))
+      .catch((e) => setErr(String(e)));
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    fetchProject(projectId)
+      .then((p) => setCurrentProject(p))
+      .catch((e) => console.warn("Failed to refresh project on dashboard", e));
+  }, [projectId, setCurrentProject]);
+
+  if (!projectId) {
+    return (
+      <div className="page-root" style={{ color: "#6b7280", fontSize: 14 }}>
+        Select a project from the Project Summary to view its dashboard.
+      </div>
+    );
+  }
+
+  if (err) {
+    return (
+      <div className="page-root" style={{ color: "crimson" }}>
+        Error: {err}
+      </div>
+    );
+  }
+
+  const safeSteps = Array.isArray(steps) ? steps : [];
+
+  const fmtSize = (ac: number | null | undefined, dc: number | null | undefined) => {
+    const acLabel = ac !== null && ac !== undefined ? `${ac} AC` : "N/A";
+    const dcLabel = dc !== null && dc !== undefined ? `${dc} DC` : "N/A";
+    return `${acLabel} / ${dcLabel}`;
+  };
+
+  const projectType = project?.project_type ?? "N/A";
+  const offtake = project?.offtake_structure ?? "N/A";
+  const location =
+    project && (project.county || project.state)
+      ? `${project.county ?? ""}${project.county && project.state ? ", " : ""}${project.state ?? ""}`
+      : "N/A";
+  const sizeLabel = fmtSize(project?.size_ac_mw, project?.size_dc_mw);
+  const leaseStart = (project as any)?.lease_option_start_date || "N/A";
+  const leaseEnd = (project as any)?.lease_option_expiration_date || "N/A";
+
+  return (
+    <div className="page-root">
+      {project && (
+        <>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: 12,
+              flexWrap: "wrap",
+              marginBottom: 12,
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <h1 className="page-title" style={{ marginBottom: 8 }}>
+                {project.project_name}
+              </h1>
+              <h2 className="page-subtitle">Dashboard</h2>
+              {steps === null && (
+                <div style={{ marginTop: 4, fontSize: 13, color: "#6b7280" }}>
+                  Loading latest project data...
+                </div>
+              )}
+            </div>
+            <div
+              className="print-hidden"
+              style={{ display: "flex", alignItems: "center", gap: 12 }}
+            >
+              <SaveAsPdfButton />
+              <img
+                src="/landcharge-logo.png"
+                alt="Land Charge"
+                style={{ height: 72, width: "auto", objectFit: "contain", display: "block" }}
+              />
+            </div>
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, minmax(180px, 1fr))",
+              gap: 12,
+              marginBottom: 24,
+              alignItems: "stretch",
+            }}
+          >
+            <div
+              style={{
+                background: "#f9fafb",
+                border: "1px solid #e5e7eb",
+                borderRadius: 10,
+                padding: "10px 12px",
+                minWidth: 220,
+              }}
+            >
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>AC / DC Size</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{sizeLabel}</div>
+            </div>
+            <div
+              style={{
+                background: "#f9fafb",
+                border: "1px solid #e5e7eb",
+                borderRadius: 10,
+                padding: "10px 12px",
+                minWidth: 220,
+              }}
+            >
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>County / State</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{location}</div>
+            </div>
+            <div
+              style={{
+                background: "#f9fafb",
+                border: "1px solid #e5e7eb",
+                borderRadius: 10,
+                padding: "10px 12px",
+                minWidth: 220,
+              }}
+            >
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Offtake Structure</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{offtake}</div>
+            </div>
+            <div
+              style={{
+                background: "#f9fafb",
+                border: "1px solid #e5e7eb",
+                borderRadius: 10,
+                padding: "10px 12px",
+                minWidth: 220,
+              }}
+            >
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Project Type</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{projectType}</div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: 16,
+              flexWrap: "wrap",
+              marginBottom: 24,
+            }}
+          >
+            <div
+              style={{
+                background: "#f9fafb",
+                border: "1px solid #e5e7eb",
+                borderRadius: 10,
+                padding: "10px 12px",
+                minWidth: 220,
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
+                Lease Option Start Date
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{leaseStart}</div>
+            </div>
+            <div
+              style={{
+                background: "#f9fafb",
+                border: "1px solid #e5e7eb",
+                borderRadius: 10,
+                padding: "10px 12px",
+                minWidth: 220,
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
+                Lease Option Expiration Date
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{leaseEnd}</div>
+            </div>
+          </div>
+        </>
+      )}
+
+      <ChartErrorBoundary title="Requirement progress">
+        <DevTypeProgressRow steps={safeSteps} />
+      </ChartErrorBoundary>
+
+      <ChartErrorBoundary title="Development timeline">
+        <DevTypeGanttChart steps={safeSteps} />
+      </ChartErrorBoundary>
+
+      <ChartErrorBoundary title="Budget vs actual">
+        <DevTypeSpendChart steps={safeSteps} />
+      </ChartErrorBoundary>
+
+      {/* Milestones / NTP Gates (binary) */}
+      <div
+        style={{
+          marginTop: 16,
+          border: "1px solid #e5e7eb",
+          borderRadius: 10,
+          background: "#ffffff",
+          padding: 12,
+          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+        }}
+      >
+        <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", marginBottom: 8 }}>
+          Milestones / NTP Gates (Binary)
+        </div>
+        {milestoneSteps.length === 0 ? (
+          <div style={{ fontSize: 13, color: "#6b7280" }}>
+            No milestone flags (Milestones / NTP Gates = Y) yet.
+          </div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: 13,
+              }}
+            >
+              <thead style={{ background: "#f9fafb" }}>
+                <tr>
+                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>
+                    Milestone
+                  </th>
+                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {milestoneSteps.map((m) => {
+                  const status = (m.status ?? "").toString();
                   let icon = "[ ]";
                   let label = "Open";
                   let color = "#ef4444";
