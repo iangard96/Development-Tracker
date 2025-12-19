@@ -405,33 +405,38 @@ class PermitRequirementViewSet(viewsets.ModelViewSet):
                 | models.Q(requirements__icontains=search)
                 | models.Q(comments__icontains=search)
             )
-        # If no permits exist for this project, try seeding from the template CSV
-        if project_id and not qs.exists():
-            try:
-                project = Project.objects.get(pk=project_id)
-                self._bootstrap_from_template(project)
-                qs = super().get_queryset().filter(project_id=project_id)
-                if level:
-                    qs = qs.filter(level__iexact=level)
-                if search:
-                    qs = qs.filter(
-                        models.Q(required_permit__icontains=search)
-                        | models.Q(agency__icontains=search)
-                        | models.Q(status__icontains=search)
-                        | models.Q(responsible_party__icontains=search)
-                        | models.Q(responsible_individual__icontains=search)
-                        | models.Q(requirements__icontains=search)
-                        | models.Q(comments__icontains=search)
-                    )
-            except Exception:
-                pass
         return qs.order_by("level", "id")
 
-    def _bootstrap_from_template(self, project: Project) -> int:
+    @action(detail=False, methods=["post"], url_path="seed")
+    def seed(self, request):
+        """
+        Explicitly seed permit requirements for a project from the template CSV in the project root.
+        Body: { "project": <id>, "force": bool }
+        """
+        project_id = request.data.get("project")
+        force = bool(request.data.get("force", False))
+        if not project_id:
+            return Response({"detail": "project is required"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            project = Project.objects.get(pk=project_id)
+        except Project.DoesNotExist:
+            return Response({"detail": "project not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        existing = PermitRequirement.objects.filter(project=project)
+        if existing.exists() and not force:
+            return Response({"detail": "permits already exist; pass force=true to replace"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if force:
+            existing.delete()
+
+        created = self._seed_from_template(project)
+        return Response({"detail": f"seeded {created} permits"}, status=status.HTTP_201_CREATED)
+
+    def _seed_from_template(self, project: Project) -> int:
         """
         Seed permit rows from the template CSV in the project root.
         """
-        csv_path = Path(settings.BASE_DIR) / "Copy of Charter Steel - Development Tracker.xlsx - Permitting.csv"
+        csv_path = Path(settings.BASE_DIR) / "Development Tracker.xlsx - Permitting.csv"
         if not csv_path.exists():
             return 0
 
@@ -474,9 +479,10 @@ class PermitRequirementViewSet(viewsets.ModelViewSet):
                     current_level = first.title()
                     continue
 
-                # skip if no agency/permit
-                agency_val = row[header_map.get("AGENCY", 1)] if header_map.get("AGENCY") is not None and len(row) > header_map.get("AGENCY", 1) else ""
-                permit_val = row[header_map.get("REQUIRED PERMIT OR CONCURRENCE", 2)] if header_map.get("REQUIRED PERMIT OR CONCURRENCE") is not None and len(row) > header_map.get("REQUIRED PERMIT OR CONCURRENCE", 2) else ""
+                agency_idx = header_map.get("AGENCY")
+                permit_idx = header_map.get("REQUIRED PERMIT OR CONCURRENCE")
+                agency_val = (row[agency_idx] if agency_idx is not None and agency_idx < len(row) else "").strip()
+                permit_val = (row[permit_idx] if permit_idx is not None and permit_idx < len(row) else "").strip()
                 if not agency_val and not permit_val:
                     continue
 
@@ -496,7 +502,7 @@ class PermitRequirementViewSet(viewsets.ModelViewSet):
 
                 PermitRequirement.objects.create(
                     project=project,
-                    level=current_level,
+                    level=current_level or "",
                     applicable=get("APPLICABLE"),
                     agency=agency_val,
                     required_permit=permit_val,

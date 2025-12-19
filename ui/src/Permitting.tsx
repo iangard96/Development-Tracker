@@ -6,6 +6,7 @@ import {
   createPermitRequirement,
   updatePermitRequirement,
   deletePermitRequirement,
+  seedPermitRequirements,
 } from "./api";
 import type { PermitRequirement } from "./types";
 
@@ -37,6 +38,7 @@ export default function Permitting() {
   const { projectId, project } = useProject();
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [seeding, setSeeding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [permits, setPermits] = useState<PermitRequirement[]>([]);
   const [editingRow, setEditingRow] = useState<number | null>(null);
@@ -51,6 +53,26 @@ export default function Permitting() {
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
   }, [projectId, search]);
+
+  async function seedFromTemplate(force = false) {
+    if (!projectId) return;
+    if (!force && permits.length > 0) {
+      const confirm = window.confirm("Permits already exist. Seed will be skipped unless you force replace. Continue?");
+      if (!confirm) return;
+    }
+    setSeeding(true);
+    setError(null);
+    try {
+      await seedPermitRequirements(projectId, force);
+      // reload after seed
+      const data = await fetchPermitRequirements(projectId, undefined, search);
+      setPermits(data);
+    } catch (e: any) {
+      setError(String(e));
+    } finally {
+      setSeeding(false);
+    }
+  }
 
   function startEdit(row: PermitRequirement) {
     setEditingRow(row.id);
@@ -138,6 +160,20 @@ export default function Permitting() {
           onChange={(e) => setSearch(e.target.value)}
           style={searchInput}
         />
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button type="button" style={ghostButton} onClick={() => seedFromTemplate(false)} disabled={seeding}>
+            {seeding ? "Seeding..." : "Seed from Template"}
+          </button>
+          <button
+            type="button"
+            style={ghostButton}
+            onClick={() => seedFromTemplate(true)}
+            disabled={seeding}
+            title="Replace existing rows with template data"
+          >
+            Force Reseed
+          </button>
+        </div>
       </div>
       {loading && <div style={{ fontSize: 12, color: "#6b7280" }}>Loading…</div>}
       {error && <div style={{ fontSize: 12, color: "crimson" }}>{error}</div>}

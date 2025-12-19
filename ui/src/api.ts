@@ -395,3 +395,15 @@ export async function deletePermitRequirement(id: number): Promise<void> {
   const r = await fetch(`${API}/permit-requirements/${id}/`, { method: "DELETE" });
   await jsonOrThrow(r, "permit delete failed");
 }
+
+export async function seedPermitRequirements(
+  projectId: number,
+  force = false,
+): Promise<{ detail: string }> {
+  const r = await fetch(`${API}/permit-requirements/seed/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project: projectId, force }),
+  });
+  return jsonOrThrow(r, "permit seed failed");
+}
