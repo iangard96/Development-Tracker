@@ -81,336 +81,12 @@ export default function Dashboard() {
   const redRiskSteps = useMemo(() => {
     return (steps ?? []).filter((s) => {
       const heat = ((s as any).risk_heatmap ?? "").toString().toLowerCase();
-      const status = (s.status ?? "").toString();
-      const isRed = heat === "red";
-      const isCompleted = status === "Completed";
-      return isRed && !isCompleted;
-    });
-  }, [steps]);
-
-  useEffect(() => {
-    if (!projectId) {
-      setSteps(null);
-      setErr(null);
-      return;
-    }
-
-    setSteps(null);
-    setErr(null);
-    fetchStepsForProject(projectId)
-      .then((rows: DevStep[]) => setSteps(rows))
-      .catch((e) => setErr(String(e)));
-  }, [projectId]);
-
-  // Refresh the selected project when landing on the dashboard so lease dates and other
-  // fields reflect the latest saves from Project Summary.
-  useEffect(() => {
-    if (!projectId) return;
-    fetchProject(projectId)
-      .then((p) => setCurrentProject(p))
-      .catch((e) => console.warn("Failed to refresh project on dashboard", e));
-  }, [projectId, setCurrentProject]);
-
-  if (!projectId) {
-    return (
-      <div className="page-root" style={{ color: "#6b7280", fontSize: 14 }}>
-        Select a project from the Project Summary to view its dashboard.
-      </div>
-    );
-  }
-
-  if (err) {
-    return (
-      <div className="page-root" style={{ color: "crimson" }}>
-        Error: {err}
-      </div>
-    );
-  }
-
-  const safeSteps = Array.isArray(steps) ? steps : [];
-
-  const fmtSize = (ac: number | null | undefined, dc: number | null | undefined) => {
-    const acLabel = ac !== null && ac !== undefined ? `${ac} AC` : "N/A";
-    const dcLabel = dc !== null && dc !== undefined ? `${dc} DC` : "N/A";
-    return `${acLabel} / ${dcLabel}`;
-  };
-
-  const projectType = project?.project_type ?? "N/A";
-  const offtake = project?.offtake_structure ?? "N/A";
-  const location =
-    project && (project.county || project.state)
-      ? `${project.county ?? ""}${project.county && project.state ? ", " : ""}${project.state ?? ""}`
-      : "N/A";
-  const sizeLabel = fmtSize(project?.size_ac_mw, project?.size_dc_mw);
-  const leaseStart = (project as any)?.lease_option_start_date || "N/A";
-  const leaseEnd = (project as any)?.lease_option_expiration_date || "N/A";
-
-  return (
-    <div className="page-root">
-      {project && (
-        <>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              gap: 12,
-              flexWrap: "wrap",
-              marginBottom: 12,
-            }}
-          >
-            <div style={{ minWidth: 0 }}>
-              <h1 className="page-title" style={{ marginBottom: 8 }}>
-                {project.project_name}
-              </h1>
-              <h2 className="page-subtitle">Dashboard</h2>
-              {steps === null && (
-                <div style={{ marginTop: 4, fontSize: 13, color: "#6b7280" }}>
-                  Loading latest project data...
-                </div>
-              )}
-            </div>
-            <div
-              className="print-hidden"
-              style={{ display: "flex", alignItems: "center", gap: 12 }}
-            >
-              <SaveAsPdfButton />
-              <img
-                src="/landcharge-logo.png"
-                alt="Land Charge"
-                style={{ height: 72, width: "auto", objectFit: "contain", display: "block" }}
-              />
-            </div>
-          </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, minmax(180px, 1fr))",
-              gap: 12,
-              marginBottom: 24,
-              alignItems: "stretch",
-            }}
-          >
-            <div
-              style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
-                borderRadius: 10,
-                padding: "10px 12px",
-                minWidth: 220,
-              }}
-            >
-              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>AC / DC Size</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{sizeLabel}</div>
-            </div>
-            <div
-              style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
-                borderRadius: 10,
-                padding: "10px 12px",
-                minWidth: 220,
-              }}
-            >
-              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>County / State</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{location}</div>
-            </div>
-            <div
-              style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
-                borderRadius: 10,
-                padding: "10px 12px",
-                minWidth: 220,
-              }}
-            >
-              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Offtake Structure</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{offtake}</div>
-            </div>
-            <div
-              style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
-                borderRadius: 10,
-                padding: "10px 12px",
-                minWidth: 220,
-              }}
-            >
-              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Project Type</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{projectType}</div>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: 16,
-              flexWrap: "wrap",
-              marginBottom: 24,
-            }}
-          >
-            <div
-              style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
-                borderRadius: 10,
-                padding: "10px 12px",
-                minWidth: 220,
-                textAlign: "center",
-              }}
-            >
-              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
-                Lease Option Start Date
-              </div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{leaseStart}</div>
-            </div>
-            <div
-              style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
-                borderRadius: 10,
-                padding: "10px 12px",
-                minWidth: 220,
-                textAlign: "center",
-              }}
-            >
-              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
-                Lease Option Expiration Date
-              </div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{leaseEnd}</div>
-            </div>
-          </div>
-        </>
-      )}
-      {/* 1. Top row: 6 requirement gauges (should also use project-scoped data internally) */}
-      <ChartErrorBoundary title="Requirement progress">
-        <DevTypeProgressRow steps={safeSteps} />
-      </ChartErrorBoundary>
-
-      {/* 2. Gantt chart under the gauges */}
-      <ChartErrorBoundary title="Development timeline">
-        <DevTypeGanttChart steps={safeSteps} />
-      </ChartErrorBoundary>
-
-      {/* 3. Budget vs Actual spend under the Gantt */}
-      <ChartErrorBoundary title="Budget vs actual">
-        <DevTypeSpendChart steps={safeSteps} />
-      </ChartErrorBoundary>
-
-      {/* Map and permit matrix side-by-side */}
-      <div
-        style={{
-          marginTop: 16,
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 16,
-          alignItems: "stretch",
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 320, maxWidth: "52%" }}>
-          <LocationMap project={project ?? null} />
-        </div>
-
-        <div
-          style={{
-            flex: 1,
-            minWidth: 320,
-            maxWidth: "48%",
-            border: "1px solid #e5e7eb",
-            borderRadius: 10,
-            background: "#ffffff",
-            padding: 12,
-            boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-          }}
-        >
-          <div style={{ fontSize: 16, fontWeight: 600, color: "#111827", marginBottom: 8 }}>
-            Permit Matrix
-          </div>
-          {permittingSteps.length === 0 ? (
-            <div style={{ fontSize: 13, color: "#6b7280" }}>
-              No permitting activities yet.
-            </div>
-          ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  fontSize: 13,
-                }}
-              >
-                <thead style={{ background: "#f9fafb" }}>
-                  <tr>
-                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Activity</th>
-                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Status</th>
-                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Start</th>
-                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>End</th>
-                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Agency</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {permittingSteps.map((p) => (
-                    <tr key={p.id} style={{ borderTop: "1px solid #e5e7eb" }}>
-                      <td style={{ padding: "8px 10px", fontWeight: 600 }}>{p.name}</td>
-                      <td style={{ padding: "8px 10px" }}>{p.status ?? "N/A"}</td>
-                      <td style={{ padding: "8px 10px" }}>{(p as any).start_date ?? "N/A"}</td>
-                      <td style={{ padding: "8px 10px" }}>{(p as any).end_date ?? "N/A"}</td>
-                      <td style={{ padding: "8px 10px" }}>{(p as any).agency ?? "N/A"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Milestones / NTP Gates (binary) */}
-      <div
-        style={{
-          marginTop: 16,
-          border: "1px solid #e5e7eb",
-          borderRadius: 10,
-          background: "#ffffff",
-          padding: 12,
-          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-        }}
-      >
-        <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", marginBottom: 8 }}>
-          Milestones / NTP Gates (Binary)
-        </div>
-        {milestoneSteps.length === 0 ? (
-          <div style={{ fontSize: 13, color: "#6b7280" }}>
-            No milestone flags (Milestones / NTP Gates = Y) yet.
-          </div>
-        ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 13,
-              }}
-            >
-              <thead style={{ background: "#f9fafb" }}>
-                <tr>
-                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>
-                    Milestone
-                  </th>
-                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {milestoneSteps.map((m) => {
-                  const status = (m.status ?? "").toString();
-                  let icon = "✖";
+      const status = (m.status ?? "").toString();
+                  let icon = "[ ]";
                   let label = "Open";
                   let color = "#ef4444";
                   if (status === "Completed") {
-                    icon = "✔";
+                    icon = "[x]";
                     label = "Complete";
                     color = "#059669";
                   } else if (status === "Not Applicable") {
@@ -494,6 +170,74 @@ export default function Dashboard() {
             </table>
           </div>
         )}
+      </div>
+
+      {/* Map and permit matrix side-by-side */}
+      <div
+        style={{
+          marginTop: 16,
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 16,
+          alignItems: "stretch",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 320, maxWidth: "52%" }}>
+          <LocationMap project={project ?? null} />
+        </div>
+
+        <div
+          style={{
+            flex: 1,
+            minWidth: 320,
+            maxWidth: "48%",
+            border: "1px solid #e5e7eb",
+            borderRadius: 10,
+            background: "#ffffff",
+            padding: 12,
+            boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+          }}
+        >
+          <div style={{ fontSize: 16, fontWeight: 600, color: "#111827", marginBottom: 8 }}>
+            Permit Matrix
+          </div>
+          {permittingSteps.length === 0 ? (
+            <div style={{ fontSize: 13, color: "#6b7280" }}>
+              No permitting activities yet.
+            </div>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: 13,
+                }}
+              >
+                <thead style={{ background: "#f9fafb" }}>
+                  <tr>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Activity</th>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Status</th>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Start</th>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>End</th>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Agency</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {permittingSteps.map((p) => (
+                    <tr key={p.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                      <td style={{ padding: "8px 10px", fontWeight: 600 }}>{p.name}</td>
+                      <td style={{ padding: "8px 10px" }}>{p.status ?? "N/A"}</td>
+                      <td style={{ padding: "8px 10px" }}>{(p as any).start_date ?? "N/A"}</td>
+                      <td style={{ padding: "8px 10px" }}>{(p as any).end_date ?? "N/A"}</td>
+                      <td style={{ padding: "8px 10px" }}>{(p as any).agency ?? "N/A"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
