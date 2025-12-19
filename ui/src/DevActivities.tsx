@@ -1650,7 +1650,7 @@ export default function DevActivities() {
               <th style={th}>Link</th>
               <th style={{ ...th, ...requirementTh }}>Requirement</th>
               <th style={{ ...th, minWidth: 180 }}>Storage Hybrid Impact</th>
-              <th style={{ ...th, minWidth: 180 }}>Milestones / NTP Gates</th>
+              <th style={{ ...th, minWidth: 140, textAlign: "center" }}>Milestones / NTP Gates</th>
               <th style={{ ...th, width: 100, minWidth: 100 }}></th>
             </tr>
           </thead>
@@ -2263,38 +2263,32 @@ export default function DevActivities() {
                   />
                 </td>
 
-                {/* Milestones / NTP Gates */}
-                <td style={td}>
-                  <input
-                    type="text"
-                    defaultValue={(r as any).milestones_ntp_gates ?? ""}
-                    placeholder="Milestones / NTP Gates"
-                    title={(r as any).milestones_ntp_gates ?? ""}
-                    onChange={syncTitle}
-                    onBlur={async (e) => {
-                      const val = e.currentTarget.value.trim();
-                      const current = (r as any).milestones_ntp_gates ?? "";
-                      if (val === current) return;
-                      try {
-                        const fresh = await updateStepMeta(r.id, { milestones_ntp_gates: val || null });
-                        applyFresh(fresh);
-                      } catch (err: any) {
-                        console.error(err);
-                        alert(`Failed to update milestones / NTP gates.\n${err?.message ?? ""}`);
-                        e.currentTarget.value = current;
-                      }
-                    }}
-                    style={{
-                      width: "100%",
-                      minWidth: 180,
-                      padding: "6px 10px",
-                      borderRadius: 5,
-                      border: "1px solid #e5e7eb",
-                      fontSize: 13,
-                      boxSizing: "border-box",
-                    }}
-                    size={30}
-                  />
+                {/* Milestones / NTP Gates (binary flag) */}
+                <td style={{ ...td, textAlign: "center" }}>
+                  {(() => {
+                    const currentChecked = isCheckedFlag((r as any).milestones_ntp_gates);
+                    return (
+                      <input
+                        type="checkbox"
+                        checked={currentChecked}
+                        aria-label="Milestones / NTP Gates"
+                        onChange={async (e) => {
+                          const nextChecked = e.target.checked;
+                          const nextVal = nextChecked ? "X" : null;
+                          try {
+                            const fresh = await updateStepMeta(r.id, {
+                              milestones_ntp_gates: nextVal,
+                            });
+                            applyFresh(fresh);
+                          } catch (err: any) {
+                            console.error(err);
+                            alert(`Failed to update milestones / NTP gates.\n${err?.message ?? ""}`);
+                            e.target.checked = currentChecked;
+                          }
+                        }}
+                      />
+                    );
+                  })()}
                 </td>
 
               <td style={{ ...td, whiteSpace: "nowrap", width: 100, minWidth: 100, textAlign: "center" }}>
