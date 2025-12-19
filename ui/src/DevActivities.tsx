@@ -431,9 +431,11 @@ function RelatedActivityCell({
 function ResponsiblePartyCell({
   step,
   onSaved,
+  onContactSync,
 }: {
   step: DevStep;
   onSaved: (fresh: DevStep) => void;
+  onContactSync?: (org: string | null) => Promise<void> | void;
 }) {
   const current = (step as any).responsible_party ?? "";
 
@@ -445,6 +447,9 @@ function ResponsiblePartyCell({
     try {
       const fresh = await updateStepMeta(step.id, { responsible_party: next });
       onSaved(fresh);
+      if (next) {
+        await onContactSync?.(next);
+      }
     } catch (err: any) {
       console.error(err);
       alert(`Failed to update responsible party.\n${err?.message ?? ""}`);
@@ -460,6 +465,7 @@ function ResponsiblePartyCell({
       title={current}
       onChange={syncTitle}
       onBlur={handleBlur}
+      list="contact-orgs"
       style={{
         width: "100%",
         minWidth: 160,
@@ -476,9 +482,11 @@ function ResponsiblePartyCell({
 function OwnerCell({
   step,
   onSaved,
+  onContactSync,
 }: {
   step: DevStep;
   onSaved: (fresh: DevStep) => void;
+  onContactSync?: (org: string | null) => Promise<void> | void;
 }) {
   const current = (step as any).owner ?? "";
   const displayOptions = [...OWNER_OPTIONS];
@@ -498,6 +506,9 @@ function OwnerCell({
     try {
       const fresh = await updateStepMeta(step.id, { owner: next });
       onSaved(fresh);
+      if (next) {
+        await onContactSync?.(next);
+      }
     } catch (err: any) {
       console.error(err);
       onSaved({ ...(step as any), owner: prev } as DevStep);
@@ -1642,7 +1653,6 @@ export default function DevActivities() {
                 </button>
               </th>
               <th style={th}>Purpose / Related Activity</th>
-              <th style={th}>Agency</th>
               <th style={{ ...th, minWidth: 160 }}>Owner</th>
               <th style={th}>Responsible Party</th>
               <th style={th}>Responsible Individual</th>
@@ -1975,57 +1985,29 @@ export default function DevActivities() {
                     onJumpToId={jumpToId}
                   />
                 </td>
-                <td style={td}>
-                  <input
-                    type="text"
-                    defaultValue={(r as any).agency ?? ""}
-                    placeholder="Agency / Org"
-                    title={(r as any).agency ?? ""}
-                    list="agency-options"
-                    onMouseEnter={(e) => {
-                      e.currentTarget.title = e.currentTarget.value;
-                    }}
-                    onChange={syncTitle}
-                    onBlur={async (e) => {
-                      const val = e.currentTarget.value.trim();
-                      const current = (r as any).agency ?? "";
-                      if (val === current) return;
-                      try {
-                        const fresh = await updateStepMeta(r.id, {
-                          agency: val || null,
-                        });
-                        applyFresh(fresh);
-                        if (val && projectId) {
-                          await maybeCreateContact({
-                            organization: val,
-                            name: null,
-                          });
-                        }
-                      } catch (err: any) {
-                        console.error(err);
-                        alert(`Failed to update agency.\n${err?.message ?? ""}`);
-                      }
-                    }}
-                    style={{
-                      width: "100%",
-                      minWidth: 160,
-                      padding: "6px 10px",
-                      borderRadius: 5,
-                      border: "1px solid #e5e7eb",
-                      fontSize: 13,
-                      boxSizing: "border-box",
-                    }}
-                    size={28}
-                  />
-                </td>
                 {/* Owner */}
                 <td style={td}>
-                  <OwnerCell step={r} onSaved={applyFresh} />
+                  <OwnerCell
+                    step={r}
+                    onSaved={applyFresh}
+                    onContactSync={(org) =>
+                      maybeCreateContact({
+                        organization: org,
+                        responsibility: "Owner",
+                      })
+                    }
+                  />
                 </td>
                 <td style={td}>
                   <ResponsiblePartyCell
                     step={r}
                     onSaved={applyFresh}
+                    onContactSync={(org) =>
+                      maybeCreateContact({
+                        organization: org,
+                        responsibility: "Responsible Party",
+                      })
+                    }
                   />
                 </td>
                 <td style={td}>
@@ -2042,17 +2024,20 @@ export default function DevActivities() {
                       const val = e.currentTarget.value.trim();
                       const current = (r as any).responsible_individual ?? "";
                       if (val === current) return;
-                      const agencyVal = (r as any).agency ?? "";
+                      const orgFallback =
+                        (r as any).responsible_party ||
+                        (r as any).owner ||
+                        null;
                       try {
                         const fresh = await updateStepMeta(r.id, {
                           responsible_individual: val || null,
                         });
                         applyFresh(fresh);
-                        // Create contact only if new org+name combo
                         if (val && projectId) {
                           await maybeCreateContact({
-                            organization: agencyVal || undefined,
+                            organization: orgFallback,
                             name: val,
+                            responsibility: "Responsible Individual",
                           });
                         }
                       } catch (err: any) {
@@ -2367,8 +2352,7 @@ export default function DevActivities() {
           + Activity
         </button>
       </div>
-      {/* agency suggestions */}
-      <datalist id="agency-options">
+      <datalist id="contact-orgs">
         {contactOrgs.map((org) => (
           <option key={org} value={org} />
         ))}
