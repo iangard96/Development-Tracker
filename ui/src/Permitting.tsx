@@ -334,6 +334,8 @@ export default function Permitting() {
                               checked={isApplicableChecked(row[c.key as keyof PermitRequirement] as any)}
                               onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.checked ? "Y" : "N")}
                             />
+                          ) : c.key === "required_permit" ? (
+                            <span>{row[c.key as keyof PermitRequirement] as any}</span>
                           ) : c.key === "start_date" || c.key === "completion_date" ? (
                             <input
                               type="date"
@@ -360,7 +362,8 @@ export default function Permitting() {
                             <textarea
                               value={row[c.key as keyof PermitRequirement] ?? ""}
                               onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.value)}
-                              style={{ ...cellInput, minWidth: 240, minHeight: 60, resize: "vertical" }}
+                              rows={2}
+                              style={{ ...cellInput, minWidth: 220, minHeight: 48, resize: "vertical", overflowY: "auto" }}
                             />
                           ) : c.key === "agency_phone" ? (
                             <input
@@ -438,10 +441,9 @@ const tbodyCell: React.CSSProperties = {
   fontSize: 12,
   color: "#111827",
   verticalAlign: "top",
-  maxWidth: 220,
-  whiteSpace: "nowrap",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
+  maxWidth: 320,
+  whiteSpace: "normal",
+  overflow: "auto",
 };
 
 const cellInput: React.CSSProperties = {
