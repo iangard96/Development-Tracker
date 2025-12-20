@@ -20,7 +20,7 @@ function LayoutInner() {
       {/* Project name at the top of every page in this project */}
       <header
         style={{
-          borderBottom: "1px solid #e5e7eb",
+          borderBottom: "1px solid var(--border)",
           paddingBottom: 8,
           marginBottom: 8,
           display: "flex",
@@ -41,18 +41,19 @@ function LayoutInner() {
           <button
             onClick={() => window.print()}
             style={{
-              padding: "6px 12px",
-              borderRadius: 6,
-              border: "1px solid #d1d5db",
-              background: "#fff",
-              cursor: "pointer",
-              fontSize: 13,
-              fontWeight: 500,
-            }}
-          >
-            Save as PDF
-          </button>
-        </div>
+            padding: "6px 12px",
+            borderRadius: 6,
+            border: "1px solid var(--border)",
+            background: "var(--card)",
+            cursor: "pointer",
+            fontSize: 13,
+            fontWeight: 500,
+            color: "var(--text)",
+          }}
+        >
+          Save as PDF
+        </button>
+      </div>
       </header>
 
       {/* Tabs for this project */}
@@ -60,7 +61,7 @@ function LayoutInner() {
         style={{
           display: "flex",
           gap: 16,
-          borderBottom: "1px solid #e5e7eb",
+          borderBottom: "1px solid var(--border)",
           paddingBottom: 8,
           marginBottom: 8,
           alignItems: "center",

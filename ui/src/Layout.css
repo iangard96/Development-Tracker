@@ -9,7 +9,7 @@ body {
 .app-shell {
   display: flex;
   min-height: 100vh;
-  background: #f9fafb;
+  background: var(--bg);
 }
 
 /* ---------- Sidebar ---------- */
@@ -17,19 +17,19 @@ body {
 .app-sidebar {
   position: relative;
   flex-shrink: 0;
-  background: #f9fafb;
+  background: var(--bg);
 }
 
 /* Desktop width when open/closed */
 .app-sidebar-open {
   width: 240px;
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid var(--border);
   transition: width 0.2s ease-out;
 }
 
 .app-sidebar-collapsed {
   width: 60px;
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid var(--border);
   transition: width 0.2s ease-out;
 }
 
@@ -41,8 +41,8 @@ body {
   left: 0;
   z-index: 40;
   width: 260px;
-  border-right: 1px solid #e5e7eb;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow);
   transform: translateX(-100%);
   transition: transform 0.2s ease-out;
 }
@@ -60,6 +60,7 @@ body {
   flex-direction: column;
   height: 100%;
   padding: 16px 12px;
+  background: var(--bg);
 }
 
 /* Backdrop when drawer is open on mobile */
@@ -81,7 +82,7 @@ body {
 .app-sidebar-title {
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text);
 }
 
 /* Collapse button (desktop) */
@@ -93,13 +94,13 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #e5e7eb;
+  background: var(--button-bg);
   cursor: pointer;
   font-size: 14px;
 }
 
 .app-sidebar-collapse-btn:hover {
-  background: #d1d5db;
+  background: var(--border);
 }
 
 /* Nav links */
@@ -115,7 +116,7 @@ body {
   padding: 8px 10px;
   border-radius: 9999px;
   font-size: 14px;
-  color: #111827;
+  color: var(--text);
   text-decoration: none;
 }
 

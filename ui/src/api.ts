@@ -19,6 +19,103 @@ const API = (() => {
   return fallback;
 })();
 
+/* ---------- auth / token helpers ---------- */
+
+type Tokens = {
+  access: string;
+  refresh: string;
+};
+
+const ACCESS_KEY = "dt_access_token";
+const REFRESH_KEY = "dt_refresh_token";
+
+function getAccessToken(): string | null {
+  return localStorage.getItem(ACCESS_KEY);
+}
+
+function getRefreshToken(): string | null {
+  return localStorage.getItem(REFRESH_KEY);
+}
+
+function saveTokens(tokens: Tokens) {
+  localStorage.setItem(ACCESS_KEY, tokens.access);
+  localStorage.setItem(REFRESH_KEY, tokens.refresh);
+}
+
+function clearTokens() {
+  localStorage.removeItem(ACCESS_KEY);
+  localStorage.removeItem(REFRESH_KEY);
+}
+
+const originalFetch: typeof window.fetch = window.fetch.bind(window);
+
+async function refreshAccessToken(): Promise<boolean> {
+  const refresh = getRefreshToken();
+  if (!refresh) return false;
+  try {
+    const r = await originalFetch(`${API}/auth/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh }),
+    });
+    if (!r.ok) return false;
+    const data = await r.json();
+    if (data?.access && data?.refresh) {
+      saveTokens({ access: data.access, refresh: data.refresh });
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.warn("refresh failed", e);
+    return false;
+  }
+}
+
+async function fetchWithAuth(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  attemptRefresh = true,
+): Promise<Response> {
+  const url = typeof input === "string" ? input : (input as any)?.url || "";
+  const isApiRequest = typeof url === "string" && url.startsWith(API);
+
+  const headers = new Headers(init.headers || {});
+  const token = getAccessToken();
+  if (isApiRequest && token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await originalFetch(input as any, {
+    ...init,
+    headers,
+  });
+
+  if (
+    response.status !== 401 ||
+    !attemptRefresh ||
+    !isApiRequest ||
+    !getRefreshToken()
+  ) {
+    return response;
+  }
+
+  const refreshed = await refreshAccessToken();
+  if (!refreshed) return response;
+
+  const retryHeaders = new Headers(init.headers || {});
+  const newAccess = getAccessToken();
+  if (isApiRequest && newAccess) {
+    retryHeaders.set("Authorization", `Bearer ${newAccess}`);
+  }
+
+  return originalFetch(input as any, {
+    ...init,
+    headers: retryHeaders,
+  });
+}
+
+(globalThis as any).fetch = fetchWithAuth;
+
 /* ---------- helpers ---------- */
 
 async function jsonOrThrow(r: Response, context: string) {
@@ -37,6 +134,53 @@ async function jsonOrThrow(r: Response, context: string) {
   const errorMsg = `${context}: ${r.status} ${detail}`;
   console.error(errorMsg);
   throw new Error(errorMsg);
+}
+
+/* ---------- auth endpoints ---------- */
+
+export type CurrentUser = {
+  id: number;
+  username: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  company?: {
+    id: number;
+    name: string;
+    contact_email?: string;
+  } | null;
+  membership?: {
+    id: number;
+    role: string;
+    status: string;
+    company: number;
+  } | null;
+};
+
+export async function loginUser(payload: { username?: string; email?: string; password: string }) {
+  const r = await fetchWithAuth(`${API}/auth/login/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }, false);
+  const data = await jsonOrThrow(r, "login failed");
+  if (data?.access && data?.refresh) {
+    saveTokens({ access: data.access, refresh: data.refresh });
+  }
+  return data;
+}
+
+export async function logoutUser(): Promise<void> {
+  clearTokens();
+  try {
+    await fetchWithAuth(`${API}/auth/logout/`, { method: "POST" }, false);
+  } catch {}
+}
+
+export async function fetchCurrentUser(): Promise<CurrentUser | null> {
+  const r = await fetchWithAuth(`${API}/me/`);
+  if (r.status === 401) return null;
+  return jsonOrThrow(r, "me fetch failed");
 }
 
 /**

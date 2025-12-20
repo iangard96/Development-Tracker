@@ -4,17 +4,21 @@ from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 
+from django.contrib.auth import authenticate, get_user_model
 from django.conf import settings
 from django.db import connection, models, transaction
 from django.db.models import OuterRef, Subquery
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions, exceptions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import generics
 from rest_framework.views import APIView
 from typing import Any, Dict, List, Optional
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import (
+    Company,
+    CompanyMembership,
     DevelopmentStep,
     Project,
     ProjectContact,
@@ -32,7 +36,128 @@ from .serializers import (
     ProjectIncentivesSerializer,
     ProjectFinanceRunSerializer,
     PermitRequirementSerializer,
+    CompanySerializer,
+    CompanyMembershipSerializer,
 )
+
+
+User = get_user_model()
+
+
+def get_active_membership(user) -> Optional[CompanyMembership]:
+    if not user or not user.is_authenticated:
+        return None
+    return (
+        CompanyMembership.objects.select_related("company")
+        .filter(user=user, status="active")
+        .order_by("id")
+        .first()
+    )
+
+
+def require_company(request) -> Company:
+    membership = get_active_membership(request.user)
+    if not membership:
+        raise exceptions.PermissionDenied("No active company membership found.")
+    return membership.company
+
+
+def ensure_project_in_company(project_id: int, company: Company) -> None:
+    exists = Project.objects.filter(id=project_id, company=company).exists()
+    if not exists:
+        raise exceptions.PermissionDenied("Project is not in your company.")
+
+
+class LoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        username = request.data.get("username") or request.data.get("email")
+        password = request.data.get("password")
+        if not username or not password:
+            return Response({"detail": "username/email and password required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # allow login by email if username not provided
+        user = authenticate(request, username=username, password=password)
+        if not user and "@" in username:
+            try:
+                candidate = User.objects.get(email__iexact=username)
+                user = authenticate(request, username=candidate.username, password=password)
+            except User.DoesNotExist:
+                user = None
+
+        if not user:
+            return Response({"detail": "invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        refresh = RefreshToken.for_user(user)
+        membership = get_active_membership(user)
+        company_data = CompanySerializer(membership.company).data if membership else None
+        membership_data = CompanyMembershipSerializer(membership).data if membership else None
+
+        return Response(
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                },
+                "company": company_data,
+                "membership": membership_data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class RefreshView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        token = request.data.get("refresh")
+        if not token:
+            return Response({"detail": "refresh token required"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            refresh = RefreshToken(token)
+        except Exception:
+            return Response({"detail": "invalid refresh token"}, status=status.HTTP_401_UNAUTHORIZED)
+        data = {
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        # With stateless JWT, logout is handled client-side by discarding tokens.
+        return Response({"detail": "logged out"}, status=status.HTTP_200_OK)
+
+
+class MeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        membership = get_active_membership(request.user)
+        company_data = CompanySerializer(membership.company).data if membership else None
+        membership_data = CompanyMembershipSerializer(membership).data if membership else None
+        user = request.user
+        return Response(
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "company": company_data,
+                "membership": membership_data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 def seed_permit_requirements_from_csv(project: Project) -> int:
@@ -132,6 +257,7 @@ def seed_permit_requirements_from_csv(project: Project) -> int:
 class DevelopmentStepViewSet(viewsets.ModelViewSet):
     queryset = DevelopmentStep.objects.all().order_by("id")
     serializer_class = DevelopmentStepSerializer
+    permission_classes = [permissions.IsAuthenticated]
     filterset_fields = ["project"]  # /development-steps/?project=<id>
 
     def get_queryset(self):
@@ -140,6 +266,8 @@ class DevelopmentStepViewSet(viewsets.ModelViewSet):
         project_id = self.request.query_params.get("project") or self.request.query_params.get("project_id")
         if project_id:
             qs = qs.filter(project_id=project_id)
+        company = require_company(self.request)
+        qs = qs.filter(project__company=company)
         order_subq = StepOrder.objects.filter(
             project_id=OuterRef("project_id"),
             step_id=OuterRef("pk"),
@@ -149,14 +277,26 @@ class DevelopmentStepViewSet(viewsets.ModelViewSet):
     
     @transaction.atomic
     def create(self, request, *args, **kwargs):
+        company = require_company(request)
+        project_id = request.data.get("project") or request.data.get("project_id")
+        if project_id:
+            ensure_project_in_company(project_id, company)
         return super().create(request, *args, **kwargs)
     
     @transaction.atomic
     def update(self, request, *args, **kwargs):
+        company = require_company(request)
+        project_id = request.data.get("project") or request.data.get("project_id")
+        if project_id:
+            ensure_project_in_company(project_id, company)
         return super().update(request, *args, **kwargs)
     
     @transaction.atomic
     def destroy(self, request, *args, **kwargs):
+        company = require_company(request)
+        instance = self.get_object()
+        if instance.project_id:
+            ensure_project_in_company(instance.project_id, company)
         return super().destroy(request, *args, **kwargs)
 
     @action(detail=False, methods=["post"])
@@ -166,6 +306,7 @@ class DevelopmentStepViewSet(viewsets.ModelViewSet):
         Reorder steps for a project.
         Body: { "project": <id>, "order": [stepId1, stepId2, ...] }
         """
+        company = require_company(request)
         project_id = request.data.get("project")
         order = request.data.get("order", [])
         if not project_id or not isinstance(order, list) or len(order) == 0:
@@ -173,7 +314,7 @@ class DevelopmentStepViewSet(viewsets.ModelViewSet):
 
         # Validate project
         try:
-            project = Project.objects.get(pk=project_id)
+            project = Project.objects.get(pk=project_id, company=company)
         except Project.DoesNotExist:
             return Response({"detail": "project not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -199,10 +340,12 @@ class DevelopmentStepViewSet(viewsets.ModelViewSet):
 class ProjectEconomicsView(generics.RetrieveUpdateAPIView):
     serializer_class = ProjectEconomicsSerializer
     lookup_url_kwarg = "project_id"
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
         project_id = self.kwargs.get(self.lookup_url_kwarg)
-        project = generics.get_object_or_404(Project, pk=project_id)
+        company = require_company(self.request)
+        project = generics.get_object_or_404(Project, pk=project_id, company=company)
         obj, _ = ProjectEconomics.objects.get_or_create(project=project)
         return obj
 
@@ -210,10 +353,12 @@ class ProjectEconomicsView(generics.RetrieveUpdateAPIView):
 class ProjectIncentivesView(generics.RetrieveUpdateAPIView):
     serializer_class = ProjectIncentivesSerializer
     lookup_url_kwarg = "project_id"
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
         project_id = self.kwargs.get(self.lookup_url_kwarg)
-        project = generics.get_object_or_404(Project, pk=project_id)
+        company = require_company(self.request)
+        project = generics.get_object_or_404(Project, pk=project_id, company=company)
         obj, _ = ProjectIncentives.objects.get_or_create(project=project)
         return obj
 
@@ -225,9 +370,11 @@ class ProjectFinanceRunView(APIView):
     """
 
     serializer_class = ProjectFinanceRunSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, project_id):
-        project = generics.get_object_or_404(Project, pk=project_id)
+        company = require_company(request)
+        project = generics.get_object_or_404(Project, pk=project_id, company=company)
         payload: Dict[str, Any] = request.data or {}
 
         def _num(val: Any, default: Decimal | int | float = 0) -> Decimal:
@@ -477,6 +624,7 @@ class ProjectFinanceRunView(APIView):
 class PermitRequirementViewSet(viewsets.ModelViewSet):
     queryset = PermitRequirement.objects.all().order_by("id")
     serializer_class = PermitRequirementSerializer
+    permission_classes = [permissions.IsAuthenticated]
     filterset_fields = ["project", "level"]
 
     def get_queryset(self):
@@ -485,6 +633,8 @@ class PermitRequirementViewSet(viewsets.ModelViewSet):
         level = self.request.query_params.get("level")
         if project_id:
             qs = qs.filter(project_id=project_id)
+        company = require_company(self.request)
+        qs = qs.filter(project__company=company)
         if level:
             qs = qs.filter(level__iexact=level)
         search = self.request.query_params.get("search")
@@ -507,12 +657,13 @@ class PermitRequirementViewSet(viewsets.ModelViewSet):
         Explicitly seed permit requirements for a project from the template CSV in the project root.
         Body: { "project": <id>, "force": bool }
         """
+        company = require_company(request)
         project_id = request.data.get("project")
         force = bool(request.data.get("force", False))
         if not project_id:
             return Response({"detail": "project is required"}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            project = Project.objects.get(pk=project_id)
+            project = Project.objects.get(pk=project_id, company=company)
         except Project.DoesNotExist:
             return Response({"detail": "project not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -529,6 +680,7 @@ class PermitRequirementViewSet(viewsets.ModelViewSet):
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by("id")
     serializer_class = ProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
     PERMIT_TEMPLATE: List[Dict[str, str]] = [
         {"level": "Federal", "applicable": "Y", "agency": "FAA", "required_permit": "Coordination / Concurrence"},
         {"level": "Federal", "applicable": "Y", "agency": "US Army Corps of Engineers", "required_permit": "Wetland Delineation Concurrence"},
@@ -598,6 +750,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
         "FTM Rooftop Community Solar": "FTM Rooftop Community Solar.csv",
         "FTM Ground Community Solar": "FTM Ground Community Solar.csv",
     }
+
+    def get_queryset(self):
+        company = require_company(self.request)
+        return super().get_queryset().filter(company=company).order_by("id")
+
+    def perform_create(self, serializer):
+        company = require_company(self.request)
+        serializer.save(company=company)
 
     def _phase_to_int(self, value: str | None):
         if value is None:
@@ -961,6 +1121,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
                     # 3) Fallback: use the first OTHER project's steps as template
                     base = (
                         DevelopmentStep.objects.exclude(project__isnull=True)
+                        .filter(project__company=project.company)
                         .order_by("project_id", "id")
                         .first()
                     )
@@ -1024,22 +1185,37 @@ class ProjectViewSet(viewsets.ModelViewSet):
 class ProjectContactViewSet(viewsets.ModelViewSet):
     queryset = ProjectContact.objects.all().order_by("id")
     serializer_class = ProjectContactSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
         project_id = self.request.query_params.get("project_id")
         if project_id:
             qs = qs.filter(project_id=project_id)
+        company = require_company(self.request)
+        qs = qs.filter(project__company=company)
         return qs.order_by("id")
     
     @transaction.atomic
     def create(self, request, *args, **kwargs):
+        company = require_company(request)
+        project_id = request.data.get("project") or request.data.get("project_id")
+        if project_id:
+            ensure_project_in_company(project_id, company)
         return super().create(request, *args, **kwargs)
     
     @transaction.atomic
     def update(self, request, *args, **kwargs):
+        company = require_company(request)
+        project_id = request.data.get("project") or request.data.get("project_id")
+        if project_id:
+            ensure_project_in_company(project_id, company)
         return super().update(request, *args, **kwargs)
     
     @transaction.atomic
     def destroy(self, request, *args, **kwargs):
+        company = require_company(request)
+        instance = self.get_object()
+        if instance.project_id:
+            ensure_project_in_company(instance.project_id, company)
         return super().destroy(request, *args, **kwargs)

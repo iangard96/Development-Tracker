@@ -1,10 +1,91 @@
 # steps/models.py
+from django.conf import settings
 from django.db import models
+
+
+class Company(models.Model):
+    """
+    Tenant/company container for projects and memberships.
+    """
+
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255, unique=True)
+    domain = models.CharField(max_length=255, blank=True, default="")
+    contact_email = models.CharField(max_length=255, blank=True, default="")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_companies",
+    )
+
+    class Meta:
+        db_table = "steps_company"
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class CompanyMembership(models.Model):
+    """
+    User membership/role within a company.
+    """
+
+    ROLE_CHOICES = [
+        ("admin", "Admin"),
+        ("member", "Member"),
+        ("viewer", "Viewer"),
+    ]
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("invited", "Invited"),
+    ]
+
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="company_memberships",
+    )
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name="memberships",
+    )
+    role = models.CharField(max_length=16, choices=ROLE_CHOICES, default="member")
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default="active")
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="invited_company_memberships",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "steps_company_membership"
+        unique_together = ("user", "company")
+
+    def __str__(self) -> str:
+        return f"{self.user} @ {self.company} ({self.role})"
 
 
 class Project(models.Model):
     id = models.AutoField(primary_key=True)
 
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name="projects",
+        null=True,
+        blank=True,
+    )
     project_name = models.CharField(max_length=255, null=False, blank=False)
     legal_name = models.CharField(max_length=255, null=False, blank=False)
     project_type = models.CharField(max_length=32, null=True, blank=True)

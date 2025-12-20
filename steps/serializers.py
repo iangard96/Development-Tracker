@@ -1,6 +1,8 @@
 # steps/serializers.py
 from rest_framework import serializers
 from .models import (
+    Company,
+    CompanyMembership,
     DevelopmentStep,
     Project,
     ProjectContact,
@@ -127,6 +129,7 @@ class DevelopmentStepSerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
+    company = serializers.PrimaryKeyRelatedField(read_only=True)
 
     project_name = serializers.CharField(
         required=False, allow_null=False, allow_blank=False
@@ -139,6 +142,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         model = Project
         fields = [
             "id",
+            "company",
             "project_name",
             "legal_name",
             "project_type",
@@ -296,3 +300,38 @@ class PermitRequirementSerializer(serializers.ModelSerializer):
             "comments",
         ]
         read_only_fields = ["id"]
+
+
+class CompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = [
+            "id",
+            "name",
+            "domain",
+            "contact_email",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class CompanyMembershipSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    user_id = serializers.IntegerField(source="user.id", read_only=True)
+
+    class Meta:
+        model = CompanyMembership
+        fields = [
+            "id",
+            "company",
+            "user",
+            "user_id",
+            "user_email",
+            "role",
+            "status",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at", "user_email", "user_id"]

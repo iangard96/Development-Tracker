@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProjectProvider } from "./ProjectContext";
+import AccountMenu from "./AccountMenu";
+import Login from "./Login";
 import NavBar from "./NavBar";
 import Dashboard from "./Dashboard";
 import ProjectSummary from "./ProjectSummary";
@@ -12,11 +14,18 @@ import Requirements from "./Requirements";
 import Lease from "./Lease";
 import Economics from "./Economics";
 import Permitting from "./Permitting";
+import { fetchCurrentUser, type CurrentUser } from "./api";
 import "./index.css";
 import "./Layout.css";
 
 function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    const stored = localStorage.getItem("dt_theme");
+    return stored === "dark" ? "dark" : "light";
+  });
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   // Auto-collapse on small screens
   useEffect(() => {
@@ -35,6 +44,26 @@ function AppShell() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("dt_theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    fetchCurrentUser()
+      .then((u) => setCurrentUser(u))
+      .catch(() => setCurrentUser(null))
+      .finally(() => setAuthChecked(true));
+  }, []);
+
+  if (!authChecked) {
+    return <div className="page-root">Checking session...</div>;
+  }
+
+  if (!currentUser) {
+    return <Login onLogin={(u) => setCurrentUser(u)} />;
+  }
+
   return (
     <div className="app-shell">
       <div className={`app-sidebar ${collapsed ? "app-sidebar-collapsed" : "app-sidebar-open"}`}>
@@ -43,6 +72,12 @@ function AppShell() {
         </div>
       </div>
       <div className="app-main">
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "12px 16px" }}>
+          <AccountMenu
+            theme={theme}
+            onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+          />
+        </div>
         <Routes>
           {/* Home -> Project Summary */}
           <Route path="/" element={<Navigate to="/project_summary" replace />} />
