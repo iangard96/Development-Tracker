@@ -401,6 +401,11 @@ export async function bootstrapPermitRequirements(projectId: number): Promise<Pe
     method: "POST",
     headers: { "Content-Type": "application/json" },
   });
+  if (r.status === 404) {
+    // Fallback for servers that don't yet expose bootstrap_permits: use existing seed endpoint then refetch.
+    await seedPermitRequirements(projectId, false).catch(() => null);
+    return fetchPermitRequirements(projectId);
+  }
   const data = await jsonOrThrow(r, "permit bootstrap failed");
   return normalizeResults<PermitRequirement>(data);
 }
