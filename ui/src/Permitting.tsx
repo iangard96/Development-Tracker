@@ -365,8 +365,6 @@ export default function Permitting() {
                               />
                             ) : (
                               <span>{row[c.key as keyof PermitRequirement] as any}</span>
-                            ) : (
-                              <span>{row[c.key as keyof PermitRequirement] as any}</span>
                             )
                           )}
                         </td>
