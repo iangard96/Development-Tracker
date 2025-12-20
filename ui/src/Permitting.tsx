@@ -11,32 +11,32 @@ import {
 import type { PermitRequirement } from "./types";
 
 const TEMPLATE_PERMITS: PermitRequirement[] = [
-  { id: -1, project: null as any, level: "Federal", applicable: "Y", agency: "FAA", required_permit: "Coordination / Concurrence" },
-  { id: -2, project: null as any, level: "Federal", applicable: "Y", agency: "US Army Corps of Engineers", required_permit: "Wetland Delineation Concurrence" },
-  { id: -3, project: null as any, level: "Federal", applicable: "N", agency: "US Army Corps of Engineers", required_permit: "Section 404 Permit  - Utility Regional General Permit, NWP 51, Individual Permit, Permit for Navigable Stream Crossings" },
-  { id: -4, project: null as any, level: "Federal", applicable: "Y", agency: "USFWS", required_permit: "Endangered Species/Resources Consultation (ESA)" },
-  { id: -5, project: null as any, level: "Federal", applicable: "Y", agency: "USFWS", required_permit: "Migratory Bird Treat Act Compliance (MBTA)" },
-  { id: -6, project: null as any, level: "Federal", applicable: "N", agency: "USFWS", required_permit: "Eagle Take Permits" },
-  { id: -7, project: null as any, level: "State", applicable: "Y", agency: "SHPO", required_permit: "Cultural/archaeological/historic resources concurrence" },
-  { id: -8, project: null as any, level: "State", applicable: "N", agency: "State Historical Society", required_permit: "Section 106 National Historic Preservation Act Compliance (NHPA)" },
-  { id: -9, project: null as any, level: "State", applicable: "N", agency: "PSC/PUC", required_permit: "Certificate of Public Convenience, Use, and Necessity (CPCN)" },
-  { id: -10, project: null as any, level: "State", applicable: "Y", agency: "DNR", required_permit: "State Threatened & Endangered Plants and Wildlife Concurrence" },
-  { id: -11, project: null as any, level: "State", applicable: "Y", agency: "DNR", required_permit: "WPDES Permit WIS067831-6 (Construction Site Stormwater Runoff General Permit)" },
-  { id: -12, project: null as any, level: "State", applicable: "N", agency: "DNR", required_permit: "GP3" },
-  { id: -13, project: null as any, level: "State", applicable: "N", agency: "DOT", required_permit: "Road Right-of-Way Permit" },
-  { id: -14, project: null as any, level: "State", applicable: "Y", agency: "Utility", required_permit: "Interconnection Agreement" },
-  { id: -16, project: null as any, level: "Local", applicable: "Y", agency: "AHJ (County, City, Township)**", required_permit: "Zoning Permit" },
-  { id: -17, project: null as any, level: "Local", applicable: "Y", agency: "AHJ (County, City, Township)**", required_permit: "Building Permit" },
-  { id: -18, project: null as any, level: "Local", applicable: "Y", agency: "AHJ (County, City, Township)**", required_permit: "Electrical Permit" },
-  { id: -19, project: null as any, level: "Local", applicable: "Y", agency: "AHJ (County, City, Township)**", required_permit: "Building Permit" },
-  { id: -20, project: null as any, level: "Local", applicable: "Y", agency: "AHJ (County, City, Township)**", required_permit: "Shoreland Permit" },
-  { id: -21, project: null as any, level: "Local", applicable: "N", agency: "AHJ (County, City, Township)**", required_permit: "Wetlands, Floodplain Permit" },
-  { id: -22, project: null as any, level: "Local", applicable: "Y", agency: "AHJ (County, City, Township)**", required_permit: "Right-of-Way Permit" },
-  { id: -23, project: null as any, level: "Local", applicable: "N", agency: "AHJ (County, City, Township)**", required_permit: "Stormwater & Erosion Control Permit / Erosion & Sediment Permit" },
-  { id: -24, project: null as any, level: "Local", applicable: "Y", agency: "AHJ (County, City, Township)**", required_permit: "Culvert Permit" },
-  { id: -25, project: null as any, level: "Local", applicable: "Y", agency: "AHJ (County, City, Township)**", required_permit: "Electrical Permit" },
-  { id: -26, project: null as any, level: "Local", applicable: "N", agency: "AHJ (County, City, Township)**", required_permit: "Fence Permit" },
-  { id: -27, project: null as any, level: "Local", applicable: "Y", agency: "AHJ (County, City, Township)**", required_permit: "Highway Permit" },
+  { id: -1, project: null as any, level: "Federal", applicable: "", agency: "FAA", required_permit: "Coordination / Concurrence" },
+  { id: -2, project: null as any, level: "Federal", applicable: "", agency: "US Army Corps of Engineers", required_permit: "Wetland Delineation Concurrence" },
+  { id: -3, project: null as any, level: "Federal", applicable: "", agency: "US Army Corps of Engineers", required_permit: "Section 404 Permit  - Utility Regional General Permit, NWP 51, Individual Permit, Permit for Navigable Stream Crossings" },
+  { id: -4, project: null as any, level: "Federal", applicable: "", agency: "USFWS", required_permit: "Endangered Species/Resources Consultation (ESA)" },
+  { id: -5, project: null as any, level: "Federal", applicable: "", agency: "USFWS", required_permit: "Migratory Bird Treat Act Compliance (MBTA)" },
+  { id: -6, project: null as any, level: "Federal", applicable: "", agency: "USFWS", required_permit: "Eagle Take Permits" },
+  { id: -7, project: null as any, level: "State", applicable: "", agency: "SHPO", required_permit: "Cultural/archaeological/historic resources concurrence" },
+  { id: -8, project: null as any, level: "State", applicable: "", agency: "State Historical Society", required_permit: "Section 106 National Historic Preservation Act Compliance (NHPA)" },
+  { id: -9, project: null as any, level: "State", applicable: "", agency: "PSC/PUC", required_permit: "Certificate of Public Convenience, Use, and Necessity (CPCN)" },
+  { id: -10, project: null as any, level: "State", applicable: "", agency: "DNR", required_permit: "State Threatened & Endangered Plants and Wildlife Concurrence" },
+  { id: -11, project: null as any, level: "State", applicable: "", agency: "DNR", required_permit: "WPDES Permit WIS067831-6 (Construction Site Stormwater Runoff General Permit)" },
+  { id: -12, project: null as any, level: "State", applicable: "", agency: "DNR", required_permit: "GP3" },
+  { id: -13, project: null as any, level: "State", applicable: "", agency: "DOT", required_permit: "Road Right-of-Way Permit" },
+  { id: -14, project: null as any, level: "State", applicable: "", agency: "Utility", required_permit: "Interconnection Agreement" },
+  { id: -16, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Zoning Permit" },
+  { id: -17, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Building Permit" },
+  { id: -18, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Electrical Permit" },
+  { id: -19, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Building Permit" },
+  { id: -20, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Shoreland Permit" },
+  { id: -21, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Wetlands, Floodplain Permit" },
+  { id: -22, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Right-of-Way Permit" },
+  { id: -23, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Stormwater & Erosion Control Permit / Erosion & Sediment Permit" },
+  { id: -24, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Culvert Permit" },
+  { id: -25, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Electrical Permit" },
+  { id: -26, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Fence Permit" },
+  { id: -27, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Highway Permit" },
   { id: -28, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "no permit, but need to relocate" },
 ].map((row) => ({
   ...row,
@@ -96,6 +96,7 @@ const columnWidths: Record<string, number> = {
   requirements: 240,
   approval_doc_link: 140,
   comments: 240,
+  actions: 140,
 };
 
 type EditablePermit = Omit<PermitRequirement, "id" | "project"> & { id?: number };
@@ -344,7 +345,7 @@ export default function Permitting() {
                       </th>
                     );
                   })}
-                  <th style={theadCell}>Actions</th>
+                  <th style={{ ...theadCell, minWidth: columnWidths["actions"], width: columnWidths["actions"] }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -415,7 +416,7 @@ export default function Permitting() {
                           )}
                         </td>
                       ))}
-                      <td style={tbodyCell}>
+                      <td style={{ ...tbodyCell, minWidth: columnWidths["actions"], width: columnWidths["actions"] }}>
                         <div style={{ display: "flex", gap: 6 }}>
                           <button style={smallButton} onClick={() => deleteRow(row.id)}>Delete</button>
                         </div>
