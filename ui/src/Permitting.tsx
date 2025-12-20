@@ -118,6 +118,7 @@ export default function Permitting() {
   const [error, setError] = useState<string | null>(null);
   const [permits, setPermits] = useState<PermitRequirement[]>(cleanPermits(TEMPLATE_PERMITS));
   const [bootstrappedProjectId, setBootstrappedProjectId] = useState<number | null>(null);
+  const [collapsedLevels, setCollapsedLevels] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!projectId) return;
@@ -305,6 +306,10 @@ export default function Permitting() {
     return byLevel;
   }, [permits]);
 
+  function toggleLevel(level: string) {
+    setCollapsedLevels((prev) => ({ ...prev, [level]: !prev[level] }));
+  }
+
   if (!projectId) {
     return <div style={{ padding: 16, color: "#6b7280" }}>Select a project to view permitting.</div>;
   }
@@ -344,9 +349,20 @@ export default function Permitting() {
       {levels.map((level) => (
         <section key={level} style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, padding: 12, boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-            <div style={{ fontSize: 15, fontWeight: 700 }}>{level}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                type="button"
+                style={{ ...ghostButton, padding: "4px 8px", minWidth: 64 }}
+                onClick={() => toggleLevel(level)}
+                aria-label={`Toggle ${level} section`}
+              >
+                {collapsedLevels[level] ? "Expand" : "Collapse"}
+              </button>
+              <div style={{ fontSize: 15, fontWeight: 700 }}>{level}</div>
+            </div>
             <button type="button" style={ghostButton} onClick={() => addRow(level)}>Add Row</button>
           </div>
+          {!collapsedLevels[level] && (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8, minWidth: 900, tableLayout: "fixed" }}>
               <thead>
@@ -448,6 +464,7 @@ export default function Permitting() {
               </tbody>
             </table>
           </div>
+          )}
         </section>
       ))}
     </div>
