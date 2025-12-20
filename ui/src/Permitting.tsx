@@ -37,7 +37,6 @@ const TEMPLATE_PERMITS: PermitRequirement[] = [
   { id: -25, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Electrical Permit" },
   { id: -26, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Fence Permit" },
   { id: -27, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "Highway Permit" },
-  { id: -28, project: null as any, level: "Local", applicable: "", agency: "AHJ (County, City, Township)**", required_permit: "no permit, but need to relocate" },
 ].map((row) => ({
   ...row,
   includes: "",
