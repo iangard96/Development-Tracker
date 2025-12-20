@@ -5,7 +5,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from django.conf import settings
-from django.db import connection, transaction
+from django.db import connection, models, transaction
 from django.db.models import OuterRef, Subquery
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -33,6 +33,100 @@ from .serializers import (
     ProjectFinanceRunSerializer,
     PermitRequirementSerializer,
 )
+
+
+def seed_permit_requirements_from_csv(project: Project) -> int:
+    """
+    Populate permits for a project using the shared CSV template.
+    Returns the number of rows created.
+    """
+    csv_path = Path(settings.BASE_DIR) / "Development Tracker.xlsx - Permitting.csv"
+    if not csv_path.exists():
+        return 0
+
+    def to_date(raw: str | None):
+        if raw is None:
+            return None
+        val = str(raw).strip()
+        if val == "":
+            return None
+        for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y"):
+            try:
+                return datetime.strptime(val, fmt).date()
+            except Exception:
+                continue
+        try:
+            dt = datetime.fromisoformat(val)
+            return dt.date()
+        except Exception:
+            return None
+
+    current_level = ""
+    created = 0
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        reader = csv.reader(f)
+        header_found = False
+        header_map = {}
+        for row in reader:
+            if not row:
+                continue
+            # detect header
+            if not header_found and "AGENCY" in [c.strip().upper() for c in row]:
+                header_found = True
+                header_map = {c.strip().upper(): idx for idx, c in enumerate(row)}
+                continue
+            if not header_found:
+                continue
+
+            first = row[0].strip().upper() if len(row) > 0 else ""
+            if first in {"FEDERAL", "STATE", "LOCAL"}:
+                current_level = first.title()
+                continue
+
+            agency_idx = header_map.get("AGENCY")
+            permit_idx = header_map.get("REQUIRED PERMIT OR CONCURRENCE")
+            agency_val = (row[agency_idx] if agency_idx is not None and agency_idx < len(row) else "").strip()
+            permit_val = (row[permit_idx] if permit_idx is not None and permit_idx < len(row) else "").strip()
+            if not agency_val and not permit_val:
+                continue
+
+            def get(col_name: str) -> str:
+                idx = header_map.get(col_name)
+                if idx is None or idx >= len(row):
+                    return ""
+                return (row[idx] or "").strip()
+
+            start_date = to_date(get("START DATE"))
+            completion_date = to_date(get("COMPLETION DATE"))
+            turnaround_raw = get("TURNAROUND  (DAYS)")
+            try:
+                turnaround_days = int(str(turnaround_raw).replace(",", "")) if turnaround_raw else None
+            except Exception:
+                turnaround_days = None
+
+            PermitRequirement.objects.create(
+                project=project,
+                level=current_level or "",
+                applicable=get("APPLICABLE"),
+                agency=agency_val,
+                required_permit=permit_val,
+                includes=get("INCLUDES"),
+                cup_condition=get("CUP CONDITION LINE ITEM"),
+                responsible_party=get("RESPONSIBLE PARTY"),
+                responsible_individual=get("RESPONSIBLE INDIVIDUAL"),
+                status=get("STATUS"),
+                fee=get("FEE"),
+                start_date=start_date,
+                turnaround_days=turnaround_days,
+                completion_date=completion_date,
+                agency_contact=get("AGENCY CONTACT"),
+                agency_phone=get("AGENCY CONTACT PHONE 1"),
+                requirements=get("REQUIREMENTS"),
+                approval_doc_link=get("APPROVAL DOC (DB LINK)"),
+                comments=get("COMMENTS"),
+            )
+            created += 1
+    return created
 
 
 class DevelopmentStepViewSet(viewsets.ModelViewSet):
@@ -429,104 +523,74 @@ class PermitRequirementViewSet(viewsets.ModelViewSet):
         if force:
             existing.delete()
 
-        created = self._seed_from_template(project)
+        created = seed_permit_requirements_from_csv(project)
         return Response({"detail": f"seeded {created} permits"}, status=status.HTTP_201_CREATED)
-
-    def _seed_from_template(self, project: Project) -> int:
-        """
-        Seed permit rows from the template CSV in the project root.
-        """
-        csv_path = Path(settings.BASE_DIR) / "Development Tracker.xlsx - Permitting.csv"
-        if not csv_path.exists():
-            return 0
-
-        def to_date(raw: str | None):
-            if raw is None:
-                return None
-            val = str(raw).strip()
-            if val == "":
-                return None
-            for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y"):
-                try:
-                    return datetime.strptime(val, fmt).date()
-                except Exception:
-                    continue
-            try:
-                dt = datetime.fromisoformat(val)
-                return dt.date()
-            except Exception:
-                return None
-
-        current_level = ""
-        created = 0
-        with open(csv_path, newline="", encoding="utf-8") as f:
-            reader = csv.reader(f)
-            header_found = False
-            header_map = {}
-            for row in reader:
-                if not row:
-                    continue
-                # detect header
-                if not header_found and "AGENCY" in [c.strip().upper() for c in row]:
-                    header_found = True
-                    header_map = {c.strip().upper(): idx for idx, c in enumerate(row)}
-                    continue
-                if not header_found:
-                    continue
-
-                first = row[0].strip().upper() if len(row) > 0 else ""
-                if first in {"FEDERAL", "STATE", "LOCAL"}:
-                    current_level = first.title()
-                    continue
-
-                agency_idx = header_map.get("AGENCY")
-                permit_idx = header_map.get("REQUIRED PERMIT OR CONCURRENCE")
-                agency_val = (row[agency_idx] if agency_idx is not None and agency_idx < len(row) else "").strip()
-                permit_val = (row[permit_idx] if permit_idx is not None and permit_idx < len(row) else "").strip()
-                if not agency_val and not permit_val:
-                    continue
-
-                def get(col_name: str) -> str:
-                    idx = header_map.get(col_name)
-                    if idx is None or idx >= len(row):
-                        return ""
-                    return (row[idx] or "").strip()
-
-                start_date = to_date(get("START DATE"))
-                completion_date = to_date(get("COMPLETION DATE"))
-                turnaround_raw = get("TURNAROUND  (DAYS)")
-                try:
-                    turnaround_days = int(str(turnaround_raw).replace(",", "")) if turnaround_raw else None
-                except Exception:
-                    turnaround_days = None
-
-                PermitRequirement.objects.create(
-                    project=project,
-                    level=current_level or "",
-                    applicable=get("APPLICABLE"),
-                    agency=agency_val,
-                    required_permit=permit_val,
-                    includes=get("INCLUDES"),
-                    cup_condition=get("CUP CONDITION LINE ITEM"),
-                    responsible_party=get("RESPONSIBLE PARTY"),
-                    responsible_individual=get("RESPONSIBLE INDIVIDUAL"),
-                    status=get("STATUS"),
-                    fee=get("FEE"),
-                    start_date=start_date,
-                    turnaround_days=turnaround_days,
-                    completion_date=completion_date,
-                    agency_contact=get("AGENCY CONTACT"),
-                    agency_phone=get("AGENCY CONTACT PHONE 1"),
-                    requirements=get("REQUIREMENTS"),
-                    approval_doc_link=get("APPROVAL DOC (DB LINK)"),
-                    comments=get("COMMENTS"),
-                )
-                created += 1
-        return created
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by("id")
     serializer_class = ProjectSerializer
+    PERMIT_TEMPLATE: List[Dict[str, str]] = [
+        {"level": "Federal", "applicable": "Y", "agency": "FAA", "required_permit": "Coordination / Concurrence"},
+        {"level": "Federal", "applicable": "Y", "agency": "US Army Corps of Engineers", "required_permit": "Wetland Delineation Concurrence"},
+        {"level": "Federal", "applicable": "N", "agency": "US Army Corps of Engineers", "required_permit": "Section 404 Permit  - Utility Regional General Permit, NWP 51, Individual Permit, Permit for Navigable Stream Crossings"},
+        {"level": "Federal", "applicable": "Y", "agency": "USFWS", "required_permit": "Endangered Species/Resources Consultation (ESA)"},
+        {"level": "Federal", "applicable": "Y", "agency": "USFWS", "required_permit": "Migratory Bird Treat Act Compliance (MBTA)"},
+        {"level": "Federal", "applicable": "N", "agency": "USFWS", "required_permit": "Eagle Take Permits"},
+        {"level": "State", "applicable": "Y", "agency": "SHPO", "required_permit": "Cultural/archaeological/historic resources concurrence"},
+        {"level": "State", "applicable": "N", "agency": "State Historical Society", "required_permit": "Section 106 National Historic Preservation Act Compliance (NHPA)"},
+        {"level": "State", "applicable": "N", "agency": "PSC/PUC", "required_permit": "Certificate of Public Convenience, Use, and Necessity (CPCN)"},
+        {"level": "State", "applicable": "Y", "agency": "DNR", "required_permit": "State Threatened & Endangered Plants and Wildlife Concurrence"},
+        {"level": "State", "applicable": "Y", "agency": "DNR", "required_permit": "WPDES Permit WIS067831-6 (Construction Site Stormwater Runoff General Permit)"},
+        {"level": "State", "applicable": "N", "agency": "DNR", "required_permit": "GP3"},
+        {"level": "State", "applicable": "N", "agency": "DOT", "required_permit": "Road Right-of-Way Permit"},
+        {"level": "State", "applicable": "Y", "agency": "Utility", "required_permit": "Interconnection Agreement"},
+        {"level": "Local", "applicable": "?", "agency": "AHJ (County, City, Township)**", "required_permit": "Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Zoning Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Building Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Electrical Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Building Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Shoreland Permit"},
+        {"level": "Local", "applicable": "N", "agency": "AHJ (County, City, Township)**", "required_permit": "Wetlands, Floodplain Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Right-of-Way Permit"},
+        {"level": "Local", "applicable": "N", "agency": "AHJ (County, City, Township)**", "required_permit": "Stormwater & Erosion Control Permit / Erosion & Sediment Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Culvert Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Electrical Permit"},
+        {"level": "Local", "applicable": "N", "agency": "AHJ (County, City, Township)**", "required_permit": "Fence Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Highway Permit"},
+        {"level": "Local", "applicable": "", "agency": "AHJ (County, City, Township)**", "required_permit": "no permit, but need to relocate"},
+    ]
+
+    # Default permitting template applied to every new project
+    PERMIT_TEMPLATE: List[Dict[str, str]] = [
+        {"level": "Federal", "applicable": "Y", "agency": "FAA", "required_permit": "Coordination / Concurrence"},
+        {"level": "Federal", "applicable": "Y", "agency": "US Army Corps of Engineers", "required_permit": "Wetland Delineation Concurrence"},
+        {"level": "Federal", "applicable": "N", "agency": "US Army Corps of Engineers", "required_permit": "Section 404 Permit  - Utility Regional General Permit, NWP 51, Individual Permit, Permit for Navigable Stream Crossings"},
+        {"level": "Federal", "applicable": "Y", "agency": "USFWS", "required_permit": "Endangered Species/Resources Consultation (ESA)"},
+        {"level": "Federal", "applicable": "Y", "agency": "USFWS", "required_permit": "Migratory Bird Treat Act Compliance (MBTA)"},
+        {"level": "Federal", "applicable": "N", "agency": "USFWS", "required_permit": "Eagle Take Permits"},
+        {"level": "State", "applicable": "Y", "agency": "SHPO", "required_permit": "Cultural/archaeological/historic resources concurrence"},
+        {"level": "State", "applicable": "N", "agency": "State Historical Society", "required_permit": "Section 106 National Historic Preservation Act Compliance (NHPA)"},
+        {"level": "State", "applicable": "N", "agency": "PSC/PUC", "required_permit": "Certificate of Public Convenience, Use, and Necessity (CPCN)"},
+        {"level": "State", "applicable": "Y", "agency": "DNR", "required_permit": "State Threatened & Endangered Plants and Wildlife Concurrence"},
+        {"level": "State", "applicable": "Y", "agency": "DNR", "required_permit": "WPDES Permit WIS067831-6 (Construction Site Stormwater Runoff General Permit)"},
+        {"level": "State", "applicable": "N", "agency": "DNR", "required_permit": "GP3"},
+        {"level": "State", "applicable": "N", "agency": "DOT", "required_permit": "Road Right-of-Way Permit"},
+        {"level": "State", "applicable": "Y", "agency": "Utility", "required_permit": "Interconnection Agreement"},
+        {"level": "Local", "applicable": "?", "agency": "AHJ (County, City, Township)**", "required_permit": "Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Zoning Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Building Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Electrical Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Building Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Shoreland Permit"},
+        {"level": "Local", "applicable": "N", "agency": "AHJ (County, City, Township)**", "required_permit": "Wetlands, Floodplain Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Right-of-Way Permit"},
+        {"level": "Local", "applicable": "N", "agency": "AHJ (County, City, Township)**", "required_permit": "Stormwater & Erosion Control Permit / Erosion & Sediment Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Culvert Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Electrical Permit"},
+        {"level": "Local", "applicable": "N", "agency": "AHJ (County, City, Township)**", "required_permit": "Fence Permit"},
+        {"level": "Local", "applicable": "Y", "agency": "AHJ (County, City, Township)**", "required_permit": "Highway Permit"},
+        {"level": "Local", "applicable": "", "agency": "AHJ (County, City, Township)**", "required_permit": "no permit, but need to relocate"},
+    ]
 
     CSV_TEMPLATES = {
         "BTM Rooftop": "BTM Rooftop.csv",
@@ -725,6 +789,70 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 )
 
         return inserted_ids
+
+    def perform_create(self, serializer):
+        project = serializer.save()
+        self._ensure_permits(project)
+
+    def _ensure_permits(self, project: Project) -> int:
+        """
+        Ensure a project has permit rows. Attempts CSV template first, then a static fallback.
+        Returns number of rows created (0 if already present).
+        """
+        if PermitRequirement.objects.filter(project=project).exists():
+            return 0
+
+        created = seed_permit_requirements_from_csv(project)
+        if created:
+            return created
+
+        return self._seed_default_permits(project)
+
+    def _seed_default_permits(self, project: Project):
+        if PermitRequirement.objects.filter(project=project).exists():
+            return 0
+        objs = []
+        for row in self.PERMIT_TEMPLATE:
+            objs.append(
+                PermitRequirement(
+                    project=project,
+                    level=row.get("level", ""),
+                    applicable=row.get("applicable", ""),
+                    agency=row.get("agency", ""),
+                    required_permit=row.get("required_permit", ""),
+                    includes="",
+                    cup_condition="",
+                    responsible_party="",
+                    responsible_individual="",
+                    status="",
+                    fee="",
+                    start_date=None,
+                    turnaround_days=None,
+                    completion_date=None,
+                    agency_contact="",
+                    agency_phone="",
+                    requirements="",
+                    approval_doc_link="",
+                    comments="",
+                )
+            )
+        if objs:
+            PermitRequirement.objects.bulk_create(objs)
+        return len(objs)
+
+    @action(detail=True, methods=["post"])
+    @transaction.atomic
+    def bootstrap_permits(self, request, pk=None):
+        """
+        Ensure this project has permitting rows seeded from the shared template.
+        Returns existing rows if present, otherwise seeds and returns the new set.
+        """
+        project = self.get_object()
+        created = self._ensure_permits(project)
+        rows = PermitRequirement.objects.filter(project=project).order_by("level", "id")
+        ser = PermitRequirementSerializer(rows, many=True)
+        status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        return Response(ser.data, status=status_code)
     
     @transaction.atomic
     def create(self, request, *args, **kwargs):

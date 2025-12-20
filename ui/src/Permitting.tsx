@@ -6,7 +6,7 @@ import {
   createPermitRequirement,
   updatePermitRequirement,
   deletePermitRequirement,
-  seedPermitRequirements,
+  bootstrapPermitRequirements,
 } from "./api";
 import type { PermitRequirement } from "./types";
 
@@ -38,41 +38,43 @@ export default function Permitting() {
   const { projectId, project } = useProject();
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [seeding, setSeeding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [permits, setPermits] = useState<PermitRequirement[]>([]);
   const [editingRow, setEditingRow] = useState<number | null>(null);
   const [drafts, setDrafts] = useState<Record<number | "new", EditablePermit>>({});
+  const [bootstrappedProjectId, setBootstrappedProjectId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
+    let cancelled = false;
     setLoading(true);
     setError(null);
-    fetchPermitRequirements(projectId, undefined, search)
-      .then(setPermits)
-      .catch((e) => setError(String(e)))
-      .finally(() => setLoading(false));
-  }, [projectId, search]);
-
-  async function seedFromTemplate(force = false) {
-    if (!projectId) return;
-    if (!force && permits.length > 0) {
-      const confirm = window.confirm("Permits already exist. Seed will be skipped unless you force replace. Continue?");
-      if (!confirm) return;
-    }
-    setSeeding(true);
-    setError(null);
-    try {
-      await seedPermitRequirements(projectId, force);
-      // reload after seed
-      const data = await fetchPermitRequirements(projectId, undefined, search);
-      setPermits(data);
-    } catch (e: any) {
-      setError(String(e));
-    } finally {
-      setSeeding(false);
-    }
-  }
+    (async () => {
+      try {
+        if (bootstrappedProjectId !== projectId) {
+          await bootstrapPermitRequirements(projectId);
+          if (!cancelled) {
+            setBootstrappedProjectId(projectId);
+          }
+        }
+        const data = await fetchPermitRequirements(projectId, undefined, search);
+        if (!cancelled) {
+          setPermits(data);
+        }
+      } catch (e: any) {
+        if (!cancelled) {
+          setError(String(e));
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, search, bootstrappedProjectId]);
 
   function startEdit(row: PermitRequirement) {
     setEditingRow(row.id);
@@ -153,26 +155,14 @@ export default function Permitting() {
             Track federal, state, and local permitting requirements.
           </p>
         </div>
-        <input
-          type="search"
-          placeholder="Search permits..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={searchInput}
-        />
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="button" style={ghostButton} onClick={() => seedFromTemplate(false)} disabled={seeding}>
-            {seeding ? "Seeding..." : "Seed from Template"}
-          </button>
-          <button
-            type="button"
-            style={ghostButton}
-            onClick={() => seedFromTemplate(true)}
-            disabled={seeding}
-            title="Replace existing rows with template data"
-          >
-            Force Reseed
-          </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <input
+            type="search"
+            placeholder="Search permits..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={searchInput}
+          />
         </div>
       </div>
       {loading && <div style={{ fontSize: 12, color: "#6b7280" }}>Loading…</div>}

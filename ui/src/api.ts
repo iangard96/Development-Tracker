@@ -396,6 +396,15 @@ export async function deletePermitRequirement(id: number): Promise<void> {
   await jsonOrThrow(r, "permit delete failed");
 }
 
+export async function bootstrapPermitRequirements(projectId: number): Promise<PermitRequirement[]> {
+  const r = await fetch(`${API}/projects/${projectId}/bootstrap_permits/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  const data = await jsonOrThrow(r, "permit bootstrap failed");
+  return normalizeResults<PermitRequirement>(data);
+}
+
 export async function seedPermitRequirements(
   projectId: number,
   force = false,
