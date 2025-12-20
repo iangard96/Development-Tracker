@@ -86,8 +86,6 @@ export default function Permitting() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [permits, setPermits] = useState<PermitRequirement[]>(TEMPLATE_PERMITS);
-  const [editingRow, setEditingRow] = useState<number | null>(null);
-  const [drafts, setDrafts] = useState<Record<number | "new", EditablePermit>>({});
   const [bootstrappedProjectId, setBootstrappedProjectId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -122,75 +120,101 @@ export default function Permitting() {
     };
   }, [projectId, search, bootstrappedProjectId]);
 
-  function startEdit(row: PermitRequirement) {
-    setEditingRow(row.id);
-    setDrafts((d) => ({ ...d, [row.id]: { ...row } }));
-  }
-
-  function stopEdit() {
-    setEditingRow(null);
-  }
-
-  function updateDraft(id: number | "new", key: keyof EditablePermit, value: string) {
-    setDrafts((d) => {
-      const current = d[id] || (permits.find((p) => p.id === id) as EditablePermit | undefined) || {};
-      const next: EditablePermit = { ...current, [key]: value };
-
-      const toDate = (v: string | null | undefined) => {
-        if (!v) return null;
-        const d = new Date(v);
-        return isNaN(+d) ? null : d;
-      };
-
-      const start = toDate(next.start_date as any);
-      const completion = toDate(next.completion_date as any);
-
-      if (key === "start_date" || key === "completion_date") {
-        if (start && completion) {
-          const diffMs = completion.getTime() - start.getTime();
-          const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
-          next.turnaround_days = Number.isFinite(days) ? days : (next.turnaround_days as any);
-        }
-      }
-
-      if (key === "turnaround_days") {
-        const days = Number(value);
-        if (start && Number.isFinite(days)) {
-          const calc = new Date(start);
-          calc.setDate(calc.getDate() + days);
-          const iso = calc.toISOString().slice(0, 10);
-          next.completion_date = iso as any;
-        }
-      }
-
-      return { ...d, [id]: next };
-    });
-  }
-
   function isApplicableChecked(value: string | null | undefined): boolean {
     if (!value) return false;
     return String(value).trim().toUpperCase() === "Y";
   }
 
-  async function saveRow(rowId: number) {
-    const draft = drafts[rowId];
-    if (!draft) {
-      setEditingRow(null);
-      return;
-    }
-    try {
-      const payload: Partial<PermitRequirement> = { ...draft, project: projectId! } as any;
-      const updated =
-        rowId < 0
-          ? await createPermitRequirement(payload)
-          : await updatePermitRequirement(rowId, payload);
-      setPermits((rows) => rows.map((r) => (r.id === rowId ? updated : r)));
-      if (rowId < 0) {
-        setPermits((rows) => rows.map((r) => (r.id === rowId ? updated : r)));
+  function normalizeDateInput(value: string | null | undefined): string {
+    if (!value) return "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return String(value);
+    const d = new Date(String(value));
+    if (isNaN(+d)) return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function applyDateCalculations(
+    base: EditablePermit,
+    key: keyof EditablePermit,
+    rawValue: string | number | null,
+  ): EditablePermit {
+    const next: EditablePermit = { ...base, [key]: rawValue as any };
+
+    const toDate = (v: any) => {
+      if (!v) return null;
+      const d = new Date(v);
+      return isNaN(+d) ? null : d;
+    };
+
+    const start = toDate(next.start_date);
+    const completion = toDate(next.completion_date);
+
+    if (key === "start_date" || key === "completion_date") {
+      if (start && completion) {
+        const diffMs = completion.getTime() - start.getTime();
+        const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        next.turnaround_days = Number.isFinite(days) ? days : (next.turnaround_days as any);
       }
-      setEditingRow(null);
+    }
+
+    if (key === "turnaround_days") {
+      const days = typeof rawValue === "number" ? rawValue : Number(rawValue);
+      if (start && Number.isFinite(days)) {
+        const calc = new Date(start);
+        calc.setDate(calc.getDate() + days);
+        const iso = calc.toISOString().slice(0, 10);
+        next.completion_date = iso as any;
+      }
+    }
+
+    return next;
+  }
+
+  async function updateField(row: PermitRequirement, key: keyof EditablePermit, raw: any) {
+    const original = { ...row } as EditablePermit;
+
+    let value: any = raw;
+    if (key === "start_date" || key === "completion_date") {
+      value = raw || null;
+    }
+    if (key === "turnaround_days") {
+      value = raw === "" || raw === null ? null : Number(raw);
+      if (!Number.isFinite(value as number)) value = null;
+    }
+
+    const updated = applyDateCalculations({ ...original, [key]: value }, key, value);
+    setPermits((rows) => rows.map((r) => (r.id === row.id ? ({ ...r, ...updated } as PermitRequirement) : r)));
+
+    if (!projectId) return;
+
+    try {
+      if (row.id < 0) {
+        const payload: any = { ...updated, project: projectId };
+        delete payload.id;
+        const created = await createPermitRequirement(payload);
+        setPermits((rows) => rows.map((r) => (r.id === row.id ? created : r)));
+        return;
+      }
+
+      const payload: Partial<PermitRequirement> = {};
+      payload[key as keyof PermitRequirement] = value as any;
+      if (key === "start_date" || key === "completion_date") {
+        payload.start_date = updated.start_date as any;
+        payload.completion_date = updated.completion_date as any;
+        payload.turnaround_days = updated.turnaround_days as any;
+      }
+      if (key === "turnaround_days") {
+        payload.turnaround_days = updated.turnaround_days as any;
+        payload.completion_date = updated.completion_date as any;
+      }
+      const saved = await updatePermitRequirement(row.id, payload);
+      setPermits((rows) => rows.map((r) => (r.id === row.id ? saved : r)));
     } catch (e: any) {
       setError(String(e));
+      setPermits((rows) => rows.map((r) => (r.id === row.id ? (original as PermitRequirement) : r)));
     }
   }
 
@@ -300,87 +324,65 @@ export default function Permitting() {
               </thead>
               <tbody>
                 {(grouped[level] || []).map((row) => {
-                  const isEditing = editingRow === row.id;
-                  const draft = (drafts[row.id] || row) as any;
                   return (
                     <tr key={row.id}>
                       {columns.map((c) => (
                         <td key={c.key} style={tbodyCell}>
-                          {isEditing ? (
-                            c.key === "applicable" ? (
-                              <input
-                                type="checkbox"
-                                checked={isApplicableChecked(draft[c.key])}
-                                onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.checked ? "Y" : "N")}
-                              />
-                            ) : c.key === "start_date" || c.key === "completion_date" ? (
-                              <input
-                                type="date"
-                                value={draft[c.key] ? String(draft[c.key]).slice(0, 10) : ""}
-                                onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.value)}
-                                style={cellInput}
-                              />
-                            ) : c.key === "turnaround_days" ? (
-                              <input
-                                type="number"
-                                value={draft[c.key] ?? ""}
-                                onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.value)}
-                                style={cellInput}
-                              />
-                            ) : c.key === "fee" ? (
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={draft[c.key] ?? ""}
-                                onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.value)}
-                                style={cellInput}
-                              />
-                            ) : c.key === "requirements" || c.key === "comments" ? (
-                              <textarea
-                                value={draft[c.key] ?? ""}
-                                onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.value)}
-                                style={{ ...cellInput, minWidth: 240, minHeight: 60, resize: "vertical" }}
-                              />
-                            ) : c.key === "agency_phone" ? (
-                              <input
-                                type="tel"
-                                value={draft[c.key] ?? ""}
-                                onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.value)}
-                                style={cellInput}
-                              />
-                            ) : (
-                              <input
-                                type="text"
-                                value={draft[c.key] ?? ""}
-                                onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.value)}
-                                style={cellInput}
-                              />
-                            )
+                          {c.key === "applicable" ? (
+                            <input
+                              type="checkbox"
+                              checked={isApplicableChecked(row[c.key as keyof PermitRequirement] as any)}
+                              onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.checked ? "Y" : "N")}
+                            />
+                          ) : c.key === "start_date" || c.key === "completion_date" ? (
+                            <input
+                              type="date"
+                              value={normalizeDateInput(row[c.key as keyof PermitRequirement] as any)}
+                              onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.value || null)}
+                              style={cellInput}
+                            />
+                          ) : c.key === "turnaround_days" ? (
+                            <input
+                              type="number"
+                              value={row[c.key as keyof PermitRequirement] ?? ""}
+                              onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.value)}
+                              style={cellInput}
+                            />
+                          ) : c.key === "fee" ? (
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={row[c.key as keyof PermitRequirement] ?? ""}
+                              onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.value)}
+                              style={cellInput}
+                            />
+                          ) : c.key === "requirements" || c.key === "comments" ? (
+                            <textarea
+                              value={row[c.key as keyof PermitRequirement] ?? ""}
+                              onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.value)}
+                              style={{ ...cellInput, minWidth: 240, minHeight: 60, resize: "vertical" }}
+                            />
+                          ) : c.key === "agency_phone" ? (
+                            <input
+                              type="tel"
+                              value={row[c.key as keyof PermitRequirement] ?? ""}
+                              onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.value)}
+                              style={cellInput}
+                            />
                           ) : (
-                            c.key === "applicable" ? (
-                              <input
-                                type="checkbox"
-                                checked={isApplicableChecked(row[c.key as keyof PermitRequirement] as any)}
-                                onChange={(e) => toggleApplicable(row, e.target.checked)}
-                              />
-                            ) : (
-                              <span>{row[c.key as keyof PermitRequirement] as any}</span>
-                            )
+                            <input
+                              type="text"
+                              value={row[c.key as keyof PermitRequirement] ?? ""}
+                              onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.value)}
+                              style={cellInput}
+                            />
                           )}
                         </td>
                       ))}
                       <td style={tbodyCell}>
-                        {isEditing ? (
-                          <div style={{ display: "flex", gap: 6 }}>
-                            <button style={smallButton} onClick={() => saveRow(row.id)}>Save</button>
-                            <button style={smallButton} onClick={stopEdit}>Cancel</button>
-                          </div>
-                        ) : (
-                          <div style={{ display: "flex", gap: 6 }}>
-                            <button style={smallButton} onClick={() => startEdit(row)}>Edit</button>
-                            <button style={smallButton} onClick={() => deleteRow(row.id)}>Delete</button>
-                          </div>
-                        )}
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button style={smallButton} onClick={() => deleteRow(row.id)}>Delete</button>
+                        </div>
                       </td>
                     </tr>
                   );
