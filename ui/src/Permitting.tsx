@@ -101,6 +101,10 @@ const columnWidths: Record<string, number> = {
 
 type EditablePermit = Omit<PermitRequirement, "id" | "project"> & { id?: number };
 
+function stripApplicable(rows: PermitRequirement[]): PermitRequirement[] {
+  return rows.map((r) => ({ ...r, applicable: "" }));
+}
+
 export default function Permitting() {
   const { projectId, project } = useProject();
   const [search, setSearch] = useState("");
@@ -124,7 +128,8 @@ export default function Permitting() {
         }
         const data = await fetchPermitRequirements(projectId, undefined, search);
         if (!cancelled) {
-          setPermits(data.length ? data : TEMPLATE_PERMITS);
+          const next = data.length ? stripApplicable(data) : stripApplicable(TEMPLATE_PERMITS);
+          setPermits(next);
         }
       } catch (e: any) {
         if (!cancelled) {
@@ -201,6 +206,9 @@ export default function Permitting() {
     if (key === "start_date" || key === "completion_date") {
       value = raw || null;
     }
+    if (key === "applicable" && (value === undefined || value === null)) {
+      value = "";
+    }
     if (key === "turnaround_days") {
       value = raw === "" || raw === null ? null : Number(raw);
       if (!Number.isFinite(value as number)) value = null;
@@ -216,7 +224,7 @@ export default function Permitting() {
         const payload: any = { ...updated, project: projectId };
         delete payload.id;
         const created = await createPermitRequirement(payload);
-        setPermits((rows) => rows.map((r) => (r.id === row.id ? created : r)));
+        setPermits((rows) => rows.map((r) => (r.id === row.id ? { ...created, applicable: "" } : r)));
         return;
       }
 
@@ -276,7 +284,7 @@ export default function Permitting() {
         required_permit: "New permit",
       } as any;
       const created = await createPermitRequirement(payload);
-      setPermits((rows) => [...rows, created]);
+      setPermits((rows) => [...rows, { ...created, applicable: "" }]);
     } catch (e: any) {
       setError(String(e));
     }
