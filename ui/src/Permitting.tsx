@@ -25,7 +25,6 @@ const TEMPLATE_PERMITS: PermitRequirement[] = [
   { id: -12, project: null as any, level: "State", applicable: "N", agency: "DNR", required_permit: "GP3" },
   { id: -13, project: null as any, level: "State", applicable: "N", agency: "DOT", required_permit: "Road Right-of-Way Permit" },
   { id: -14, project: null as any, level: "State", applicable: "Y", agency: "Utility", required_permit: "Interconnection Agreement" },
-  { id: -15, project: null as any, level: "Local", applicable: "?", agency: "AHJ (County, City, Township)**", required_permit: "Permit" },
   { id: -16, project: null as any, level: "Local", applicable: "Y", agency: "AHJ (County, City, Township)**", required_permit: "Zoning Permit" },
   { id: -17, project: null as any, level: "Local", applicable: "Y", agency: "AHJ (County, City, Township)**", required_permit: "Building Permit" },
   { id: -18, project: null as any, level: "Local", applicable: "Y", agency: "AHJ (County, City, Township)**", required_permit: "Electrical Permit" },
@@ -133,10 +132,44 @@ export default function Permitting() {
   }
 
   function updateDraft(id: number | "new", key: keyof EditablePermit, value: string) {
-    setDrafts((d) => ({
-      ...d,
-      [id]: { ...(d[id] || {}), [key]: value },
-    }));
+    setDrafts((d) => {
+      const current = d[id] || (permits.find((p) => p.id === id) as EditablePermit | undefined) || {};
+      const next: EditablePermit = { ...current, [key]: value };
+
+      const toDate = (v: string | null | undefined) => {
+        if (!v) return null;
+        const d = new Date(v);
+        return isNaN(+d) ? null : d;
+      };
+
+      const start = toDate(next.start_date as any);
+      const completion = toDate(next.completion_date as any);
+
+      if (key === "start_date" || key === "completion_date") {
+        if (start && completion) {
+          const diffMs = completion.getTime() - start.getTime();
+          const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
+          next.turnaround_days = Number.isFinite(days) ? days : (next.turnaround_days as any);
+        }
+      }
+
+      if (key === "turnaround_days") {
+        const days = Number(value);
+        if (start && Number.isFinite(days)) {
+          const calc = new Date(start);
+          calc.setDate(calc.getDate() + days);
+          const iso = calc.toISOString().slice(0, 10);
+          next.completion_date = iso as any;
+        }
+      }
+
+      return { ...d, [id]: next };
+    });
+  }
+
+  function isApplicableChecked(value: string | null | undefined): boolean {
+    if (!value) return false;
+    return String(value).trim().toUpperCase() === "Y";
   }
 
   async function saveRow(rowId: number) {
@@ -173,6 +206,22 @@ export default function Permitting() {
     }
   }
 
+  async function toggleApplicable(row: PermitRequirement, checked: boolean) {
+    const nextVal = checked ? "Y" : "N";
+    setPermits((rows) => rows.map((r) => (r.id === row.id ? { ...r, applicable: nextVal } : r)));
+    if (!projectId) return;
+    if (row.id < 0) {
+      return;
+    }
+    try {
+      const updated = await updatePermitRequirement(row.id, { applicable: nextVal });
+      setPermits((rows) => rows.map((r) => (r.id === row.id ? updated : r)));
+    } catch (e: any) {
+      setError(String(e));
+      setPermits((rows) => rows.map((r) => (r.id === row.id ? row : r)));
+    }
+  }
+
   async function addRow(level: string) {
     if (!projectId) return;
     try {
@@ -202,11 +251,21 @@ export default function Permitting() {
   }
 
   return (
-    <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+    <div className="page-root" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 12,
+          flexWrap: "wrap",
+          marginBottom: 4,
+        }}
+      >
         <div>
-          <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>{project?.project_name || "Project"} - Permitting</h2>
-          <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 13 }}>
+          <h1 className="page-title" style={{ marginBottom: 4 }}>{project?.project_name || "Project"}</h1>
+          <h2 className="page-subtitle" style={{ margin: "0 0 4px" }}>Permitting</h2>
+          <p style={{ margin: 0, color: "#6b7280", fontSize: 13 }}>
             Track federal, state, and local permitting requirements.
           </p>
         </div>
@@ -248,14 +307,67 @@ export default function Permitting() {
                       {columns.map((c) => (
                         <td key={c.key} style={tbodyCell}>
                           {isEditing ? (
-                            <input
-                              type="text"
-                              value={draft[c.key] ?? ""}
-                              onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.value)}
-                              style={cellInput}
-                            />
+                            c.key === "applicable" ? (
+                              <input
+                                type="checkbox"
+                                checked={isApplicableChecked(draft[c.key])}
+                                onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.checked ? "Y" : "N")}
+                              />
+                            ) : c.key === "start_date" || c.key === "completion_date" ? (
+                              <input
+                                type="date"
+                                value={draft[c.key] ? String(draft[c.key]).slice(0, 10) : ""}
+                                onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.value)}
+                                style={cellInput}
+                              />
+                            ) : c.key === "turnaround_days" ? (
+                              <input
+                                type="number"
+                                value={draft[c.key] ?? ""}
+                                onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.value)}
+                                style={cellInput}
+                              />
+                            ) : c.key === "fee" ? (
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={draft[c.key] ?? ""}
+                                onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.value)}
+                                style={cellInput}
+                              />
+                            ) : c.key === "requirements" || c.key === "comments" ? (
+                              <textarea
+                                value={draft[c.key] ?? ""}
+                                onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.value)}
+                                style={{ ...cellInput, minWidth: 240, minHeight: 60, resize: "vertical" }}
+                              />
+                            ) : c.key === "agency_phone" ? (
+                              <input
+                                type="tel"
+                                value={draft[c.key] ?? ""}
+                                onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.value)}
+                                style={cellInput}
+                              />
+                            ) : (
+                              <input
+                                type="text"
+                                value={draft[c.key] ?? ""}
+                                onChange={(e) => updateDraft(row.id, c.key as keyof EditablePermit, e.target.value)}
+                                style={cellInput}
+                              />
+                            )
                           ) : (
-                            <span>{row[c.key as keyof PermitRequirement] as any}</span>
+                            c.key === "applicable" ? (
+                              <input
+                                type="checkbox"
+                                checked={isApplicableChecked(row[c.key as keyof PermitRequirement] as any)}
+                                onChange={(e) => toggleApplicable(row, e.target.checked)}
+                              />
+                            ) : (
+                              <span>{row[c.key as keyof PermitRequirement] as any}</span>
+                            ) : (
+                              <span>{row[c.key as keyof PermitRequirement] as any}</span>
+                            )
                           )}
                         </td>
                       ))}
