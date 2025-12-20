@@ -78,6 +78,26 @@ const columns = [
 
 const levels = ["Federal", "State", "Local"];
 
+const columnWidths: Record<string, number> = {
+  applicable: 80,
+  agency: 160,
+  required_permit: 220,
+  includes: 140,
+  cup_condition: 140,
+  responsible_party: 140,
+  responsible_individual: 140,
+  status: 140,
+  fee: 120,
+  start_date: 140,
+  turnaround_days: 130,
+  completion_date: 140,
+  agency_contact: 150,
+  agency_phone: 140,
+  requirements: 240,
+  approval_doc_link: 140,
+  comments: 240,
+};
+
 type EditablePermit = Omit<PermitRequirement, "id" | "project"> & { id?: number };
 
 export default function Permitting() {
@@ -313,12 +333,17 @@ export default function Permitting() {
             <button type="button" style={ghostButton} onClick={() => addRow(level)}>Add Row</button>
           </div>
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8, minWidth: 900 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8, minWidth: 900, tableLayout: "fixed" }}>
               <thead>
                 <tr>
-                  {columns.map((c) => (
-                    <th key={c.key} style={theadCell}>{c.label}</th>
-                  ))}
+                  {columns.map((c) => {
+                    const width = columnWidths[c.key] || 140;
+                    return (
+                      <th key={c.key} style={{ ...theadCell, minWidth: width, width }}>
+                        {c.label}
+                      </th>
+                    );
+                  })}
                   <th style={theadCell}>Actions</th>
                 </tr>
               </thead>
@@ -327,7 +352,7 @@ export default function Permitting() {
                   return (
                     <tr key={row.id}>
                       {columns.map((c) => (
-                        <td key={c.key} style={tbodyCell}>
+                        <td key={c.key} style={{ ...tbodyCell, minWidth: columnWidths[c.key] || 140, width: columnWidths[c.key] || 140 }}>
                           {c.key === "applicable" ? (
                             <input
                               type="checkbox"
@@ -335,20 +360,22 @@ export default function Permitting() {
                               onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.checked ? "Y" : "N")}
                             />
                           ) : c.key === "required_permit" ? (
-                            <span>{row[c.key as keyof PermitRequirement] as any}</span>
+                            <span style={{ display: "block", minWidth: columnWidths[c.key] || 140 }}>
+                              {row[c.key as keyof PermitRequirement] as any}
+                            </span>
                           ) : c.key === "start_date" || c.key === "completion_date" ? (
                             <input
                               type="date"
                               value={normalizeDateInput(row[c.key as keyof PermitRequirement] as any)}
                               onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.value || null)}
-                              style={cellInput}
+                              style={{ ...cellInput, minWidth: columnWidths[c.key] || 140 }}
                             />
                           ) : c.key === "turnaround_days" ? (
                             <input
                               type="number"
                               value={row[c.key as keyof PermitRequirement] ?? ""}
                               onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.value)}
-                              style={cellInput}
+                              style={{ ...cellInput, minWidth: columnWidths[c.key] || 130 }}
                             />
                           ) : c.key === "fee" ? (
                             <input
@@ -356,28 +383,34 @@ export default function Permitting() {
                               step="0.01"
                               value={row[c.key as keyof PermitRequirement] ?? ""}
                               onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.value)}
-                              style={cellInput}
+                              style={{ ...cellInput, minWidth: columnWidths[c.key] || 120 }}
                             />
                           ) : c.key === "requirements" || c.key === "comments" ? (
                             <textarea
                               value={row[c.key as keyof PermitRequirement] ?? ""}
                               onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.value)}
                               rows={2}
-                              style={{ ...cellInput, minWidth: 220, minHeight: 48, resize: "vertical", overflowY: "auto" }}
+                              style={{
+                                ...cellInput,
+                                minWidth: columnWidths[c.key] || 220,
+                                minHeight: 48,
+                                resize: "vertical",
+                                overflowY: "auto",
+                              }}
                             />
                           ) : c.key === "agency_phone" ? (
                             <input
                               type="tel"
                               value={row[c.key as keyof PermitRequirement] ?? ""}
                               onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.value)}
-                              style={cellInput}
+                              style={{ ...cellInput, minWidth: columnWidths[c.key] || 140 }}
                             />
                           ) : (
                             <input
                               type="text"
                               value={row[c.key as keyof PermitRequirement] ?? ""}
                               onChange={(e) => updateField(row, c.key as keyof EditablePermit, e.target.value)}
-                              style={cellInput}
+                              style={{ ...cellInput, minWidth: columnWidths[c.key] || 140 }}
                             />
                           )}
                         </td>
