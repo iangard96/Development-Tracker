@@ -104,12 +104,19 @@ function stripApplicable(rows: PermitRequirement[]): PermitRequirement[] {
   return rows.map((r) => ({ ...r, applicable: "" }));
 }
 
+function cleanPermits(rows: PermitRequirement[]): PermitRequirement[] {
+  const disallowed = new Set(["permit", "no permit, but need to relocate"]);
+  return stripApplicable(
+    rows.filter((r) => !disallowed.has(String(r.required_permit || "").trim().toLowerCase())),
+  );
+}
+
 export default function Permitting() {
   const { projectId, project } = useProject();
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [permits, setPermits] = useState<PermitRequirement[]>(TEMPLATE_PERMITS);
+  const [permits, setPermits] = useState<PermitRequirement[]>(cleanPermits(TEMPLATE_PERMITS));
   const [bootstrappedProjectId, setBootstrappedProjectId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -127,7 +134,7 @@ export default function Permitting() {
         }
         const data = await fetchPermitRequirements(projectId, undefined, search);
         if (!cancelled) {
-          const next = data.length ? stripApplicable(data) : stripApplicable(TEMPLATE_PERMITS);
+          const next = data.length ? cleanPermits(data) : cleanPermits(TEMPLATE_PERMITS);
           setPermits(next);
         }
       } catch (e: any) {
@@ -283,7 +290,7 @@ export default function Permitting() {
         required_permit: "New permit",
       } as any;
       const created = await createPermitRequirement(payload);
-      setPermits((rows) => [...rows, { ...created, applicable: "" }]);
+      setPermits((rows) => cleanPermits([...rows, { ...created, applicable: "" }]));
     } catch (e: any) {
       setError(String(e));
     }
