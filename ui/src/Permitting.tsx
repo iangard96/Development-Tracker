@@ -352,15 +352,24 @@ export default function Permitting() {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button
                 type="button"
-                style={{ ...ghostButton, padding: "4px 8px", minWidth: 64 }}
+                style={toggleButton}
                 onClick={() => toggleLevel(level)}
                 aria-label={`Toggle ${level} section`}
               >
+                <span aria-hidden="true">{collapsedLevels[level] ? "►" : "▼"}</span>
                 {collapsedLevels[level] ? "Expand" : "Collapse"}
+              </button>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                type="button"
+                style={ghostButton}
+                onClick={() => addRow(level)}
+              >
+                Add Row
               </button>
               <div style={{ fontSize: 15, fontWeight: 700 }}>{level}</div>
             </div>
-            <button type="button" style={ghostButton} onClick={() => addRow(level)}>Add Row</button>
           </div>
           {!collapsedLevels[level] && (
           <div style={{ overflowX: "auto" }}>
@@ -488,6 +497,20 @@ const ghostButton: React.CSSProperties = {
   fontWeight: 600,
   color: "#111827",
   cursor: "pointer",
+};
+
+const toggleButton: React.CSSProperties = {
+  border: "1px solid #d1d5db",
+  background: "#f3f4f6",
+  padding: "6px 10px",
+  borderRadius: 6,
+  fontSize: 12,
+  fontWeight: 700,
+  color: "#111827",
+  cursor: "pointer",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
 };
 
 const theadCell: React.CSSProperties = {
