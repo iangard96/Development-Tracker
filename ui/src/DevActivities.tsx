@@ -1768,7 +1768,7 @@ export default function DevActivities() {
               <th style={{ ...th, ...requirementTh }}>Requirement</th>
               <th style={{ ...th, minWidth: 180 }}>Storage Hybrid Impact</th>
               <th style={{ ...th, minWidth: 140, textAlign: "center" }}>Milestones / NTP Gates</th>
-              <th style={{ ...th, width: 100, minWidth: 100 }}></th>
+              <th style={{ ...th, width: 110 }}>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -2380,33 +2380,56 @@ export default function DevActivities() {
                     );
                   })()}
                 </td>
+                <td
+                  style={{
+                    ...td,
+                    width: 110,
+                    textAlign: "center",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {(() => {
+                    const isCustom =
+                      customIds.has(r.id) ||
+                      (r.name || "").toLowerCase().includes("custom");
+                    if (!isCustom) return null;
+                    return (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const ok = window.confirm("Delete this activity? This cannot be undone.");
+                          if (!ok) return;
+                          try {
+                            await deleteDevelopmentStep(r.id);
+                            setRows((cur) => (cur ? cur.filter((x) => x.id !== r.id) : cur));
+                            setCustomIds((prev) => {
+                              const next = new Set(prev);
+                              next.delete(r.id);
+                              return next;
+                            });
+                          } catch (err: any) {
+                            console.error(err);
+                            alert(`Failed to delete activity.\n${err?.message ?? ""}`);
+                          }
+                        }}
+                        style={{
+                          padding: "8px 14px",
+                          borderRadius: 8,
+                          border: "1px solid #d93434",
+                          background: "#ffecec",
+                          color: "#d93434",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                        }}
+                      >
+                        Remove
+                      </button>
+                    );
+                  })()}
+                </td>
 
-              <td style={{ ...td, whiteSpace: "nowrap", width: 100, minWidth: 100, textAlign: "center" }}>
-                {customIds.has(r.id) || (r.name || "").toLowerCase().includes("custom") ? (
-                  <button
-                    type="button"
-                    className="btn-delete"
-                    onClick={async () => {
-                      const ok = window.confirm("Delete this activity? This cannot be undone.");
-                      if (!ok) return;
-                      try {
-                        await deleteDevelopmentStep(r.id);
-                        setRows((cur) => (cur ? cur.filter((x) => x.id !== r.id) : cur));
-                        setCustomIds((prev) => {
-                          const next = new Set(prev);
-                          next.delete(r.id);
-                          return next;
-                        });
-                      } catch (err: any) {
-                        console.error(err);
-                        alert(`Failed to delete activity.\n${err?.message ?? ""}`);
-                      }
-                    }}
-                  >
-                    Remove
-                  </button>
-                ) : null}
-              </td>
             </tr>
           ))}
           </tbody>
