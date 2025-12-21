@@ -86,9 +86,9 @@ export default function DevTypeProgressRow({ steps }: { steps: DevStep[] }) {
       <div
         style={{
           width: "100%",
-          background: "#ffffff",
+          background: "var(--card)",
           borderRadius: 16,
-          border: "1px solid #e5e7eb",
+          border: "1px solid var(--border)",
           padding: 24,
           boxSizing: "border-box",
         }}
@@ -116,7 +116,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
 
   // For 0%, animate a full sweep (100) but still show 0% in the label
   const targetValue = clamped === 0 ? 100 : clamped;
-  const barColor = clamped === 0 ? "#e5e7eb" : "#C6B5FF";
+  const barColor = clamped === 0 ? "var(--border)" : "var(--accent-strong)";
 
   useEffect(() => {
     let raf: number | null = null;
@@ -173,7 +173,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
             <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
             <RadialBar
               minAngle={2}
-              background={{ fill: "#f1f5f9" }}
+              background={{ fill: "var(--surface)" }}
               clockWise
               dataKey="value"
               cornerRadius={999}
@@ -192,7 +192,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
           textAlign: "center",
           fontSize: 22,
           fontWeight: 700,
-          color: "#111827",
+          color: "var(--text)",
           lineHeight: 1,
         }}
       >
@@ -204,7 +204,7 @@ function DonutGauge({ label, pct }: { label: string; pct: number }) {
           textAlign: "center",
           fontSize: 13,
           fontWeight: 600,
-          color: "#111827",
+          color: "var(--text)",
         }}
       >
         {label}

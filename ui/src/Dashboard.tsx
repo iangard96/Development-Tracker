@@ -34,9 +34,9 @@ class ChartErrorBoundary extends Component<
       return (
         <div
           style={{
-            border: "1px solid #fee2e2",
-            background: "#fff1f2",
-            color: "#991b1b",
+            border: "1px solid var(--danger)",
+            background: "rgba(248, 113, 113, 0.12)",
+            color: "var(--danger)",
             padding: 12,
             borderRadius: 10,
             margin: "16px 0",
@@ -110,7 +110,7 @@ export default function Dashboard() {
 
   if (!projectId) {
     return (
-      <div className="page-root" style={{ color: "#6b7280", fontSize: 14 }}>
+      <div className="page-root" style={{ color: "var(--muted)", fontSize: 14 }}>
         Select a project from the Project Summary to view its dashboard.
       </div>
     );
@@ -162,7 +162,7 @@ export default function Dashboard() {
               </h1>
               <h2 className="page-subtitle">Dashboard</h2>
               {steps === null && (
-                <div style={{ marginTop: 4, fontSize: 13, color: "#6b7280" }}>
+                <div style={{ marginTop: 4, fontSize: 13, color: "var(--muted)" }}>
                   Loading latest project data...
                 </div>
               )}
@@ -190,51 +190,51 @@ export default function Dashboard() {
           >
             <div
               style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
+                background: "var(--table-row)",
+                border: "1px solid var(--border)",
                 borderRadius: 10,
                 padding: "10px 12px",
                 minWidth: 220,
               }}
             >
-              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>AC / DC Size</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{sizeLabel}</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>AC / DC Size</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{sizeLabel}</div>
             </div>
             <div
               style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
+                background: "var(--table-row)",
+                border: "1px solid var(--border)",
                 borderRadius: 10,
                 padding: "10px 12px",
                 minWidth: 220,
               }}
             >
-              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>County / State</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{location}</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>County / State</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{location}</div>
             </div>
             <div
               style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
+                background: "var(--table-row)",
+                border: "1px solid var(--border)",
                 borderRadius: 10,
                 padding: "10px 12px",
                 minWidth: 220,
               }}
             >
-              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Offtake Structure</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{offtake}</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>Offtake Structure</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{offtake}</div>
             </div>
             <div
               style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
+                background: "var(--table-row)",
+                border: "1px solid var(--border)",
                 borderRadius: 10,
                 padding: "10px 12px",
                 minWidth: 220,
               }}
             >
-              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Project Type</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{projectType}</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>Project Type</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{projectType}</div>
             </div>
           </div>
 
@@ -249,33 +249,33 @@ export default function Dashboard() {
           >
             <div
               style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
+                background: "var(--table-row)",
+                border: "1px solid var(--border)",
                 borderRadius: 10,
                 padding: "10px 12px",
                 minWidth: 220,
                 textAlign: "center",
               }}
             >
-              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
+              <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>
                 Lease Option Start Date
               </div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{leaseStart}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{leaseStart}</div>
             </div>
             <div
               style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
+                background: "var(--table-row)",
+                border: "1px solid var(--border)",
                 borderRadius: 10,
                 padding: "10px 12px",
                 minWidth: 220,
                 textAlign: "center",
               }}
             >
-              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
+              <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>
                 Lease Option Expiration Date
               </div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{leaseEnd}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{leaseEnd}</div>
             </div>
           </div>
         </>
@@ -297,18 +297,18 @@ export default function Dashboard() {
       <div
         style={{
           marginTop: 16,
-          border: "1px solid #e5e7eb",
+          border: "1px solid var(--border)",
           borderRadius: 10,
-          background: "#ffffff",
+          background: "var(--card)",
           padding: 12,
           boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
         }}
       >
-        <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", marginBottom: 8 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>
           Milestones / NTP Gates (Binary)
         </div>
         {milestoneSteps.length === 0 ? (
-          <div style={{ fontSize: 13, color: "#6b7280" }}>
+          <div style={{ fontSize: 13, color: "var(--muted)" }}>
             No milestone flags (Milestones / NTP Gates = Y) yet.
           </div>
         ) : (
@@ -320,12 +320,12 @@ export default function Dashboard() {
                 fontSize: 13,
               }}
             >
-              <thead style={{ background: "#f9fafb" }}>
+              <thead style={{ background: "var(--table-row)" }}>
                 <tr>
-                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>
+                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "var(--muted)" }}>
                     Milestone
                   </th>
-                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>
+                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "var(--muted)" }}>
                     Status
                   </th>
                 </tr>
@@ -343,11 +343,11 @@ export default function Dashboard() {
                   } else if (status === "Not Applicable") {
                     icon = "";
                     label = "N/A";
-                    color = "#6b7280";
+                    color = "var(--muted)";
                   }
                   return (
-                    <tr key={m.id} style={{ borderTop: "1px solid #e5e7eb" }}>
-                      <td style={{ padding: "8px 10px", fontWeight: 600, color: "#111827" }}>{m.name}</td>
+                    <tr key={m.id} style={{ borderTop: "1px solid var(--border)" }}>
+                      <td style={{ padding: "8px 10px", fontWeight: 600, color: "var(--text)" }}>{m.name}</td>
                       <td style={{ padding: "8px 10px", display: "flex", alignItems: "center", gap: 8, color }}>
                         {icon ? (
                           <span aria-hidden="true" style={{ fontSize: 14 }}>
@@ -369,18 +369,18 @@ export default function Dashboard() {
       <div
         style={{
           marginTop: 16,
-          border: "1px solid #e5e7eb",
+          border: "1px solid var(--border)",
           borderRadius: 10,
-          background: "#ffffff",
+          background: "var(--card)",
           padding: 12,
           boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
         }}
       >
-        <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", marginBottom: 8 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>
           Open RED Risks (Auto-Filtered)
         </div>
         {redRiskSteps.length === 0 ? (
-          <div style={{ fontSize: 13, color: "#6b7280" }}>No open RED risks.</div>
+          <div style={{ fontSize: 13, color: "var(--muted)" }}>No open RED risks.</div>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table
@@ -390,25 +390,25 @@ export default function Dashboard() {
                 fontSize: 13,
               }}
             >
-              <thead style={{ background: "#f9fafb" }}>
+              <thead style={{ background: "var(--table-row)" }}>
                 <tr>
-                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>
+                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "var(--muted)" }}>
                     Activity
                   </th>
-                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>
+                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "var(--muted)" }}>
                     Phase
                   </th>
-                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>
+                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "var(--muted)" }}>
                     Dev Type
                   </th>
-                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>
+                  <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "var(--muted)" }}>
                     Duration (Days)
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {redRiskSteps.map((r) => (
-                  <tr key={r.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                  <tr key={r.id} style={{ borderTop: "1px solid var(--border)" }}>
                     <td style={{ padding: "8px 10px", fontWeight: 600 }}>{r.name}</td>
                     <td style={{ padding: "8px 10px" }}>{(r as any).phase ?? "N/A"}</td>
                     <td style={{ padding: "8px 10px" }}>{r.development_type ?? "N/A"}</td>
@@ -442,18 +442,18 @@ export default function Dashboard() {
             flex: 1,
             minWidth: 320,
             maxWidth: "48%",
-            border: "1px solid #e5e7eb",
+            border: "1px solid var(--border)",
             borderRadius: 10,
-            background: "#ffffff",
+            background: "var(--card)",
             padding: 12,
             boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
           }}
         >
-          <div style={{ fontSize: 16, fontWeight: 600, color: "#111827", marginBottom: 8 }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text)", marginBottom: 8 }}>
             Permit Matrix
           </div>
           {permittingSteps.length === 0 ? (
-            <div style={{ fontSize: 13, color: "#6b7280" }}>
+            <div style={{ fontSize: 13, color: "var(--muted)" }}>
               No permitting activities yet.
             </div>
           ) : (
@@ -465,18 +465,18 @@ export default function Dashboard() {
                   fontSize: 13,
                 }}
               >
-                <thead style={{ background: "#f9fafb" }}>
+                <thead style={{ background: "var(--table-row)" }}>
                   <tr>
-                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Activity</th>
-                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Status</th>
-                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Start</th>
-                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>End</th>
-                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6b7280" }}>Agency</th>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "var(--muted)" }}>Activity</th>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "var(--muted)" }}>Status</th>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "var(--muted)" }}>Start</th>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "var(--muted)" }}>End</th>
+                    <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 12, color: "var(--muted)" }}>Agency</th>
                   </tr>
                 </thead>
                 <tbody>
                   {permittingSteps.map((p) => (
-                    <tr key={p.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                    <tr key={p.id} style={{ borderTop: "1px solid var(--border)" }}>
                       <td style={{ padding: "8px 10px", fontWeight: 600 }}>{p.name}</td>
                       <td style={{ padding: "8px 10px" }}>{p.status ?? "N/A"}</td>
                       <td style={{ padding: "8px 10px" }}>{(p as any).start_date ?? "N/A"}</td>

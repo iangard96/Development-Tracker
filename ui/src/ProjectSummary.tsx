@@ -163,7 +163,7 @@ export default function ProjectSummaryPage() {
           />
         </div>
       </div>
-      <p style={{ margin: "4px 0 16px", color: "#374151", fontSize: 12, lineHeight: 1.4 }}>
+      <p style={{ margin: "4px 0 16px", color: "var(--muted)", fontSize: 12, lineHeight: 1.4 }}>
         Please use this tool to plan and manage pre-construction projects.
         <br />
         Disclaimer: [App Name] supports project workflow and planning but does not replace professional judgment. Users are responsible for managing, reviewing, and validating all project information and decisions.
@@ -176,22 +176,22 @@ export default function ProjectSummaryPage() {
         style={{
           marginBottom: 16,
           borderRadius: 5,
-          border: "1px solid #d1d5db",
+          border: "1px solid var(--border)",
           padding: "6px 12px",
           fontSize: 13,
           fontWeight: 500,
-          background: "#ffffff",
-          color: "#374151",
+          background: "var(--card)",
+          color: "var(--muted)",
           cursor: "pointer",
           transition: "all 0.15s ease",
         }}
         onMouseOver={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = "#f3f4f6";
-          (e.currentTarget as HTMLButtonElement).style.borderColor = "#9ca3af";
+          (e.currentTarget as HTMLButtonElement).style.background = "var(--surface)";
+          (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--muted)";
         }}
         onMouseOut={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = "#ffffff";
-          (e.currentTarget as HTMLButtonElement).style.borderColor = "#d1d5db";
+          (e.currentTarget as HTMLButtonElement).style.background = "var(--card)";
+          (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
         }}
       >
         + Add Project
@@ -199,11 +199,11 @@ export default function ProjectSummaryPage() {
 
       <div
         style={{
-          border: "1px solid #e5e7eb",
+          border: "1px solid var(--border)",
           borderRadius: 8,
           overflowX: "auto",
           overflowY: "visible",
-          background: "#ffffff",
+          background: "var(--card)",
           boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)",
         }}
       >
@@ -214,7 +214,7 @@ export default function ProjectSummaryPage() {
             width: "max-content",
           }}
         >
-          <thead style={{ background: "#f9fafb" }}>
+          <thead style={{ background: "var(--table-row)" }}>
             <tr>
               <th style={th}>Project Name</th>
               <th style={th}>Legal Name</th>
@@ -231,12 +231,12 @@ export default function ProjectSummaryPage() {
               <th style={th}>City</th>
               <th style={th}>Address</th>
               <th style={th}>Other</th>
-              <th style={{ ...th, position: "sticky", right: 0, background: "#f9fafb", borderLeft: "1px solid #e5e7eb" }}>Actions</th>
+              <th style={{ ...th, position: "sticky", right: 0, background: "var(--table-row)", borderLeft: "1px solid var(--border)" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {projects.map((p, idx) => (
-              <tr key={p.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+              <tr key={p.id} style={{ borderTop: "1px solid var(--border)" }}>
                 {/* Project Name */}
                 <td style={td}>
                   <input
@@ -472,9 +472,9 @@ export default function ProjectSummaryPage() {
                     onClick={() => handleSelectProject(p.id)}
                     style={{
                       padding: "5px 10px",
-                      background: "white",
-                      color: "#374151",
-                      border: "1px solid #d1d5db",
+                      background: "var(--card)",
+                      color: "var(--muted)",
+                      border: "1px solid var(--border)",
                       borderRadius: 5,
                       cursor: "pointer",
                       fontSize: 12,
@@ -483,12 +483,12 @@ export default function ProjectSummaryPage() {
                       transition: "all 0.15s ease",
                     }}
                     onMouseOver={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = "#f3f4f6";
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#9ca3af";
+                      (e.currentTarget as HTMLButtonElement).style.background = "var(--surface)";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--muted)";
                     }}
                     onMouseOut={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = "white";
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#d1d5db";
+                      (e.currentTarget as HTMLButtonElement).style.background = "var(--card)";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
                     }}
                   >
                     View
@@ -497,9 +497,9 @@ export default function ProjectSummaryPage() {
                     onClick={() => handleDeleteProject(p.id)}
                     style={{
                       padding: "5px 10px",
-                      background: "#fee2e2",
-                      color: "#7f1d1d",
-                      border: "1px solid #fecaca",
+                      background: "rgba(248, 113, 113, 0.12)",
+                      color: "var(--danger)",
+                      border: "1px solid var(--danger)",
                       borderRadius: 5,
                       cursor: canDeleteProjects ? "pointer" : "default",
                       fontSize: 12,
@@ -509,13 +509,13 @@ export default function ProjectSummaryPage() {
                     }}
                     onMouseOver={(e) => {
                       if (!canDeleteProjects) return;
-                      (e.currentTarget as HTMLButtonElement).style.background = "#fecaca";
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#fca5a5";
+                      (e.currentTarget as HTMLButtonElement).style.background = "rgba(248, 113, 113, 0.2)";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--danger)";
                     }}
                     onMouseOut={(e) => {
                       if (!canDeleteProjects) return;
-                      (e.currentTarget as HTMLButtonElement).style.background = "#fee2e2";
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#fecaca";
+                      (e.currentTarget as HTMLButtonElement).style.background = "rgba(248, 113, 113, 0.12)";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--danger)";
                     }}
                   >
                     Remove
@@ -535,31 +535,31 @@ const th: React.CSSProperties = {
   padding: "10px 12px",
   fontWeight: 600,
   fontSize: 12,
-  color: "#6b7280",
-  background: "#f3f4f6",
+  color: "var(--muted)",
+  background: "var(--surface)",
   border: "none",
-  borderBottom: "1px solid #e5e7eb",
+  borderBottom: "1px solid var(--border)",
   whiteSpace: "nowrap",
 };
 
 const td: React.CSSProperties = {
   padding: "10px 12px",
   verticalAlign: "middle",
-  borderBottom: "1px solid #e5e7eb",
+  borderBottom: "1px solid var(--border)",
   minWidth: 120,
   fontSize: 13,
-  color: "#1f2937",
+  color: "var(--text)",
 };
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "6px 10px",
-  border: "1px solid #e5e7eb",
+  border: "1px solid var(--border)",
   borderRadius: 5,
   fontSize: 13,
   boxSizing: "border-box",
-  background: "white",
-  color: "#1f2937",
+  background: "var(--card)",
+  color: "var(--text)",
   transition: "all 0.15s ease",
 };
 
@@ -567,13 +567,14 @@ const selectStyle: React.CSSProperties = {
   width: "100%",
   padding: "6px 10px",
   paddingRight: 24,
-  border: "1px solid #e5e7eb",
+  border: "1px solid var(--border)",
   borderRadius: 5,
   fontSize: 13,
   boxSizing: "border-box",
-  background: "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+  background:
+    "var(--card) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
   backgroundSize: "10px",
-  color: "#1f2937",
+  color: "var(--text)",
   cursor: "pointer",
   appearance: "none" as any,
 };
@@ -582,7 +583,7 @@ const actionsTd: React.CSSProperties = {
   ...td,
   position: "sticky",
   right: 0,
-  background: "#ffffff",
-  borderLeft: "1px solid #e5e7eb",
+  background: "var(--card)",
+  borderLeft: "1px solid var(--border)",
   minWidth: 140,
 };

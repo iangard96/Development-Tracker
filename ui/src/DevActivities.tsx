@@ -39,7 +39,7 @@ const th: React.CSSProperties = {
   paddingRight: 12,
   fontWeight: 600,
   fontSize: 12,
-  color: "#ffffff",
+  color: "var(--card)",
   position: "sticky",
   top: 0,
   background: "var(--card)",
@@ -162,11 +162,11 @@ function DateCell({
       onBlur={(e) => onBlurValue(e.currentTarget.value || null)}
       style={{
         padding: "6px 10px",
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--border)",
         borderRadius: 5,
         fontSize: 13,
         background: "white",
-        color: "#1f2937",
+        color: "var(--text)",
       }}
     />
   );
@@ -200,13 +200,13 @@ function StatusCell({
       onChange={onChange}
       style={{
         padding: "6px 10px",
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--border)",
         borderRadius: 5,
         background: "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
         backgroundSize: "10px",
         paddingRight: 24,
         fontSize: 13,
-        color: "#1f2937",
+        color: "var(--text)",
         cursor: "pointer",
         appearance: "none" as any,
       }}
@@ -328,9 +328,9 @@ function DevTypeCell({
           width: "100%",
           padding: "8px 12px",
           borderRadius: 6,
-          border: "1px solid #d1d5db",
+          border: "1px solid var(--border)",
           fontSize: 13,
-          color: "#111827",
+          color: "var(--text)",
           background:
             "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 10px center",
           backgroundSize: "10px",
@@ -405,14 +405,14 @@ function RelatedActivityCell({
       onChange={onChange}
       style={{
         padding: "6px 10px",
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--border)",
         borderRadius: 5,
         background:
           "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
         backgroundSize: "10px",
         paddingRight: 24,
         fontSize: 13,
-        color: "#1f2937",
+        color: "var(--text)",
         cursor: "pointer",
         appearance: "none" as any,
         minWidth: 220,
@@ -470,7 +470,7 @@ function ResponsiblePartyCell({
         width: "100%",
         minWidth: 160,
         padding: "6px 10px",
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--border)",
         borderRadius: 5,
         fontSize: 13,
         boxSizing: "border-box",
@@ -522,14 +522,14 @@ function OwnerCell({
       onChange={onChange}
       style={{
         padding: "6px 10px",
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--border)",
         borderRadius: 5,
         background:
           "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
         backgroundSize: "10px",
         paddingRight: 24,
         fontSize: 13,
-        color: "#1f2937",
+        color: "var(--text)",
         cursor: "pointer",
         appearance: "none" as any,
         minWidth: 160,
@@ -578,7 +578,7 @@ function HeatmapCell({
     (opt) => opt.value.toLowerCase() === current.toLowerCase(),
   );
   const currentLabel = currentOpt ? currentOpt.label : "Select";
-  const swatchColor = currentOpt ? currentOpt.color : "#e5e7eb";
+  const swatchColor = currentOpt ? currentOpt.color : "var(--border)";
 
   return (
     <div style={{ position: "relative", minWidth: 160 }}>
@@ -593,11 +593,11 @@ function HeatmapCell({
           gap: 10,
           padding: "8px 10px",
           borderRadius: 6,
-          border: currentOpt ? "1px solid #d1d5db" : "1px solid #d1d5db",
-          background: currentOpt ? swatchColor : "#ffffff",
+          border: currentOpt ? "1px solid var(--border)" : "1px solid var(--border)",
+          background: currentOpt ? swatchColor : "var(--card)",
           cursor: "pointer",
           fontSize: 13,
-          color: currentOpt ? "#ffffff" : "#111827",
+          color: currentOpt ? "var(--card)" : "var(--text)",
           boxShadow: currentOpt ? "0 1px 2px rgba(0,0,0,0.08) inset" : undefined,
         }}
         aria-haspopup="listbox"
@@ -612,13 +612,13 @@ function HeatmapCell({
               height: 16,
               borderRadius: 6,
               background: swatchColor,
-              border: "1px solid #d1d5db",
-              boxShadow: currentOpt ? "0 0 0 1px #e5e7eb inset" : undefined,
+              border: "1px solid var(--border)",
+              boxShadow: currentOpt ? "0 0 0 1px var(--border) inset" : undefined,
             }}
           />
           <span style={{ fontSize: 0 }}>{currentLabel}</span>
         </span>
-        <span aria-hidden="true" style={{ color: "#6b7280" }}>
+        <span aria-hidden="true" style={{ color: "var(--muted)" }}>
           ▾
         </span>
       </button>
@@ -631,8 +631,8 @@ function HeatmapCell({
             zIndex: 10,
             marginTop: 6,
             minWidth: "100%",
-            background: "#ffffff",
-            border: "1px solid #e5e7eb",
+            background: "var(--card)",
+            border: "1px solid var(--border)",
             borderRadius: 8,
             boxShadow: "0 8px 24px rgba(0, 0, 0, 0.08)",
             padding: 8,
@@ -658,11 +658,11 @@ function HeatmapCell({
                   gap: 10,
                   padding: "8px 10px",
                   borderRadius: 6,
-                  border: isActive ? "2px solid #111827" : "1px solid #e5e7eb",
-                  background: "#ffffff",
+                  border: isActive ? "2px solid var(--text)" : "1px solid var(--border)",
+                  background: "var(--card)",
                   cursor: "pointer",
-                  color: "#111827",
-                  boxShadow: isActive ? "0 0 0 2px #e5e7eb" : undefined,
+                  color: "var(--text)",
+                  boxShadow: isActive ? "0 0 0 2px var(--border)" : undefined,
                 }}
               >
                 <span
@@ -672,7 +672,7 @@ function HeatmapCell({
                     height: 18,
                     borderRadius: 6,
                     background: opt.color,
-                    border: "1px solid #d1d5db",
+                    border: "1px solid var(--border)",
                   }}
                 />
                 <span style={{ fontSize: 0 }}>{opt.label}</span>
@@ -685,11 +685,11 @@ function HeatmapCell({
             style={{
               padding: "8px 10px",
               borderRadius: 6,
-              border: "1px solid #e5e7eb",
-              background: "#f9fafb",
+              border: "1px solid var(--border)",
+              background: "var(--table-row)",
               cursor: "pointer",
               fontSize: 13,
-              color: "#374151",
+              color: "var(--muted)",
               textAlign: "left",
             }}
           >
@@ -758,11 +758,11 @@ function SpendCell({
         width: "100%",
         padding: "8px 12px",
         borderRadius: 5,
-        border: "1px solid #d1d5db",
+        border: "1px solid var(--border)",
         fontSize: 14,
         fontWeight: 500,
         background: "white",
-        color: "#111827",
+        color: "var(--text)",
         boxSizing: "border-box",
         textAlign: "right",
       }}
@@ -1209,7 +1209,7 @@ export default function DevActivities() {
 
   if (noProjectSelected) {
     return (
-      <div style={{ padding: 16, color: "#6b7280", fontSize: 14 }}>
+      <div style={{ padding: 16, color: "var(--muted)", fontSize: 14 }}>
         Select a project from the Project Summary to edit its development activities.
       </div>
     );
@@ -1429,7 +1429,7 @@ export default function DevActivities() {
         }}
       >
         {project && (
-          <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111827", margin: 0 }}>
+          <h1 style={{ fontSize: 24, fontWeight: 600, color: "var(--text)", margin: 0 }}>
             {project.project_name}
           </h1>
         )}
@@ -1454,22 +1454,22 @@ export default function DevActivities() {
           gap: 12,
         }}
       >
-        <h2 style={{ fontSize: 16, fontWeight: 500, color: "#374151", margin: 0 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 500, color: "var(--muted)", margin: 0 }}>
           Development Activities
         </h2>
         {project?.project_type && (
-          <div style={{ fontSize: 12, color: "#6b7280" }}>
+          <div style={{ fontSize: 12, color: "var(--muted)" }}>
             Project type: {project.project_type}
           </div>
         )}
         <div className="print-hidden" style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {sortBy && (
-            <div style={{ fontSize: 12, color: "#6b7280" }}>
+            <div style={{ fontSize: 12, color: "var(--muted)" }}>
               Sorted by {sortBy.replace("_", " ")} ({sortDir})
             </div>
           )}
           {hasCustomOrder && (
-            <div style={{ fontSize: 12, color: "#ef4444" }} title="Order differs from default">
+            <div style={{ fontSize: 12, color: "var(--danger)" }} title="Order differs from default">
               Custom order
             </div>
           )}
@@ -1477,9 +1477,9 @@ export default function DevActivities() {
             type="button"
             onClick={resetSort}
             style={{
-              border: "1px solid #d1d5db",
-              background: "#fff",
-              color: "#111827",
+              border: "1px solid var(--border)",
+              background: "var(--card)",
+              color: "var(--text)",
               borderRadius: 6,
               padding: "6px 10px",
               fontSize: 12,
@@ -1513,12 +1513,12 @@ export default function DevActivities() {
             style={{
               padding: "6px 10px",
               borderRadius: 5,
-              border: "1px solid #e5e7eb",
+              border: "1px solid var(--border)",
               fontSize: 13,
               background: "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
               backgroundSize: "10px",
               paddingRight: 24,
-              color: "#1f2937",
+              color: "var(--text)",
               cursor: "pointer",
               appearance: "none" as any,
             }}
@@ -1546,9 +1546,9 @@ export default function DevActivities() {
             style={{
               padding: "6px 10px",
               borderRadius: 5,
-              border: "1px solid #e5e7eb",
+              border: "1px solid var(--border)",
               fontSize: 13,
-              color: "#1f2937",
+              color: "var(--text)",
               background: "white",
             }}
           />
@@ -1573,13 +1573,13 @@ export default function DevActivities() {
             style={{
               padding: "6px 10px",
               borderRadius: 5,
-              border: "1px solid #e5e7eb",
+              border: "1px solid var(--border)",
               fontSize: 13,
               background:
                 "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
               backgroundSize: "10px",
               paddingRight: 24,
-              color: "#1f2937",
+              color: "var(--text)",
               cursor: "pointer",
               appearance: "none" as any,
             }}
@@ -1596,9 +1596,9 @@ export default function DevActivities() {
         style={{
           overflow: "auto",
           maxHeight: "70vh",
-          border: "1px solid #e5e7eb",
+          border: "1px solid var(--border)",
           borderRadius: 8,
-          background: "linear-gradient(#f9fafb 0 52px, #ffffff 52px)",
+          background: "linear-gradient(var(--table-row) 0 52px, var(--card) 52px)",
           boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)",
           position: "relative",
         }}
@@ -1607,7 +1607,7 @@ export default function DevActivities() {
         <table
           style={{ width: "100%", fontSize: 14, borderCollapse: "collapse" }}
         >
-          <thead style={{ background: "#f9fafb" }}>
+          <thead style={{ background: "var(--table-row)" }}>
             <tr>
               <th style={{ ...th, width: 70 }}>Order</th>
               <th style={th}>
@@ -1685,8 +1685,8 @@ export default function DevActivities() {
                 }}
                 onDragEnd={() => setDraggingId(null)}
                 style={{
-                  borderTop: "1px solid #e5e7eb",
-                  background: highlighted.has(r.id) ? "#e0f2fe" : undefined,
+                  borderTop: "1px solid var(--border)",
+                  background: highlighted.has(r.id) ? "rgba(245, 182, 59, 0.16)" : undefined,
                   transition: "background 0.3s ease",
                 }}
               >
@@ -1700,7 +1700,7 @@ export default function DevActivities() {
                     viewBox="0 0 16 16"
                     aria-hidden="true"
                     focusable="false"
-                    style={{ display: "block", color: "#9ca3af" }}
+                    style={{ display: "block", color: "var(--muted)" }}
                   >
                     <path
                       d="M3 4.5h10M3 8h10M3 11.5h10"
@@ -1774,7 +1774,7 @@ export default function DevActivities() {
                           minWidth: 120,
                           padding: "8px 10px",
                           borderRadius: 5,
-                          border: "1px solid #e5e7eb",
+                          border: "1px solid var(--border)",
                           fontSize: 13,
                           boxSizing: "border-box",
                           background:
@@ -1824,7 +1824,7 @@ export default function DevActivities() {
                           minWidth: 260,
                           padding: "8px 10px",
                           borderRadius: 5,
-                          border: "1px solid #e5e7eb",
+                          border: "1px solid var(--border)",
                           fontSize: 13,
                           boxSizing: "border-box",
                         }}
@@ -1962,7 +1962,7 @@ export default function DevActivities() {
                       width: "90px",
                       padding: "6px 10px",
                       borderRadius: 5,
-                      border: "1px solid #e5e7eb",
+                      border: "1px solid var(--border)",
                       fontSize: 13,
                       boxSizing: "border-box",
                     }}
@@ -2050,7 +2050,7 @@ export default function DevActivities() {
                       minWidth: 160,
                       padding: "6px 10px",
                       borderRadius: 5,
-                      border: "1px solid #e5e7eb",
+                      border: "1px solid var(--border)",
                       fontSize: 13,
                       boxSizing: "border-box",
                     }}
@@ -2086,7 +2086,7 @@ export default function DevActivities() {
                       minWidth: 180,
                       padding: "6px 10px",
                       borderRadius: 5,
-                      border: "1px solid #e5e7eb",
+                      border: "1px solid var(--border)",
                       fontSize: 13,
                       boxSizing: "border-box",
                     }}
@@ -2122,7 +2122,7 @@ export default function DevActivities() {
                       minWidth: 160,
                       padding: "6px 10px",
                       borderRadius: 5,
-                      border: "1px solid " + "#e5e7eb",
+                      border: "1px solid " + "var(--border)",
                       fontSize: 13,
                       boxSizing: "border-box",
                     }}
@@ -2240,7 +2240,7 @@ export default function DevActivities() {
                       minWidth: 180,
                       padding: "6px 10px",
                       borderRadius: 5,
-                      border: "1px solid #e5e7eb",
+                      border: "1px solid var(--border)",
                       fontSize: 13,
                       boxSizing: "border-box",
                     }}
@@ -2297,9 +2297,9 @@ export default function DevActivities() {
                       }
                     }}
                     style={{
-                      border: "1px solid #fecaca",
-                      background: "#fee2e2",
-                      color: "#7f1d1d",
+                      border: "1px solid var(--danger)",
+                      background: "rgba(248, 113, 113, 0.12)",
+                      color: "var(--danger)",
                       borderRadius: 5,
                       padding: "6px 10px",
                       fontSize: 12,
@@ -2340,12 +2340,12 @@ export default function DevActivities() {
           }}
           style={{
             borderRadius: 6,
-            border: "1px solid #d1d5db",
+            border: "1px solid var(--border)",
             padding: "8px 12px",
             fontSize: 13,
             fontWeight: 600,
-            background: "#f9fafb",
-            color: "#1f2937",
+            background: "var(--table-row)",
+            color: "var(--text)",
             cursor: "pointer",
           }}
         >

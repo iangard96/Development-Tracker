@@ -138,7 +138,7 @@ export default function ProjectContacts() {
 
   if (!projectId) {
     return (
-      <div className="page-root" style={{ color: "#6b7280", fontSize: 14 }}>
+      <div className="page-root" style={{ color: "var(--muted)", fontSize: 14 }}>
         Select a project from the Project Summary to manage its contacts.
       </div>
     );
@@ -204,7 +204,7 @@ export default function ProjectContacts() {
         <div style={{ minWidth: 0 }}>
           <h1 className="page-title" style={{ marginBottom: 8 }}>{projectName}</h1>
           <h2 className="page-subtitle" style={{ marginBottom: 8 }}>Project Contacts</h2>
-          <p style={{ margin: 0, color: "#6b7280", fontSize: 13 }}>
+          <p style={{ margin: 0, color: "var(--muted)", fontSize: 13 }}>
             {project ? `For ${project.project_name}` : null} - Track key organizations and people involved with this project.
           </p>
         </div>
@@ -223,10 +223,10 @@ export default function ProjectContacts() {
 
       <div
         style={{
-          border: "1px solid #e5e7eb",
+          border: "1px solid var(--border)",
           borderRadius: 8,
           overflowX: "auto",
-          background: "#ffffff",
+          background: "var(--card)",
           boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)",
         }}
       >
@@ -238,7 +238,7 @@ export default function ProjectContacts() {
             minWidth: 900,
           }}
         >
-          <thead style={{ background: "#f9fafb" }}>
+          <thead style={{ background: "var(--table-row)" }}>
             <tr>
               <th style={th}>#</th>
               <th style={th}>Organization</th>
@@ -254,7 +254,7 @@ export default function ProjectContacts() {
           </thead>
           <tbody>
             {rows.map((row, idx) => (
-              <tr key={row.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+              <tr key={row.id} style={{ borderTop: "1px solid var(--border)" }}>
                 <td style={td}>{idx + 1}</td>
 
                 <td style={td}>
@@ -298,12 +298,12 @@ export default function ProjectContacts() {
                     type="button"
                     onClick={() => removeRow(row.id)}
                     style={{
-                      border: "1px solid #fecaca",
+                      border: "1px solid var(--danger)",
                       borderRadius: 5,
                       padding: "5px 10px",
                       fontSize: 12,
-                      background: "#fee2e2",
-                      color: "#7f1d1d",
+                      background: "rgba(248, 113, 113, 0.12)",
+                      color: "var(--danger)",
                       cursor: "pointer",
                       opacity: 1,
                       transition: "all 0.15s ease",
@@ -324,12 +324,12 @@ export default function ProjectContacts() {
         style={{
           marginTop: 16,
           borderRadius: 5,
-          border: "1px solid #d1d5db",
+          border: "1px solid var(--border)",
           padding: "6px 12px",
           fontSize: 13,
           fontWeight: 500,
-          background: "#ffffff",
-          color: "#374151",
+          background: "var(--card)",
+          color: "var(--muted)",
           cursor: "pointer",
           transition: "all 0.15s ease",
         }}
@@ -345,28 +345,28 @@ const th: React.CSSProperties = {
   padding: "10px 12px",
   fontWeight: 600,
   fontSize: 12,
-  color: "#6b7280",
-  borderBottom: "1px solid #e5e7eb",
+  color: "var(--muted)",
+  borderBottom: "1px solid var(--border)",
   whiteSpace: "nowrap",
-  background: "#f3f4f6",
+  background: "var(--surface)",
 };
 
 const td: React.CSSProperties = {
   padding: "10px 12px",
   verticalAlign: "middle",
   fontSize: 13,
-  color: "#1f2937",
+  color: "var(--text)",
 };
 
 const input: React.CSSProperties = {
   width: "100%",
   padding: "6px 10px",
   borderRadius: 5,
-  border: "1px solid #e5e7eb",
+  border: "1px solid var(--border)",
   fontSize: 13,
   boxSizing: "border-box",
   background: "white",
-  color: "#1f2937",
+  color: "var(--text)",
 };
 const expandedInput: React.CSSProperties = {
   minHeight: 64,

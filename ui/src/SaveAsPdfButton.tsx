@@ -7,8 +7,8 @@ export default function SaveAsPdfButton({ style }: { style?: React.CSSProperties
       style={{
         padding: "6px 12px",
         borderRadius: 6,
-        border: "1px solid #d1d5db",
-        background: "#fff",
+        border: "1px solid var(--border)",
+        background: "var(--card)",
         cursor: "pointer",
         fontSize: 13,
         fontWeight: 500,

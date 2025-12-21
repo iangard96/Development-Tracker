@@ -311,7 +311,7 @@ export default function Permitting() {
   }
 
   if (!projectId) {
-    return <div style={{ padding: 16, color: "#6b7280" }}>Select a project to view permitting.</div>;
+    return <div style={{ padding: 16, color: "var(--muted)" }}>Select a project to view permitting.</div>;
   }
 
   return (
@@ -329,7 +329,7 @@ export default function Permitting() {
         <div>
           <h1 className="page-title" style={{ marginBottom: 4 }}>{project?.project_name || "Project"}</h1>
           <h2 className="page-subtitle" style={{ margin: "0 0 4px" }}>Permitting</h2>
-          <p style={{ margin: 0, color: "#6b7280", fontSize: 13 }}>
+          <p style={{ margin: 0, color: "var(--muted)", fontSize: 13 }}>
             Track federal, state, and local permitting requirements.
           </p>
         </div>
@@ -343,11 +343,11 @@ export default function Permitting() {
           />
         </div>
       </div>
-      {loading && <div style={{ fontSize: 12, color: "#6b7280" }}>Loading…</div>}
+      {loading && <div style={{ fontSize: 12, color: "var(--muted)" }}>Loading…</div>}
       {error && <div style={{ fontSize: 12, color: "crimson" }}>{error}</div>}
 
       {levels.map((level) => (
-        <section key={level} style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, padding: 12, boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
+        <section key={level} style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 10, padding: 12, boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button
@@ -465,7 +465,7 @@ export default function Permitting() {
                 })}
                 {(!grouped[level] || grouped[level].length === 0) && (
                   <tr>
-                    <td colSpan={columns.length + 1} style={{ ...tbodyCell, textAlign: "center", color: "#6b7280" }}>
+                    <td colSpan={columns.length + 1} style={{ ...tbodyCell, textAlign: "center", color: "var(--muted)" }}>
                       No rows yet.
                     </td>
                   </tr>
@@ -482,31 +482,31 @@ export default function Permitting() {
 
 const searchInput: React.CSSProperties = {
   padding: "8px 10px",
-  border: "1px solid #d1d5db",
+  border: "1px solid var(--border)",
   borderRadius: 6,
   minWidth: 240,
   fontSize: 13,
 };
 
 const ghostButton: React.CSSProperties = {
-  border: "1px solid #d1d5db",
-  background: "#ffffff",
+  border: "1px solid var(--border)",
+  background: "var(--card)",
   padding: "6px 10px",
   borderRadius: 6,
   fontSize: 13,
   fontWeight: 600,
-  color: "#111827",
+  color: "var(--text)",
   cursor: "pointer",
 };
 
 const toggleButton: React.CSSProperties = {
-  border: "1px solid #d1d5db",
-  background: "#f3f4f6",
+  border: "1px solid var(--border)",
+  background: "var(--surface)",
   padding: "6px 10px",
   borderRadius: 6,
   fontSize: 12,
   fontWeight: 700,
-  color: "#111827",
+  color: "var(--text)",
   cursor: "pointer",
   display: "inline-flex",
   alignItems: "center",
@@ -516,18 +516,18 @@ const toggleButton: React.CSSProperties = {
 const theadCell: React.CSSProperties = {
   padding: "8px 10px",
   textAlign: "left",
-  borderBottom: "1px solid #e5e7eb",
+  borderBottom: "1px solid var(--border)",
   fontSize: 12,
-  color: "#6b7280",
-  background: "#f9fafb",
+  color: "var(--muted)",
+  background: "var(--table-row)",
 };
 
 const tbodyCell: React.CSSProperties = {
   padding: "8px 10px",
   textAlign: "left",
-  borderBottom: "1px solid #f3f4f6",
+  borderBottom: "1px solid var(--surface)",
   fontSize: 12,
-  color: "#111827",
+  color: "var(--text)",
   verticalAlign: "top",
   maxWidth: 320,
   whiteSpace: "normal",
@@ -537,14 +537,14 @@ const tbodyCell: React.CSSProperties = {
 const cellInput: React.CSSProperties = {
   width: "100%",
   padding: "6px 8px",
-  border: "1px solid #d1d5db",
+  border: "1px solid var(--border)",
   borderRadius: 6,
   fontSize: 12,
 };
 
 const smallButton: React.CSSProperties = {
-  border: "1px solid #d1d5db",
-  background: "#ffffff",
+  border: "1px solid var(--border)",
+  background: "var(--card)",
   padding: "4px 8px",
   borderRadius: 6,
   fontSize: 12,

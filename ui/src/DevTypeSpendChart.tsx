@@ -13,6 +13,11 @@ import {
 } from "recharts";
 import type { DevStep, DevType } from "./types";
 
+const OVER_AMBER = "#b45309";
+const UNDER_AMBER = "#f7c241";
+const PLANNED_AMBER = "#b87914";
+const ACTUAL_AMBER = "#f2b84b";
+
 type SpendRow = {
   devTypeLabel: string;
   planned: number;
@@ -123,7 +128,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
     if (isNaN(centerX) || isNaN(centerY)) return null;
 
     const isUnder = delta > 0;
-    const outsideColor = isUnder ? "#15803D" : "#DC2626"; // muted green / red
+    const outsideColor = isUnder ? UNDER_AMBER : OVER_AMBER;
     const MIN_INSIDE_WIDTH = 60;
 
     if (barWidth >= MIN_INSIDE_WIDTH) {
@@ -132,7 +137,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
           x={centerX}
           y={centerY}
           textAnchor="middle"
-          fill="#ffffff"
+          fill="var(--card)"
           style={{ fontSize: 12, fontWeight: 500 }}
         >
           {label}
@@ -200,7 +205,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
           x={centerX}
           y={centerY}
           textAnchor="middle"
-          fill="#ffffff"
+          fill="var(--card)"
           style={{ fontSize: 11, fontWeight: 500 }}
         >
           {label}
@@ -216,7 +221,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
         x={textX}
         y={centerY}
         textAnchor="start"
-        fill="#111827"
+        fill="var(--text)"
         style={{ fontSize: 11, fontWeight: 500 }}
       >
         {label}
@@ -230,14 +235,16 @@ export default function DevTypeSpendChart({ steps }: Props) {
         marginTop: 24,
         marginBottom: 32,
         padding: 16,
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--border)",
         borderRadius: 12,
+        background: "var(--card)",
+        boxShadow: "var(--shadow)",
       }}
     >
       <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>
         Budget vs Actual by Development Type
       </h2>
-      <p style={{ marginBottom: 12, color: "#4b5563" }}>
+      <p style={{ marginBottom: 12, color: "var(--muted)" }}>
         Left chart shows how far we are over or under budget (centered at $0).
         Right chart shows total planned vs actual spend.
       </p>
@@ -255,7 +262,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
         <div
           style={{
             flex: 1,
-            borderRight: "1px solid #e5e7eb",
+            borderRight: "1px solid var(--border)",
             paddingRight: 12,
           }}
         >
@@ -314,10 +321,10 @@ export default function DevTypeSpendChart({ steps }: Props) {
                     key={i}
                     fill={
                       row.delta > 0.5
-                        ? "#15803D" // muted green - under budget (right/positive)
+                        ? UNDER_AMBER
                         : row.delta < -0.5
-                        ? "#DC2626" // muted red - over budget (left/negative)
-                        : "#9ca3af" // ~on budget
+                        ? OVER_AMBER
+                        : "var(--muted)" // ~on budget
                     }
                   />
                 ))}
@@ -372,13 +379,13 @@ export default function DevTypeSpendChart({ steps }: Props) {
                 content={(props) => <SpendLegend {...props} />}
               />
 
-              {/* Planned: dark, muted purple */}
-              <Bar dataKey="planned" name="Planned Spend" fill="#4C1D95">
+              {/* Planned: dark amber */}
+              <Bar dataKey="planned" name="Planned Spend" fill={PLANNED_AMBER}>
                 <LabelList dataKey="planned" content={SpendLabel} />
               </Bar>
 
-              {/* Actual: light purple */}
-              <Bar dataKey="actual" name="Actual Spend" fill="#C6B5FF">
+              {/* Actual: bright amber */}
+              <Bar dataKey="actual" name="Actual Spend" fill={ACTUAL_AMBER}>
                 <LabelList dataKey="actual" content={SpendLabel} />
               </Bar>
             </BarChart>
@@ -411,10 +418,10 @@ function DeltaLegend() {
             height: 12,
             borderRadius: 2,
             display: "inline-block",
-            backgroundColor: "#DC2626",
+            backgroundColor: OVER_AMBER,
           }}
         />
-        <span style={{ color: "#111827" }}>Over budget</span>
+        <span style={{ color: "var(--text)" }}>Over budget</span>
       </div>
       {/* Under second (muted green) */}
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -424,10 +431,10 @@ function DeltaLegend() {
             height: 12,
             borderRadius: 2,
             display: "inline-block",
-            backgroundColor: "#15803D",
+            backgroundColor: UNDER_AMBER,
           }}
         />
-        <span style={{ color: "#111827" }}>Under budget</span>
+        <span style={{ color: "var(--text)" }}>Under budget</span>
       </div>
     </div>
   );
@@ -462,7 +469,7 @@ function SpendLegend(props: any) {
             }}
           />
           {/* force label text to black */}
-          <span style={{ color: "#111827" }}>{entry.value}</span>
+          <span style={{ color: "var(--text)" }}>{entry.value}</span>
         </div>
       ))}
     </div>

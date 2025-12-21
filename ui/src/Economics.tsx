@@ -275,7 +275,7 @@ export default function Economics() {
 
   if (!projectId) {
     return (
-      <div className="page-root" style={{ color: "#6b7280", fontSize: 14 }}>
+      <div className="page-root" style={{ color: "var(--muted)", fontSize: 14 }}>
         Select a project from the Project Portfolio to view economics.
       </div>
     );
@@ -297,10 +297,10 @@ export default function Economics() {
         <div>
           <h1 className="page-title">{projectName}</h1>
           <h2 className="page-subtitle">Economics</h2>
-          <p style={{ margin: "0 0 6px", color: "#6b7280", fontSize: 13 }}>
+          <p style={{ margin: "0 0 6px", color: "var(--muted)", fontSize: 13 }}>
             Incentives, production, and a lightweight financial snapshot.
           </p>
-          {loading && <div style={{ fontSize: 12, color: "#6b7280" }}>Loading economics???</div>}
+          {loading && <div style={{ fontSize: 12, color: "var(--muted)" }}>Loading economics???</div>}
           {error && <div style={{ fontSize: 12, color: "crimson" }}>{error}</div>}
         </div>
         <div className="print-hidden" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -313,7 +313,7 @@ export default function Economics() {
         </div>
       </div>
 
-      <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 12px" }}>
+      <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 12px" }}>
         This is a lightweight snapshot. For full rigor, plug these inputs into your detailed model.
       </p>
 
@@ -487,7 +487,7 @@ export default function Economics() {
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, gap: 12, flexWrap: "wrap" }}>
-          <div style={{ fontSize: 12, color: "#6b7280" }}>Cash Flow (per year)</div>
+          <div style={{ fontSize: 12, color: "var(--muted)" }}>Cash Flow (per year)</div>
           <button
             type="button"
             style={ghostButton}
@@ -544,8 +544,8 @@ function Card({
   return (
     <section
       style={{
-        background: "#ffffff",
-        border: "1px solid #e5e7eb",
+        background: "var(--card)",
+        border: "1px solid var(--border)",
         borderRadius: 12,
         padding: 14,
         boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
@@ -555,7 +555,7 @@ function Card({
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>{title}</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)" }}>{title}</div>
         {action}
       </div>
       {children}
@@ -575,7 +575,7 @@ function LabeledInput({
   type?: string;
 }) {
   return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "#374151" }}>
+    <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "var(--muted)" }}>
       <span style={{ fontWeight: 600 }}>{label}</span>
       <input
         type={type}
@@ -591,14 +591,14 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div
       style={{
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--border)",
         borderRadius: 10,
         padding: "10px 12px",
-        background: "#f9fafb",
+        background: "var(--table-row)",
       }}
     >
-      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>{value}</div>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)" }}>{value}</div>
     </div>
   );
 }
@@ -646,30 +646,30 @@ const formGridCols2: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
   padding: "8px 10px",
-  border: "1px solid #d1d5db",
+  border: "1px solid var(--border)",
   borderRadius: 6,
   fontSize: 13,
-  color: "#111827",
-  background: "#fff",
+  color: "var(--text)",
+  background: "var(--card)",
 };
 
 const ghostButton: React.CSSProperties = {
-  border: "1px solid #d1d5db",
-  background: "#ffffff",
+  border: "1px solid var(--border)",
+  background: "var(--card)",
   padding: "6px 10px",
   borderRadius: 6,
   fontSize: 13,
   fontWeight: 600,
-  color: "#111827",
+  color: "var(--text)",
   cursor: "pointer",
 };
 
 const tableHeaderCell: React.CSSProperties = {
   textAlign: "right",
   padding: "8px 10px",
-  borderBottom: "1px solid #e5e7eb",
+  borderBottom: "1px solid var(--border)",
   fontSize: 12,
-  color: "#6b7280",
+  color: "var(--muted)",
   whiteSpace: "nowrap",
 };
 
@@ -677,7 +677,7 @@ const tableHeaderSticky: React.CSSProperties = {
   ...tableHeaderCell,
   position: "sticky",
   left: 0,
-  background: "#f9fafb",
+  background: "var(--table-row)",
   zIndex: 3,
   textAlign: "left",
   boxShadow: "2px 0 2px rgba(0,0,0,0.04)",
@@ -685,24 +685,24 @@ const tableHeaderSticky: React.CSSProperties = {
 
 const tableRowHeader: React.CSSProperties = {
   padding: "8px 10px",
-  borderBottom: "1px solid #e5e7eb",
+  borderBottom: "1px solid var(--border)",
   textAlign: "left",
   fontSize: 12,
-  color: "#374151",
+  color: "var(--muted)",
   fontWeight: 600,
   whiteSpace: "nowrap",
   position: "sticky",
   left: 0,
-  background: "#fff",
+  background: "var(--card)",
   zIndex: 2,
   boxShadow: "2px 0 2px rgba(0,0,0,0.04)",
 };
 
 const tableCell: React.CSSProperties = {
   padding: "8px 10px",
-  borderBottom: "1px solid #f3f4f6",
+  borderBottom: "1px solid var(--surface)",
   textAlign: "right",
   fontSize: 12,
-  color: "#111827",
+  color: "var(--text)",
   whiteSpace: "nowrap",
 };

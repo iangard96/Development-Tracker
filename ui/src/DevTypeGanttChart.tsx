@@ -36,9 +36,9 @@ const DEV_TYPE_ORDER: DevType[] = [
 
 // Colors per dev type
 const DEV_TYPE_COLORS: Record<string, string> = {
-  Interconnection: "#0f766e",
-  "Due Diligence": "#1d4ed8",
-  Permitting: "#4C1D95",
+  Interconnection: "#f2b84b",
+  "Due Diligence": "#d17f0f",
+  Permitting: "#b45309",
 };
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -154,7 +154,7 @@ export default function DevTypeGanttChart({ steps }: Props) {
         visibleRows.some((r) => r.devType === dt),
       ).map((dt) => ({
         type: "square",
-        color: DEV_TYPE_COLORS[dt] ?? "#6b7280",
+        color: DEV_TYPE_COLORS[dt] ?? "var(--muted)",
         value: dt,
       })),
     [visibleRows],
@@ -186,8 +186,8 @@ export default function DevTypeGanttChart({ steps }: Props) {
         marginTop: 24,
         padding: 16,
         borderRadius: 12,
-        border: "1px solid #e5e7eb",
-        color: "#6b7280",
+        border: "1px solid var(--border)",
+        color: "var(--muted)",
         fontSize: 14,
       }}
     >
@@ -215,7 +215,7 @@ export default function DevTypeGanttChart({ steps }: Props) {
                 <LabelList
                   dataKey="label"
                   position="insideLeft"
-                  style={{ fill: "#ffffff", fontSize: 11, fontWeight: 500 }}
+                  style={{ fill: "var(--card)", fontSize: 11, fontWeight: 500 }}
                   formatter={(v: string | number | null | undefined) =>
                     typeof v === "string" && v.includes(": ")
                       ? v.split(": ")[1] ?? v
@@ -227,7 +227,7 @@ export default function DevTypeGanttChart({ steps }: Props) {
                 {visibleRows.map((row, i) => (
                   <Cell
                     key={row.id ?? i}
-                    fill={DEV_TYPE_COLORS[row.devType] ?? "#6b7280"}
+                    fill={DEV_TYPE_COLORS[row.devType] ?? "var(--muted)"}
                     radius={[4, 4, 4, 4]}
                   />
                 ))}
@@ -295,7 +295,9 @@ export default function DevTypeGanttChart({ steps }: Props) {
         marginBottom: 32,
         padding: 16,
         borderRadius: 12,
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--border)",
+        background: "var(--card)",
+        boxShadow: "var(--shadow)",
       }}
     >
       <div
@@ -310,7 +312,7 @@ export default function DevTypeGanttChart({ steps }: Props) {
           <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
             Development Timeline by Type
           </h2>
-          <p style={{ marginBottom: 12, color: "#4b5563", fontSize: 14 }}>
+          <p style={{ marginBottom: 12, color: "var(--muted)", fontSize: 14 }}>
             Tasks are grouped by development type and ordered by the overall
             step sequence. Bars span from each task's start date to end date.
           </p>
@@ -319,9 +321,9 @@ export default function DevTypeGanttChart({ steps }: Props) {
           type="button"
           onClick={() => setExpanded((v) => !v)}
           style={{
-            border: "1px solid #d1d5db",
-            background: "#ffffff",
-            color: "#111827",
+            border: "1px solid var(--border)",
+            background: "var(--card)",
+            color: "var(--text)",
             borderRadius: 8,
             padding: "6px 10px",
             fontSize: 12,
@@ -336,14 +338,14 @@ export default function DevTypeGanttChart({ steps }: Props) {
         </button>
       </div>
       {!expanded && rows.length > visibleRows.length && (
-        <div style={{ marginBottom: 10, color: "#6b7280", fontSize: 13 }}>
+        <div style={{ marginBottom: 10, color: "var(--muted)", fontSize: 13 }}>
           Showing {visibleRows.length} of {rows.length} activities. Maximize to
           see everything.
         </div>
       )}
 
       {errors.length > 0 && (
-        <div style={{ marginBottom: 10, color: "#b45309", fontSize: 12 }}>
+        <div style={{ marginBottom: 10, color: "var(--accent-soft)", fontSize: 12 }}>
           Skipped {errors.length} step{errors.length === 1 ? "" : "s"} with invalid or missing dates.
         </div>
       )}

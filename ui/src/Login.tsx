@@ -33,8 +33,8 @@ export default function Login({ onLogin }: Props) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(135deg, #0f172a, #111827)",
-        color: "#fef3c7",
+        background: "radial-gradient(circle at 20% 20%, rgba(245,182,59,0.16), transparent 35%), radial-gradient(circle at 80% 10%, rgba(168,108,25,0.2), transparent 36%), radial-gradient(circle at 50% 90%, rgba(247,183,51,0.18), transparent 32%), linear-gradient(135deg, #0a090f, #1b140e)",
+        color: "var(--text)",
         padding: 24,
       }}
     >
@@ -63,15 +63,15 @@ export default function Login({ onLogin }: Props) {
             required
             style={{
               width: "100%",
-              marginTop: 6,
-              padding: "10px 12px",
-              borderRadius: 10,
-              border: "1px solid var(--border)",
-              background: "var(--bg)",
-              color: "var(--text)",
-              boxSizing: "border-box",
-            }}
-          />
+            marginTop: 6,
+            padding: "10px 12px",
+            borderRadius: 10,
+            border: "1px solid var(--border)",
+            background: "var(--card)",
+            color: "var(--text)",
+            boxSizing: "border-box",
+          }}
+        />
         </label>
 
         <label style={{ display: "block", marginBottom: 16, fontSize: 13, color: "var(--text)" }}>
@@ -83,22 +83,22 @@ export default function Login({ onLogin }: Props) {
             required
             style={{
               width: "100%",
-              marginTop: 6,
-              padding: "10px 12px",
-              borderRadius: 10,
-              border: "1px solid var(--border)",
-              background: "var(--bg)",
-              color: "var(--text)",
-              boxSizing: "border-box",
-            }}
-          />
-        </label>
+            marginTop: 6,
+            padding: "10px 12px",
+            borderRadius: 10,
+            border: "1px solid var(--border)",
+            background: "var(--card)",
+            color: "var(--text)",
+            boxSizing: "border-box",
+          }}
+        />
+      </label>
 
-        {error && (
-          <div style={{ color: "#ef4444", marginBottom: 12, fontSize: 13 }}>
-            {error}
-          </div>
-        )}
+      {error && (
+        <div style={{ color: "var(--danger)", marginBottom: 12, fontSize: 13 }}>
+          {error}
+        </div>
+      )}
 
         <button
           type="submit"
@@ -108,8 +108,8 @@ export default function Login({ onLogin }: Props) {
             padding: "10px 12px",
             borderRadius: 10,
             border: "1px solid transparent",
-            background: "linear-gradient(135deg, #fbbf24, #f59e0b)",
-            color: "#0f172a",
+            background: "linear-gradient(135deg, var(--accent-strong), #ffce5a)",
+            color: "#120c06",
             fontWeight: 700,
             cursor: isLoading ? "not-allowed" : "pointer",
           }}

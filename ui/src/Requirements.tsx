@@ -19,8 +19,8 @@ type RequirementBucket = (typeof REQUIREMENT_BUCKETS)[number];
 type GroupedRequirements = Record<RequirementBucket, DevStep[]>;
 
 const cardStyle: React.CSSProperties = {
-  background: "#ffffff",
-  border: "1px solid #e5e7eb",
+  background: "var(--card)",
+  border: "1px solid var(--border)",
   borderRadius: 12,
   padding: 16,
   boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
@@ -35,15 +35,15 @@ const badge: React.CSSProperties = {
   gap: 6,
   padding: "4px 10px",
   borderRadius: 9999,
-  background: "#eef2ff",
-  color: "#4338ca",
+  background: "rgba(245, 182, 59, 0.18)",
+  color: "var(--accent-strong)",
   fontWeight: 600,
   fontSize: 12,
 };
 
 const subText: React.CSSProperties = {
   margin: 0,
-  color: "#6b7280",
+  color: "var(--muted)",
   fontSize: 13,
 };
 
@@ -156,7 +156,7 @@ export default function Requirements() {
 
   if (!projectId) {
     return (
-      <div className="page-root" style={{ color: "#6b7280", fontSize: 14 }}>
+      <div className="page-root" style={{ color: "var(--muted)", fontSize: 14 }}>
         Select a project from the Project Summary to view requirements.
       </div>
     );
@@ -223,7 +223,7 @@ export default function Requirements() {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: "#111827" }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text)" }}>
                     {bucket}
                   </div>
                   <p style={subText}>
@@ -272,4 +272,3 @@ export default function Requirements() {
     </div>
   );
 }
-

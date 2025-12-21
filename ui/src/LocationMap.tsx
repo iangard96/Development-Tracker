@@ -85,9 +85,9 @@ export default function LocationMap({ project }: Props) {
     <div
       style={{
         marginTop: 16,
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--border)",
         borderRadius: 10,
-        background: "#ffffff",
+        background: "var(--card)",
         padding: 12,
         boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
       }}
@@ -100,14 +100,14 @@ export default function LocationMap({ project }: Props) {
           marginBottom: 8,
         }}
       >
-        <div style={{ fontSize: 16, fontWeight: 600, color: "#111827" }}>Project Map</div>
+        <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text)" }}>Project Map</div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             type="button"
             onClick={() => setZoom((z) => Math.min(18, z + 1))}
             style={{
-              border: "1px solid #d1d5db",
-              background: "#ffffff",
+              border: "1px solid var(--border)",
+              background: "var(--card)",
               borderRadius: 6,
               width: 28,
               height: 28,
@@ -122,8 +122,8 @@ export default function LocationMap({ project }: Props) {
             type="button"
             onClick={() => setZoom((z) => Math.max(1, z - 1))}
             style={{
-              border: "1px solid #d1d5db",
-              background: "#ffffff",
+              border: "1px solid var(--border)",
+              background: "var(--card)",
               borderRadius: 6,
               width: 28,
               height: 28,
@@ -138,8 +138,8 @@ export default function LocationMap({ project }: Props) {
             value={mapStyle}
             onChange={(e) => setMapStyle(e.target.value as "streets" | "satellite")}
             style={{
-              border: "1px solid #d1d5db",
-              background: "#ffffff",
+              border: "1px solid var(--border)",
+              background: "var(--card)",
               borderRadius: 6,
               padding: "4px 8px",
               fontSize: 12,
@@ -150,7 +150,7 @@ export default function LocationMap({ project }: Props) {
             <option value="streets">Streets</option>
             <option value="satellite">Satellite</option>
           </select>
-          {loading && <span style={{ fontSize: 12, color: "#6b7280" }}>Geocoding...</span>}
+          {loading && <span style={{ fontSize: 12, color: "var(--muted)" }}>Geocoding...</span>}
         </div>
       </div>
 
@@ -165,8 +165,8 @@ export default function LocationMap({ project }: Props) {
           style={{
             height: 260,
             borderRadius: 8,
-            background: "#f3f4f6",
-            color: "#6b7280",
+            background: "var(--surface)",
+            color: "var(--muted)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -180,10 +180,10 @@ export default function LocationMap({ project }: Props) {
       )}
 
       {geocodeError && (
-        <div style={{ marginTop: 8, fontSize: 12, color: "#b91c1c" }}>{geocodeError}</div>
+        <div style={{ marginTop: 8, fontSize: 12, color: "var(--danger)" }}>{geocodeError}</div>
       )}
       {!location && !geocodeError && (
-        <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
+        <div style={{ marginTop: 8, fontSize: 12, color: "var(--muted)" }}>
           Using default map view. Add latitude/longitude or an address to show a pin.
         </div>
       )}

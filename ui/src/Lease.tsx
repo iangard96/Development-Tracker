@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import SaveAsPdfButton from "./SaveAsPdfButton";
 import logo from "../public/landcharge-logo.png";
 import { useProject } from "./ProjectContext";
-import { fetchProjectEconomics, updateProjectEconomics } from "./api";
+import { fetchProjectEconomics, updateProjectEconomics, updateProject } from "./api";
 import type { ProjectEconomics } from "./types";
 
 type LeaseDetails = {
@@ -34,7 +34,7 @@ type PaymentRow = {
 };
 
 export default function Lease() {
-  const { projectId, project } = useProject();
+  const { projectId, project, setCurrentProject } = useProject();
 
   const [lease, setLease] = useState<LeaseDetails>({
     ownerName: "",
@@ -146,6 +146,13 @@ export default function Lease() {
     };
     try {
       await updateProjectEconomics(projectId, payload);
+      // Sync lease start/end into project portfolio columns
+      const projectPayload: any = {
+        lease_option_start_date: lease.leaseStart || null,
+        lease_option_expiration_date: lease.leaseEnd || null,
+      };
+      const updatedProject = await updateProject(projectId, projectPayload);
+      setCurrentProject(updatedProject);
     } catch (e: any) {
       setError(String(e));
     } finally {
@@ -155,7 +162,7 @@ export default function Lease() {
 
   if (!projectId) {
     return (
-      <div className="page-root" style={{ color: "#6b7280", fontSize: 14 }}>
+      <div className="page-root" style={{ color: "var(--muted)", fontSize: 14 }}>
         Select a project from the Project Portfolio to view lease info.
       </div>
     );
@@ -177,7 +184,7 @@ export default function Lease() {
         <div>
           <h1 className="page-title">{projectName}</h1>
           <h2 className="page-subtitle">Lease Info</h2>
-          {loading && <div style={{ fontSize: 12, color: "#6b7280" }}>Loading lease info…</div>}
+          {loading && <div style={{ fontSize: 12, color: "var(--muted)" }}>Loading lease info…</div>}
           {error && <div style={{ fontSize: 12, color: "crimson" }}>{error}</div>}
         </div>
         <div className="print-hidden" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -294,7 +301,7 @@ export default function Lease() {
             />
           </div>
           <div style={{ marginTop: 12 }}>
-            <label style={{ fontSize: 13, color: "#374151", fontWeight: 600, display: "block", marginBottom: 6 }}>
+            <label style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600, display: "block", marginBottom: 6 }}>
               Leased Area (JPEG/PNG)
             </label>
             <input
@@ -309,11 +316,11 @@ export default function Lease() {
             />
             {lease.leasedAreaImage && (
               <div style={{ marginTop: 8 }}>
-                <div style={{ fontSize: 12, color: "#6b7280" }}>{lease.leasedAreaImageName}</div>
+                <div style={{ fontSize: 12, color: "var(--muted)" }}>{lease.leasedAreaImageName}</div>
                 <img
                   src={lease.leasedAreaImage}
                   alt="Leased area"
-                  style={{ marginTop: 6, maxWidth: "100%", borderRadius: 8, border: "1px solid #e5e7eb" }}
+                  style={{ marginTop: 6, maxWidth: "100%", borderRadius: 8, border: "1px solid var(--border)" }}
                 />
               </div>
             )}
@@ -338,7 +345,7 @@ export default function Lease() {
               Download template
             </button>
           </div>
-          <p style={{ fontSize: 12, color: "#6b7280", marginTop: 8 }}>
+          <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
             Use merge fields like <code>{"{owner_name}"}</code>, <code>{"{apn}"}</code>, <code>{"{base_rent}"}</code>, <code>{"{escalator_pct}"}</code> to auto-fill.
           </p>
         </Card>
@@ -362,13 +369,13 @@ export default function Lease() {
             Export CSV
           </button>
         }>
-          <div style={{ fontSize: 13, color: "#374151", marginBottom: 8 }}>
+          <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>
             Base rent escalated {lease.escalatorPct}%/{lease.frequency.toLowerCase()} over {lease.termYears} years.
             Total (incl. option/construction) ≈ ${totalPayments.toLocaleString(undefined, { maximumFractionDigits: 0 })}.
           </div>
-          <div style={{ maxHeight: 260, overflow: "auto", border: "1px solid #e5e7eb", borderRadius: 8 }}>
+          <div style={{ maxHeight: 260, overflow: "auto", border: "1px solid var(--border)", borderRadius: 8 }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-              <thead style={{ background: "#f9fafb", position: "sticky", top: 0 }}>
+              <thead style={{ background: "var(--table-row)", position: "sticky", top: 0 }}>
                 <tr>
                   <th style={th}>Period</th>
                   <th style={th}>Year</th>
@@ -377,7 +384,7 @@ export default function Lease() {
               </thead>
               <tbody>
                 {payments.slice(0, 240).map((p) => (
-                  <tr key={p.period} style={{ borderTop: "1px solid #e5e7eb" }}>
+                  <tr key={p.period} style={{ borderTop: "1px solid var(--border)" }}>
                     <td style={td}>{p.period}</td>
                     <td style={td}>{p.year}</td>
                     <td style={td}>${p.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
@@ -412,8 +419,8 @@ function Card({
   return (
     <section
       style={{
-        background: "#ffffff",
-        border: "1px solid #e5e7eb",
+        background: "var(--card)",
+        border: "1px solid var(--border)",
         borderRadius: 12,
         padding: 14,
         boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
@@ -423,7 +430,7 @@ function Card({
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>{title}</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)" }}>{title}</div>
         {action}
       </div>
       {children}
@@ -443,7 +450,7 @@ function LabeledInput({
   type?: string;
 }) {
   return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "#374151" }}>
+    <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "var(--muted)" }}>
       <span style={{ fontWeight: 600 }}>{label}</span>
       <input
         type={type}
@@ -467,7 +474,7 @@ function LabeledSelect({
   options: string[];
 }) {
   return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "#374151" }}>
+    <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "var(--muted)" }}>
       <span style={{ fontWeight: 600 }}>{label}</span>
       <select value={value} onChange={(e) => onChange(e.target.value)} style={inputStyle}>
         {options.map((opt) => (
@@ -488,21 +495,21 @@ const formGridCols2: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
   padding: "8px 10px",
-  border: "1px solid #d1d5db",
+  border: "1px solid var(--border)",
   borderRadius: 6,
   fontSize: 13,
-  color: "#111827",
-  background: "#fff",
+  color: "var(--text)",
+  background: "var(--card)",
 };
 
 const ghostButton: React.CSSProperties = {
-  border: "1px solid #d1d5db",
-  background: "#ffffff",
+  border: "1px solid var(--border)",
+  background: "var(--card)",
   padding: "6px 10px",
   borderRadius: 6,
   fontSize: 13,
   fontWeight: 600,
-  color: "#111827",
+  color: "var(--text)",
   cursor: "pointer",
 };
 
@@ -511,15 +518,15 @@ const th: React.CSSProperties = {
   padding: "8px 10px",
   fontWeight: 600,
   fontSize: 12,
-  color: "#6b7280",
+  color: "var(--muted)",
   position: "sticky",
   top: 0,
-  background: "#f9fafb",
+  background: "var(--table-row)",
   zIndex: 1,
 };
 
 const td: React.CSSProperties = {
   padding: "8px 10px",
   fontSize: 12,
-  color: "#111827",
+  color: "var(--text)",
 };
