@@ -124,6 +124,15 @@ const HEATMAP_OPTIONS = [
 ] as const;
 
 const OWNER_OPTIONS = ["Internal", "Consultant", "External", "EPC"] as const;
+const PHASE_OPTION_MAP: Record<"" | "1" | "2" | "3", string> = {
+  "": "--",
+  "1": "Early",
+  "2": "Mid",
+  "3": "Late",
+};
+
+const customStorageKey = (projectId: string | number) =>
+  `dev-activities-custom-${projectId}`;
 
 /** Convert whatever we have to what <input type="date"> expects (YYYY-MM-DD). */
 function normalizeForDateInput(value?: string | null): string {
@@ -810,6 +819,10 @@ export default function DevActivities() {
   const [contactOrgs, setContactOrgs] = useState<string[]>([]);
   const [reorderPending, setReorderPending] = useState(false);
   const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newActivityName, setNewActivityName] = useState("");
+  const [newActivityPhase, setNewActivityPhase] = useState<"" | 1 | 2 | 3>("");
+  const [addSaving, setAddSaving] = useState(false);
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -821,6 +834,50 @@ export default function DevActivities() {
   useEffect(() => {
     seededRequirementDefaults.current = new Set();
   }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) {
+      setCustomIds(new Set());
+      return;
+    }
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(customStorageKey(projectId));
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.filter((id) => typeof id === "number");
+        setCustomIds(new Set(cleaned as number[]));
+      }
+    } catch (err) {
+      console.warn("Failed to restore custom activities", err);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        customStorageKey(projectId),
+        JSON.stringify(Array.from(customIds)),
+      );
+    } catch (err) {
+      console.warn("Failed to persist custom activities", err);
+    }
+  }, [customIds, projectId]);
+
+  useEffect(() => {
+    if (!rows) return;
+    setCustomIds((prev) => {
+      const idsInRows = new Set(rows.map((r) => r.id));
+      const filtered = new Set(
+        Array.from(prev).filter((id) => idsInRows.has(id)),
+      );
+      if (filtered.size === prev.size) return prev;
+      return filtered;
+    });
+  }, [rows]);
 
   const applyFresh = useCallback(
     (fresh: DevStep) =>
@@ -1384,6 +1441,53 @@ export default function DevActivities() {
     }
   };
 
+  const resetAddForm = useCallback(() => {
+    setNewActivityName("");
+    setNewActivityPhase("");
+    setShowAddForm(false);
+    setAddSaving(false);
+  }, []);
+
+  const handleAddActivity = useCallback(async () => {
+    if (!projectId) return;
+    const trimmed = newActivityName.trim();
+    if (!trimmed) {
+      alert("Enter an activity name.");
+      return;
+    }
+    const phaseVal = newActivityPhase === "" ? null : newActivityPhase;
+    setAddSaving(true);
+    try {
+      const created = await createDevelopmentStep({
+        project: Number(projectId),
+        name: trimmed,
+        phase: phaseVal,
+      });
+      setRows((cur) => (cur ? [...cur, created] : [created]));
+      setCustomIds((prev) => {
+        const next = new Set(prev);
+        next.add(created.id);
+        return next;
+      });
+      setNewActivityName("");
+      setNewActivityPhase("");
+      setShowAddForm(false);
+
+      window.setTimeout(() => {
+        const rowEl = rowRefs.current[created.id];
+        const container = tableContainerRef.current;
+        if (rowEl && container) {
+          rowEl.scrollIntoView({ block: "center" });
+        }
+      }, 50);
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to add activity.\n${err?.message ?? ""}`);
+    } finally {
+      setAddSaving(false);
+    }
+  }, [newActivityName, newActivityPhase, projectId]);
+
   const jumpToId = (id: number) => {
     const target = sorted.find((p) => p.id === id);
     if (target) {
@@ -1401,8 +1505,8 @@ export default function DevActivities() {
         container.scrollTo({
           top: Math.max(0, targetScroll),
           behavior: "smooth",
-    });
-  }
+        });
+      }
 
       setHighlighted((prev) => {
         const next = new Set(prev);
@@ -1742,14 +1846,12 @@ export default function DevActivities() {
                       (r.name || "").toLowerCase().includes("custom");
 
                     const phaseVal = (r as any).phase ?? null;
-                    const phaseLabel =
-                      phaseVal === 1
-                        ? "Early"
-                        : phaseVal === 2
-                          ? "Mid"
-                          : phaseVal === 3
-                            ? "Late"
-                            : "--";
+                    const phaseKey = (phaseVal === null ? "" : String(phaseVal)) as
+                      | ""
+                      | "1"
+                      | "2"
+                      | "3";
+                    const phaseLabel = PHASE_OPTION_MAP[phaseKey] ?? "--";
 
                     if (!isCustom) {
                       return phaseLabel;
@@ -2310,42 +2412,131 @@ export default function DevActivities() {
           </tbody>
         </table>
       </div>
-      <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
-        <button
-          type="button"
-          onClick={async () => {
-            if (!projectId) return;
-            const name = window.prompt("Activity name?");
-            const trimmed = (name || "").trim();
-            if (!trimmed) return;
-            const phaseInput = window.prompt("Phase number (optional)?");
-            const phaseVal = phaseInput && phaseInput.trim() !== "" ? Number(phaseInput) : null;
-            try {
-              const created = await createDevelopmentStep({
-                project: Number(projectId),
-                name: trimmed,
-                phase: isNaN(phaseVal as any) ? null : phaseVal,
-              });
-              setRows((cur) => (cur ? [...cur, created] : [created]));
-              setCustomIds((prev) => new Set(prev).add(created.id));
-            } catch (e: any) {
-              console.error(e);
-              alert(`Failed to add activity.\n${e?.message ?? ""}`);
-            }
-          }}
-          style={{
-            borderRadius: 6,
-            border: "1px solid var(--border)",
-            padding: "8px 12px",
-            fontSize: 13,
-            fontWeight: 600,
-            background: "var(--table-row)",
-            color: "var(--text)",
-            cursor: "pointer",
-          }}
-        >
-          + Activity
-        </button>
+      <div
+        style={{
+          marginTop: 12,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        {showAddForm ? (
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 8,
+              alignItems: "center",
+              borderRadius: 8,
+              border: "1px solid var(--border)",
+              padding: "10px 12px",
+              background: "var(--table-row)",
+            }}
+          >
+            <input
+              id="new-activity-name"
+              type="text"
+              value={newActivityName}
+              onChange={(e) => setNewActivityName(e.target.value)}
+              placeholder="Activity name"
+              style={{
+                padding: "8px 10px",
+                borderRadius: 6,
+                border: "1px solid var(--border)",
+                minWidth: 220,
+                fontSize: 13,
+              }}
+            />
+            <select
+              value={newActivityPhase === "" ? "" : String(newActivityPhase)}
+              onChange={(e) => {
+                const raw = e.target.value as "" | "1" | "2" | "3";
+                setNewActivityPhase(raw === "" ? "" : (Number(raw) as 1 | 2 | 3));
+              }}
+              style={{
+                padding: "8px 10px",
+                borderRadius: 6,
+                border: "1px solid var(--border)",
+                fontSize: 13,
+                minWidth: 160,
+                background:
+                  "var(--table-row) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 8px center",
+                backgroundSize: "10px",
+                paddingRight: 26,
+              }}
+            >
+              <option value="">Phase (optional)</option>
+              <option value="1">Early</option>
+              <option value="2">Mid</option>
+              <option value="3">Late</option>
+            </select>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                onClick={handleAddActivity}
+                disabled={addSaving}
+                style={{
+                  borderRadius: 6,
+                  border: "1px solid var(--border)",
+                  padding: "8px 12px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  background: "var(--accent-weak)",
+                  color: "var(--text)",
+                  cursor: addSaving ? "default" : "pointer",
+                  opacity: addSaving ? 0.7 : 1,
+                }}
+              >
+                {addSaving ? "Saving..." : "Save Activity"}
+              </button>
+              <button
+                type="button"
+                onClick={resetAddForm}
+                disabled={addSaving}
+                style={{
+                  borderRadius: 6,
+                  border: "1px solid var(--border)",
+                  padding: "8px 12px",
+                  fontSize: 13,
+                  background: "transparent",
+                  color: "var(--text)",
+                  cursor: addSaving ? "default" : "pointer",
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setShowAddForm(true);
+              if (typeof document !== "undefined") {
+                setTimeout(() => {
+                  const el = document.getElementById("new-activity-name");
+                  if (el instanceof HTMLInputElement) {
+                    el.focus();
+                  }
+                }, 0);
+              }
+            }}
+            style={{
+              borderRadius: 6,
+              border: "1px solid var(--border)",
+              padding: "8px 12px",
+              fontSize: 13,
+              fontWeight: 600,
+              background: "var(--table-row)",
+              color: "var(--text)",
+              cursor: "pointer",
+            }}
+          >
+            + Activity
+          </button>
+        )}
       </div>
       <datalist id="contact-orgs">
         {contactOrgs.map((org) => (
