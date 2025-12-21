@@ -495,28 +495,12 @@ export default function ProjectSummaryPage() {
                   </button>
                   <button
                     onClick={() => handleDeleteProject(p.id)}
+                    className="btn-delete"
                     style={{
-                      padding: "5px 10px",
-                      background: "rgba(248, 113, 113, 0.12)",
-                      color: "var(--danger)",
-                      border: "1px solid var(--danger)",
-                      borderRadius: 5,
-                      cursor: canDeleteProjects ? "pointer" : "default",
-                      fontSize: 12,
-                      fontWeight: 500,
-                      transition: "all 0.15s ease",
                       opacity: canDeleteProjects ? 1 : 0.4,
+                      cursor: canDeleteProjects ? "pointer" : "default",
                     }}
-                    onMouseOver={(e) => {
-                      if (!canDeleteProjects) return;
-                      (e.currentTarget as HTMLButtonElement).style.background = "rgba(248, 113, 113, 0.2)";
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--danger)";
-                    }}
-                    onMouseOut={(e) => {
-                      if (!canDeleteProjects) return;
-                      (e.currentTarget as HTMLButtonElement).style.background = "rgba(248, 113, 113, 0.12)";
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--danger)";
-                    }}
+                    disabled={!canDeleteProjects}
                   >
                     Remove
                   </button>

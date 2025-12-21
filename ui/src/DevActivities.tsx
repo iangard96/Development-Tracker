@@ -2283,6 +2283,7 @@ export default function DevActivities() {
                 {customIds.has(r.id) || (r.name || "").toLowerCase().includes("custom") ? (
                   <button
                     type="button"
+                    className="btn-delete"
                     onClick={async () => {
                       const ok = window.confirm("Delete this activity? This cannot be undone.");
                       if (!ok) return;
@@ -2298,15 +2299,6 @@ export default function DevActivities() {
                         console.error(err);
                         alert(`Failed to delete activity.\n${err?.message ?? ""}`);
                       }
-                    }}
-                    style={{
-                      border: "1px solid var(--danger)",
-                      background: "rgba(248, 113, 113, 0.12)",
-                      color: "var(--danger)",
-                      borderRadius: 5,
-                      padding: "6px 10px",
-                      fontSize: 12,
-                      cursor: "pointer",
                     }}
                   >
                     Delete

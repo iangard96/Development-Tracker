@@ -469,7 +469,11 @@ export default function Permitting() {
                       ))}
                       <td style={{ ...tbodyCell, minWidth: columnWidths["actions"], width: columnWidths["actions"] }}>
                         <div style={{ display: "flex", gap: 6 }}>
-                          {canDelete ? <button style={smallButton} onClick={() => deleteRow(row.id)}>Delete</button> : null}
+                          {canDelete ? (
+                            <button className="btn-delete" onClick={() => deleteRow(row.id)}>
+                              Delete
+                            </button>
+                          ) : null}
                         </div>
                       </td>
                     </tr>
