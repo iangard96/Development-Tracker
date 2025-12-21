@@ -1,25 +1,25 @@
 :root {
-  --bg: #0d0c11;
-  --card: #16141d;
-  --surface: #1b1923;
-  --border: #2d2733;
-  --text: #f4c06a;
-  --muted: #d8ae52;
-  --accent: #f7b733;
-  --accent-strong: #f59e0b;
-  --accent-soft: #a86c19;
-  --icon-muted: #d4a64d;
-  --button-bg: #1f1c26;
-  --button-border: #33251b;
-  --shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
-  --table-header: #1c1a23;
-  --table-row: #13111b;
-  --table-hover: #1f1c27;
-  --pill: #24170d;
-  --success: #34d399;
-  --danger: #f87171;
-  --scroll-track: var(--table-row);
-  --scroll-thumb: #8c6a2c;
+  --bg: #f9fafb;
+  --card: #ffffff;
+  --surface: #f3f4f6;
+  --border: #e5e7eb;
+  --text: #0f172a;
+  --muted: #4b5563;
+  --accent: #f59e0b;
+  --accent-strong: #d97706;
+  --accent-soft: #b45309;
+  --icon-muted: #9ca3af;
+  --button-bg: #f6f7fb;
+  --button-border: #e5e7eb;
+  --shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  --table-header: #f3f4f6;
+  --table-row: #ffffff;
+  --table-hover: #f9fafb;
+  --pill: #fff7ed;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --scroll-track: #e5e7eb;
+  --scroll-thumb: #9ca3af;
 }
 
 [data-theme="dark"] {
