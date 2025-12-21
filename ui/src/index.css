@@ -63,6 +63,12 @@ h2 {
   color: var(--text);
 }
 
+/* Ensure headers remain readable in dark mode within page containers */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2 {
+  color: #ffffff;
+}
+
 input, select, textarea {
   font-family: inherit;
   font-size: 13px;

@@ -30,10 +30,10 @@ function LayoutInner() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--text)" }}>
             {project.project_name}
           </h1>
-          <p style={{ fontSize: 14, color: "#6b7280" }}>
+          <p style={{ fontSize: 14, color: "var(--muted)" }}>
             {project.legal_name}
           </p>
         </div>
