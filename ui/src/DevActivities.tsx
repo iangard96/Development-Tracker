@@ -1266,6 +1266,53 @@ export default function DevActivities() {
     [canReorder, orderedBySequence, performReorder, projectId],
   );
 
+  const resetAddForm = useCallback(() => {
+    setNewActivityName("");
+    setNewActivityPhase("");
+    setShowAddForm(false);
+    setAddSaving(false);
+  }, []);
+
+  const handleAddActivity = useCallback(async () => {
+    if (!projectId) return;
+    const trimmed = newActivityName.trim();
+    if (!trimmed) {
+      alert("Enter an activity name.");
+      return;
+    }
+    const phaseVal = newActivityPhase === "" ? null : newActivityPhase;
+    setAddSaving(true);
+    try {
+      const created = await createDevelopmentStep({
+        project: Number(projectId),
+        name: trimmed,
+        phase: phaseVal,
+      });
+      setRows((cur) => (cur ? [...cur, created] : [created]));
+      setCustomIds((prev) => {
+        const next = new Set(prev);
+        next.add(created.id);
+        return next;
+      });
+      setNewActivityName("");
+      setNewActivityPhase("");
+      setShowAddForm(false);
+
+      window.setTimeout(() => {
+        const rowEl = rowRefs.current[created.id];
+        const container = tableContainerRef.current;
+        if (rowEl && container) {
+          rowEl.scrollIntoView({ block: "center" });
+        }
+      }, 50);
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to add activity.\n${err?.message ?? ""}`);
+    } finally {
+      setAddSaving(false);
+    }
+  }, [newActivityName, newActivityPhase, projectId]);
+
   if (noProjectSelected) {
     return (
       <div style={{ padding: 16, color: "var(--muted)", fontSize: 14 }}>
@@ -1440,53 +1487,6 @@ export default function DevActivities() {
       alert(`Failed to update duration.\n${err?.message ?? ""}`);
     }
   };
-
-  const resetAddForm = useCallback(() => {
-    setNewActivityName("");
-    setNewActivityPhase("");
-    setShowAddForm(false);
-    setAddSaving(false);
-  }, []);
-
-  const handleAddActivity = useCallback(async () => {
-    if (!projectId) return;
-    const trimmed = newActivityName.trim();
-    if (!trimmed) {
-      alert("Enter an activity name.");
-      return;
-    }
-    const phaseVal = newActivityPhase === "" ? null : newActivityPhase;
-    setAddSaving(true);
-    try {
-      const created = await createDevelopmentStep({
-        project: Number(projectId),
-        name: trimmed,
-        phase: phaseVal,
-      });
-      setRows((cur) => (cur ? [...cur, created] : [created]));
-      setCustomIds((prev) => {
-        const next = new Set(prev);
-        next.add(created.id);
-        return next;
-      });
-      setNewActivityName("");
-      setNewActivityPhase("");
-      setShowAddForm(false);
-
-      window.setTimeout(() => {
-        const rowEl = rowRefs.current[created.id];
-        const container = tableContainerRef.current;
-        if (rowEl && container) {
-          rowEl.scrollIntoView({ block: "center" });
-        }
-      }, 50);
-    } catch (err: any) {
-      console.error(err);
-      alert(`Failed to add activity.\n${err?.message ?? ""}`);
-    } finally {
-      setAddSaving(false);
-    }
-  }, [newActivityName, newActivityPhase, projectId]);
 
   const jumpToId = (id: number) => {
     const target = sorted.find((p) => p.id === id);
