@@ -367,7 +367,7 @@ export default function Permitting() {
                 onClick={() => toggleLevel(level)}
                 aria-label={`Toggle ${level} section`}
               >
-                <span aria-hidden="true">{collapsedLevels[level] ? "►" : "▼"}</span>
+                <span aria-hidden="true">{collapsedLevels[level] ? "▼" : "▲"}</span>
                 {collapsedLevels[level] ? "Expand" : "Collapse"}
               </button>
               <div style={{ fontSize: 15, fontWeight: 700 }}>{level}</div>
@@ -380,7 +380,6 @@ export default function Permitting() {
               >
                 Add Row
               </button>
-              <div style={{ fontSize: 15, fontWeight: 700 }}>{level}</div>
             </div>
           </div>
           {!collapsedLevels[level] && (
@@ -470,11 +469,7 @@ export default function Permitting() {
                       ))}
                       <td style={{ ...tbodyCell, minWidth: columnWidths["actions"], width: columnWidths["actions"] }}>
                         <div style={{ display: "flex", gap: 6 }}>
-                          {canDelete ? (
-                            <button style={smallButton} onClick={() => deleteRow(row.id)}>Delete</button>
-                          ) : (
-                            <span style={{ fontSize: 12, color: "var(--muted)" }}>Locked</span>
-                          )}
+                          {canDelete ? <button style={smallButton} onClick={() => deleteRow(row.id)}>Delete</button> : null}
                         </div>
                       </td>
                     </tr>
