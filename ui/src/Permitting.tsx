@@ -486,6 +486,8 @@ const searchInput: React.CSSProperties = {
   borderRadius: 6,
   minWidth: 240,
   fontSize: 13,
+  background: "var(--table-row)",
+  color: "var(--text)",
 };
 
 const ghostButton: React.CSSProperties = {
