@@ -39,10 +39,10 @@ const th: React.CSSProperties = {
   paddingRight: 12,
   fontWeight: 600,
   fontSize: 12,
-  color: "#6b7280",
+  color: "var(--text)",
   position: "sticky",
   top: 0,
-  background: "#f9fafb",
+  background: "var(--card)",
   zIndex: 3,
 };
 const td: React.CSSProperties = {
@@ -57,7 +57,7 @@ const stickyActivity: React.CSSProperties = {
   position: "sticky",
   left: 0,
   top: 0,
-  background: "#ffffff",
+  background: "var(--card)",
   zIndex: 4,
 };
 const requirementTh: React.CSSProperties = {
@@ -112,7 +112,7 @@ const sortBtn: React.CSSProperties = {
   margin: 0,
   fontSize: 12,
   fontWeight: 600,
-  color: "#374151",
+  color: "var(--text)",
   cursor: "pointer",
 };
 
