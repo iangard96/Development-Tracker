@@ -70,6 +70,7 @@ const requirementTd: React.CSSProperties = {
   width: 240,
   minWidth: 240,
   verticalAlign: "top",
+  background: "var(--table-row)",
 };
 const requirementList: React.CSSProperties = {
   display: "flex",
@@ -165,7 +166,7 @@ function DateCell({
         border: "1px solid var(--border)",
         borderRadius: 5,
         fontSize: 13,
-        background: "var(--card)",
+        background: "var(--table-row)",
         color: "var(--text)",
       }}
     />
@@ -203,7 +204,7 @@ function StatusCell({
         border: "1px solid var(--border)",
         borderRadius: 5,
         background:
-          "var(--card) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+          "var(--table-row) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
         backgroundSize: "10px",
         paddingRight: 24,
         fontSize: 13,
@@ -632,7 +633,7 @@ function HeatmapCell({
             zIndex: 10,
             marginTop: 6,
             minWidth: "100%",
-            background: "var(--card)",
+            background: "var(--table-row)",
             border: "1px solid var(--border)",
             borderRadius: 8,
             boxShadow: "0 8px 24px rgba(0, 0, 0, 0.08)",
@@ -660,7 +661,7 @@ function HeatmapCell({
                   padding: "8px 10px",
                   borderRadius: 6,
                   border: isActive ? "2px solid var(--text)" : "1px solid var(--border)",
-                  background: "var(--card)",
+                  background: "var(--table-row)",
                   cursor: "pointer",
                   color: "var(--text)",
                   boxShadow: isActive ? "0 0 0 2px var(--border)" : undefined,
@@ -762,7 +763,7 @@ function SpendCell({
         border: "1px solid var(--border)",
         fontSize: 14,
         fontWeight: 500,
-        background: "var(--card)",
+        background: "var(--table-row)",
         color: "var(--text)",
         boxSizing: "border-box",
         textAlign: "right",
@@ -1479,7 +1480,7 @@ export default function DevActivities() {
             onClick={resetSort}
             style={{
               border: "1px solid var(--border)",
-              background: "var(--card)",
+              background: "var(--table-row)",
               color: "var(--text)",
               borderRadius: 6,
               padding: "6px 10px",
@@ -1517,7 +1518,7 @@ export default function DevActivities() {
               border: "1px solid var(--border)",
               fontSize: 13,
               background:
-                "var(--card) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+                "var(--table-row) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
               backgroundSize: "10px",
               paddingRight: 24,
               color: "var(--text)",
@@ -1551,7 +1552,7 @@ export default function DevActivities() {
               border: "1px solid var(--border)",
               fontSize: 13,
               color: "var(--text)",
-              background: "var(--card)",
+              background: "var(--table-row)",
             }}
           />
         </label>
@@ -1578,7 +1579,7 @@ export default function DevActivities() {
               border: "1px solid var(--border)",
               fontSize: 13,
               background:
-                "var(--card) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+                "var(--table-row) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
               backgroundSize: "10px",
               paddingRight: 24,
               color: "var(--text)",

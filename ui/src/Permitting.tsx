@@ -540,6 +540,8 @@ const cellInput: React.CSSProperties = {
   border: "1px solid var(--border)",
   borderRadius: 6,
   fontSize: 12,
+  background: "var(--table-row)",
+  color: "var(--text)",
 };
 
 const smallButton: React.CSSProperties = {
