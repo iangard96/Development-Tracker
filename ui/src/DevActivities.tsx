@@ -1274,12 +1274,24 @@ export default function DevActivities() {
   const isCustomRow = useCallback(
     (row: DevStep) => {
       const name = (row.name || "").toLowerCase();
-      if (customIds.has(row.id)) return true;
-      if (name.includes("custom")) return true;
-      // Be conservative: if we don't explicitly know it's custom, treat it as standard
-      return false;
+      const explicitCustom = customIds.has(row.id) || name.includes("custom");
+
+      // If we don't know the template (missing project_type), fall back to explicit markers only
+      if (!requirementTemplateLookup) {
+        return explicitCustom;
+      }
+
+      // If the activity matches a template entry, treat as standard even if customIds had a stale id
+      const match = findRequirementsForActivity(
+        requirementTemplateLookup,
+        row.name ?? "",
+      );
+      if (match) return false;
+
+      // Otherwise it's not in the template, so consider it custom
+      return true;
     },
-    [customIds],
+    [customIds, requirementTemplateLookup],
   );
 
   const resetAddForm = useCallback(() => {
