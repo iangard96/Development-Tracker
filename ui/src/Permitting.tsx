@@ -471,7 +471,7 @@ export default function Permitting() {
                         <div style={{ display: "flex", gap: 6 }}>
                           {canDelete ? (
                             <button className="btn-delete" onClick={() => deleteRow(row.id)}>
-                              Delete
+                              Remove
                             </button>
                           ) : null}
                         </div>

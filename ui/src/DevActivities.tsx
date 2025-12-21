@@ -2301,7 +2301,7 @@ export default function DevActivities() {
                       }
                     }}
                   >
-                    Delete
+                    Remove
                   </button>
                 ) : null}
               </td>
