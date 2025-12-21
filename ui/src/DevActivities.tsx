@@ -39,7 +39,7 @@ const th: React.CSSProperties = {
   paddingRight: 12,
   fontWeight: 600,
   fontSize: 12,
-  color: "var(--text)",
+  color: "#ffffff",
   position: "sticky",
   top: 0,
   background: "var(--card)",
