@@ -307,6 +307,8 @@ export default function Lease() {
             <input
               type="file"
               accept="image/png,image/jpeg"
+              className="file-input-dark"
+              style={{ background: "var(--table-row)" }}
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
@@ -329,7 +331,7 @@ export default function Lease() {
 
         <Card title="Lease Template">
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-            <input type="file" accept=".doc,.docx,.odt,.pdf" />
+            <input type="file" accept=".doc,.docx,.odt,.pdf" className="file-input-dark" style={{ background: "var(--table-row)" }} />
             <button
               type="button"
               onClick={() => alert("Wire this to backend lease merge/template storage.")}
@@ -476,7 +478,19 @@ function LabeledSelect({
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "var(--muted)" }}>
       <span style={{ fontWeight: 600 }}>{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={inputStyle}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          ...inputStyle,
+          appearance: "none",
+          paddingRight: 28,
+          background:
+            "var(--card) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 10px center",
+          backgroundSize: "10px",
+          cursor: "pointer",
+        }}
+      >
         {options.map((opt) => (
           <option key={opt} value={opt}>
             {opt}

@@ -561,3 +561,25 @@ button:disabled {
 .nav-collapse-btn:hover {
   background: var(--table-hover);
 }
+
+/* Dark file inputs for lease uploads */
+input[type="file"].file-input-dark {
+  background: var(--table-row);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+input[type="file"].file-input-dark::file-selector-button {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+input[type="file"].file-input-dark:hover::file-selector-button {
+  border-color: var(--accent);
+}
