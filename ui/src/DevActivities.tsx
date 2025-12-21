@@ -824,6 +824,11 @@ export default function DevActivities() {
   const [newActivityPhase, setNewActivityPhase] = useState<"" | 1 | 2 | 3>("");
   const [addSaving, setAddSaving] = useState(false);
 
+  const requirementTemplateLookup = useMemo(
+    () => (project?.project_type ? getRequirementTemplateLookup(project.project_type) : null),
+    [project?.project_type],
+  );
+
   useEffect(() => {
     const handle = window.setTimeout(() => {
       setSearchTerm(searchInput.trim());
@@ -1050,7 +1055,7 @@ export default function DevActivities() {
 
   useEffect(() => {
     if (!rows || !project?.project_type) return;
-    const templateLookup = getRequirementTemplateLookup(project.project_type);
+    const templateLookup = requirementTemplateLookup;
     if (!templateLookup) return;
 
     const setsEqual = (a: Set<string>, b: Set<string>) => {
@@ -1091,7 +1096,7 @@ export default function DevActivities() {
         }
       }
     })();
-  }, [applyFresh, project?.project_type, requirementSets, rows]);
+  }, [applyFresh, project?.project_type, requirementSets, requirementTemplateLookup, rows]);
 
   const sorted = useMemo(() => {
     const list = [...deferredFiltered];
@@ -1264,6 +1269,22 @@ export default function DevActivities() {
       performReorder(updated.map((r) => r.id));
     },
     [canReorder, orderedBySequence, performReorder, projectId],
+  );
+
+  const isCustomRow = useCallback(
+    (row: DevStep) => {
+      const name = (row.name || "").toLowerCase();
+      if (customIds.has(row.id)) return true;
+      if (name.includes("custom")) return true;
+      const seq = (row as any).sequence;
+      if (seq === null || seq === undefined) return true;
+      if (requirementTemplateLookup) {
+        const norm = normalizeActivityName(row.name ?? "");
+        if (!requirementTemplateLookup.has(norm)) return true;
+      }
+      return false;
+    },
+    [customIds, requirementTemplateLookup],
   );
 
   const resetAddForm = useCallback(() => {
@@ -2389,15 +2410,12 @@ export default function DevActivities() {
                   }}
                 >
                   {(() => {
-                    const isCustom =
-                      customIds.has(r.id) ||
-                      (r.name || "").toLowerCase().includes("custom");
-                    if (!isCustom) return null;
-                    return (
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          const ok = window.confirm("Delete this activity? This cannot be undone.");
+                  if (!isCustomRow(r)) return null;
+                  return (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const ok = window.confirm("Delete this activity? This cannot be undone.");
                           if (!ok) return;
                           try {
                             await deleteDevelopmentStep(r.id);
