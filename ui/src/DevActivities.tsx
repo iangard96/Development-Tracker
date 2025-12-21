@@ -824,10 +824,10 @@ export default function DevActivities() {
   const [newActivityPhase, setNewActivityPhase] = useState<"" | 1 | 2 | 3>("");
   const [addSaving, setAddSaving] = useState(false);
 
-  const requirementTemplateLookup = useMemo(
-    () => (project?.project_type ? getRequirementTemplateLookup(project.project_type) : null),
-    [project?.project_type],
-  );
+  const requirementTemplateLookup = useMemo(() => {
+    if (!project?.project_type) return null;
+    return getRequirementTemplateLookup(project.project_type);
+  }, [project?.project_type]);
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -1276,8 +1276,6 @@ export default function DevActivities() {
       const name = (row.name || "").toLowerCase();
       if (customIds.has(row.id)) return true;
       if (name.includes("custom")) return true;
-      const seq = (row as any).sequence;
-      if (seq === null || seq === undefined) return true;
       if (requirementTemplateLookup) {
         const norm = normalizeActivityName(row.name ?? "");
         if (!requirementTemplateLookup.has(norm)) return true;
