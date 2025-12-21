@@ -1276,11 +1276,12 @@ export default function DevActivities() {
       const name = (row.name || "").toLowerCase();
       if (customIds.has(row.id)) return true;
       if (name.includes("custom")) return true;
-      if (requirementTemplateLookup) {
-        const norm = normalizeActivityName(row.name ?? "");
-        if (!requirementTemplateLookup.has(norm)) return true;
-      }
-      return false;
+      if (!requirementTemplateLookup) return false;
+      const match = findRequirementsForActivity(
+        requirementTemplateLookup,
+        row.name ?? "",
+      );
+      return !match;
     },
     [customIds, requirementTemplateLookup],
   );
