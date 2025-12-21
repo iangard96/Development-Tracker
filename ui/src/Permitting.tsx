@@ -76,6 +76,12 @@ const columns = [
 ];
 
 const levels = ["Federal", "State", "Local"];
+const TEMPLATE_SIGNATURES = new Set(
+  TEMPLATE_PERMITS.map(
+    (r) =>
+      `${(r.level || "").toLowerCase()}|${(r.agency || "").toLowerCase()}|${(r.required_permit || "").toLowerCase()}`,
+  ),
+);
 
 const columnWidths: Record<string, number> = {
   applicable: 80,
@@ -310,6 +316,11 @@ export default function Permitting() {
     setCollapsedLevels((prev) => ({ ...prev, [level]: !prev[level] }));
   }
 
+  const isTemplateRow = (row: PermitRequirement) => {
+    const sig = `${(row.level || "").toLowerCase()}|${(row.agency || "").toLowerCase()}|${(row.required_permit || "").toLowerCase()}`;
+    return TEMPLATE_SIGNATURES.has(sig);
+  };
+
   if (!projectId) {
     return <div style={{ padding: 16, color: "var(--muted)" }}>Select a project to view permitting.</div>;
   }
@@ -348,8 +359,8 @@ export default function Permitting() {
 
       {levels.map((level) => (
         <section key={level} style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 10, padding: 12, boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 , flexWrap: "wrap" }}>
               <button
                 type="button"
                 style={toggleButton}
@@ -359,6 +370,7 @@ export default function Permitting() {
                 <span aria-hidden="true">{collapsedLevels[level] ? "►" : "▼"}</span>
                 {collapsedLevels[level] ? "Expand" : "Collapse"}
               </button>
+              <div style={{ fontSize: 15, fontWeight: 700 }}>{level}</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button
@@ -389,6 +401,7 @@ export default function Permitting() {
               </thead>
               <tbody>
                 {(grouped[level] || []).map((row) => {
+                  const canDelete = row.id >= 0 && !isTemplateRow(row);
                   return (
                     <tr key={row.id}>
                       {columns.map((c) => (
@@ -457,7 +470,11 @@ export default function Permitting() {
                       ))}
                       <td style={{ ...tbodyCell, minWidth: columnWidths["actions"], width: columnWidths["actions"] }}>
                         <div style={{ display: "flex", gap: 6 }}>
-                          <button style={smallButton} onClick={() => deleteRow(row.id)}>Delete</button>
+                          {canDelete ? (
+                            <button style={smallButton} onClick={() => deleteRow(row.id)}>Delete</button>
+                          ) : (
+                            <span style={{ fontSize: 12, color: "var(--muted)" }}>Locked</span>
+                          )}
                         </div>
                       </td>
                     </tr>
