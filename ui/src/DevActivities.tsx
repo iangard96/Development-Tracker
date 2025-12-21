@@ -1276,14 +1276,10 @@ export default function DevActivities() {
       const name = (row.name || "").toLowerCase();
       if (customIds.has(row.id)) return true;
       if (name.includes("custom")) return true;
-      if (!requirementTemplateLookup) return false;
-      const match = findRequirementsForActivity(
-        requirementTemplateLookup,
-        row.name ?? "",
-      );
-      return !match;
+      // Be conservative: if we don't explicitly know it's custom, treat it as standard
+      return false;
     },
-    [customIds, requirementTemplateLookup],
+    [customIds],
   );
 
   const resetAddForm = useCallback(() => {
