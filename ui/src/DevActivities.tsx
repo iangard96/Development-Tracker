@@ -131,9 +131,6 @@ const PHASE_OPTION_MAP: Record<"" | "1" | "2" | "3", string> = {
   "3": "Late",
 };
 
-const customStorageKey = (projectId: string | number) =>
-  `dev-activities-custom-${projectId}`;
-
 /** Convert whatever we have to what <input type="date"> expects (YYYY-MM-DD). */
 function normalizeForDateInput(value?: string | null): string {
   if (!value) return "";
@@ -841,38 +838,6 @@ export default function DevActivities() {
   }, [projectId]);
 
   useEffect(() => {
-    if (!projectId) {
-      setCustomIds(new Set());
-      return;
-    }
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem(customStorageKey(projectId));
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        const cleaned = parsed.filter((id) => typeof id === "number");
-        setCustomIds(new Set(cleaned as number[]));
-      }
-    } catch (err) {
-      console.warn("Failed to restore custom activities", err);
-    }
-  }, [projectId]);
-
-  useEffect(() => {
-    if (!projectId) return;
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(
-        customStorageKey(projectId),
-        JSON.stringify(Array.from(customIds)),
-      );
-    } catch (err) {
-      console.warn("Failed to persist custom activities", err);
-    }
-  }, [customIds, projectId]);
-
-  useEffect(() => {
     if (!rows) return;
     setCustomIds((prev) => {
       const idsInRows = new Set(rows.map((r) => r.id));
@@ -1277,11 +1242,9 @@ export default function DevActivities() {
       const explicitCustom = customIds.has(row.id) || name.includes("custom");
 
       // If we don't know the template (missing project_type), fall back to explicit markers only
-      if (!requirementTemplateLookup) {
-        return explicitCustom;
-      }
+      if (!requirementTemplateLookup) return explicitCustom;
 
-      // If the activity matches a template entry, treat as standard even if customIds had a stale id
+      // If the activity matches a template entry, treat as standard
       const match = findRequirementsForActivity(
         requirementTemplateLookup,
         row.name ?? "",
