@@ -39,10 +39,10 @@ const th: React.CSSProperties = {
   paddingRight: 12,
   fontWeight: 600,
   fontSize: 12,
-  color: "var(--card)",
+  color: "var(--muted)",
   position: "sticky",
   top: 0,
-  background: "var(--card)",
+  background: "var(--table-header)",
   zIndex: 3,
 };
 const td: React.CSSProperties = {
@@ -57,7 +57,7 @@ const stickyActivity: React.CSSProperties = {
   position: "sticky",
   left: 0,
   top: 0,
-  background: "var(--card)",
+  background: "var(--table-row)",
   zIndex: 4,
 };
 const requirementTh: React.CSSProperties = {
@@ -165,7 +165,7 @@ function DateCell({
         border: "1px solid var(--border)",
         borderRadius: 5,
         fontSize: 13,
-        background: "white",
+        background: "var(--card)",
         color: "var(--text)",
       }}
     />
@@ -202,7 +202,8 @@ function StatusCell({
         padding: "6px 10px",
         border: "1px solid var(--border)",
         borderRadius: 5,
-        background: "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+        background:
+          "var(--card) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
         backgroundSize: "10px",
         paddingRight: 24,
         fontSize: 13,
@@ -761,7 +762,7 @@ function SpendCell({
         border: "1px solid var(--border)",
         fontSize: 14,
         fontWeight: 500,
-        background: "white",
+        background: "var(--card)",
         color: "var(--text)",
         boxSizing: "border-box",
         textAlign: "right",
@@ -1515,7 +1516,8 @@ export default function DevActivities() {
               borderRadius: 5,
               border: "1px solid var(--border)",
               fontSize: 13,
-              background: "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+              background:
+                "var(--card) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
               backgroundSize: "10px",
               paddingRight: 24,
               color: "var(--text)",
@@ -1549,7 +1551,7 @@ export default function DevActivities() {
               border: "1px solid var(--border)",
               fontSize: 13,
               color: "var(--text)",
-              background: "white",
+              background: "var(--card)",
             }}
           />
         </label>
@@ -1576,7 +1578,7 @@ export default function DevActivities() {
               border: "1px solid var(--border)",
               fontSize: 13,
               background:
-                "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+                "var(--card) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
               backgroundSize: "10px",
               paddingRight: 24,
               color: "var(--text)",
