@@ -18,6 +18,8 @@
   --pill: #24170d;
   --success: #34d399;
   --danger: #f87171;
+  --scroll-track: var(--table-row);
+  --scroll-thumb: #8c6a2c;
 }
 
 [data-theme="dark"] {
@@ -40,6 +42,8 @@
   --pill: #1e140c;
   --success: #34d399;
   --danger: #f87171;
+  --scroll-track: var(--table-row);
+  --scroll-thumb: #c08a2e;
 }
 
 /* Global body reset */
@@ -50,6 +54,35 @@ body {
   background: var(--bg);
   font-size: 14px;
   color: var(--text);
+}
+
+/* Global scrollbar dark theme */
+* {
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background: var(--scroll-track);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 999px;
+  border: 2px solid var(--scroll-track);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--scroll-track);
 }
 
 /* Ensure the root fills viewport height */
