@@ -334,7 +334,7 @@ function DevTypeCell({
           fontSize: 13,
           color: "var(--text)",
           background:
-            "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 10px center",
+            "var(--table-row) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 10px center",
           backgroundSize: "10px",
           paddingRight: 28,
           appearance: "none" as any,
@@ -410,7 +410,7 @@ function RelatedActivityCell({
         border: "1px solid var(--border)",
         borderRadius: 5,
         background:
-          "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+          "var(--table-row) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
         backgroundSize: "10px",
         paddingRight: 24,
         fontSize: 13,
@@ -527,7 +527,7 @@ function OwnerCell({
         border: "1px solid var(--border)",
         borderRadius: 5,
         background:
-          "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+            "var(--table-row) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
         backgroundSize: "10px",
         paddingRight: 24,
         fontSize: 13,
@@ -1781,7 +1781,7 @@ export default function DevActivities() {
                           fontSize: 13,
                           boxSizing: "border-box",
                           background:
-                            "white url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
+                            "var(--table-row) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d8ae52' d='M6 9L1 4h10z'/%3E%3C/svg%3E\") no-repeat right 6px center",
                           backgroundSize: "10px",
                           paddingRight: 24,
                         }}
