@@ -2,26 +2,26 @@
   --bg: #f9fafb;
   --card: #ffffff;
   --border: #e5e7eb;
-  --text: #111827;
-  --muted: #6b7280;
-  --accent: #1d4ed8;
-  --icon-muted: #b0b4bb;
-  --button-bg: #f3f4f6;
+  --text: #0f172a;
+  --muted: #4b5563;
+  --accent: #f59e0b; /* amber */
+  --icon-muted: #9ca3af;
+  --button-bg: #f6f7fb;
   --button-border: #e5e7eb;
   --shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
 [data-theme="dark"] {
-  --bg: #0f172a;
-  --card: #111827;
-  --border: #243449;
-  --text: #e5e7eb;
-  --muted: #cbd5e1;
-  --accent: #fbbf24;
-  --icon-muted: #cbd5e1;
-  --button-bg: #1f2937;
-  --button-border: #273449;
-  --shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  --bg: #0a1020;
+  --card: #0f172a;
+  --border: #233043;
+  --text: #f8fafc;
+  --muted: #d3d8e3;
+  --accent: #f59e0b; /* deeper amber for contrast */
+  --icon-muted: #e2e8f0;
+  --button-bg: #16233c;
+  --button-border: #2c3a50;
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
 
 /* Global body reset */
