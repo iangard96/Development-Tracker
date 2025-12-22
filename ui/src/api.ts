@@ -107,6 +107,12 @@ async function fetchWithAuth(
   const refreshed = await refreshAccessToken();
   if (!refreshed) {
     console.warn("[auth] refresh token failed or expired; keeping 401 response.");
+    clearTokens();
+    try {
+      window.dispatchEvent(new CustomEvent("dt_session_expired"));
+    } catch (e) {
+      // ignore if not in browser
+    }
     return response;
   }
 

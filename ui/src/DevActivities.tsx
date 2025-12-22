@@ -232,11 +232,16 @@ function StatusCell({
 }
 
 /** Dev Type dropdown cell */
+// Core development types seeded from templates; treat these as standard, not "custom".
 const DEFAULT_DEV_TYPE_OPTIONS: DevType[] = [
   "",
   "Interconnection",
   "Permitting",
   "Due Diligence",
+  "Site Control",
+  "Engineering",
+  "Financing",
+  "Construction / Execution",
 ];
 
 class DevActivitiesErrorBoundary extends Component<

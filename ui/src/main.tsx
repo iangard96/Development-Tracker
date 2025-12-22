@@ -92,6 +92,17 @@ function AppShell() {
     };
   }, []);
 
+  // React to global session-expired events from fetchWithAuth
+  useEffect(() => {
+    const handler = () => {
+      setCurrentUser(null);
+      setSessionMessage("Your session expired. Please sign in again.");
+      setAuthChecked(true);
+    };
+    window.addEventListener("dt_session_expired", handler as EventListener);
+    return () => window.removeEventListener("dt_session_expired", handler as EventListener);
+  }, []);
+
   const handleResetAuth = async () => {
     try {
       await logoutUser();

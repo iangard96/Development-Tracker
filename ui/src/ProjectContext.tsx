@@ -27,10 +27,17 @@ type ProjectProviderProps = {
   projectId?: number;
 };
 
+const PROJECT_KEY = "dt_selected_project_id";
+
 export function ProjectProvider({ children, projectId: projectIdProp }: ProjectProviderProps) {
-  const [projectId, setProjectId] = useState<number | null>(
-    projectIdProp && projectIdProp > 0 ? projectIdProp : null,
-  );
+  const initialId = (() => {
+    if (projectIdProp && projectIdProp > 0) return projectIdProp;
+    const stored = localStorage.getItem(PROJECT_KEY);
+    const parsed = stored ? Number(stored) : null;
+    return parsed && parsed > 0 ? parsed : null;
+  })();
+
+  const [projectId, setProjectId] = useState<number | null>(initialId);
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +48,15 @@ export function ProjectProvider({ children, projectId: projectIdProp }: ProjectP
       setProjectId(projectIdProp);
     }
   }, [projectIdProp, projectId]);
+
+  // Persist selection for reloads
+  useEffect(() => {
+    if (projectId && projectId > 0) {
+      localStorage.setItem(PROJECT_KEY, String(projectId));
+    } else {
+      localStorage.removeItem(PROJECT_KEY);
+    }
+  }, [projectId]);
 
   useEffect(() => {
     // If no project selected, clear state
@@ -81,6 +97,7 @@ export function ProjectProvider({ children, projectId: projectIdProp }: ProjectP
   const clearProject = () => {
     setProjectId(null);
     setProject(null);
+    localStorage.removeItem(PROJECT_KEY);
   };
 
   const setCurrentProject = (p: Project | null) => {
