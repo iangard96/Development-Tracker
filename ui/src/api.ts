@@ -77,13 +77,27 @@ async function fetchWithAuth(
   init: RequestInit = {},
   attemptRefresh = true,
 ): Promise<Response> {
-  const url = typeof input === "string" ? input : (input as any)?.url || "";
-  const isApiRequest = typeof url === "string" && url.startsWith(API);
+  const resolvedUrl = (() => {
+    try {
+      if (typeof input === "string") {
+        return new URL(input, window.location.origin).toString();
+      }
+      if (input instanceof URL) return input.toString();
+      if (typeof (input as any)?.url === "string") {
+        return (input as any).url;
+      }
+    } catch (e) {}
+    return "";
+  })();
+
+  const isApiRequest =
+    typeof resolvedUrl === "string" &&
+    (resolvedUrl.startsWith(API) || resolvedUrl.includes("/api/"));
 
   const headers = new Headers(init.headers || {});
   const token = getAccessToken();
   if (isApiRequest && !token) {
-    console.warn("[auth] API request without access token in storage:", url);
+    console.warn("[auth] API request without access token in storage:", resolvedUrl || input);
   }
   if (isApiRequest && token) {
     headers.set("Authorization", `Bearer ${token}`);
@@ -99,7 +113,7 @@ async function fetchWithAuth(
 
   if (response.status === 401 && isApiRequest && (hasRefresh || hasAccess)) {
     console.warn(
-      `[auth] 401 for ${url || input}. attemptRefresh=${attemptRefresh} refreshPresent=${hasRefresh}`,
+      `[auth] 401 for ${resolvedUrl || input}. attemptRefresh=${attemptRefresh} refreshPresent=${hasRefresh}`,
     );
   }
 
