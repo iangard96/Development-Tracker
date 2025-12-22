@@ -10,6 +10,7 @@ import {
   LabelList,
   Legend,
   Cell,
+  ReferenceLine,
 } from "recharts";
 import type { DevStep, DevType } from "./types";
 
@@ -82,6 +83,12 @@ export default function DevTypeSpendChart({ steps }: Props) {
     rows.reduce((m, r) => Math.max(m, Math.abs(r.delta)), 0) || 1000;
   // Symmetric domain: [-maxAbsDelta, maxAbsDelta] with 0 centered
   const deltaDomain = [-maxAbsDelta, maxAbsDelta];
+  const deltaTicks = useMemo(() => {
+    const max = maxAbsDelta;
+    if (!Number.isFinite(max) || max === 0) return [0];
+    const vals = [-max, 0, max];
+    return Array.from(new Set(vals)).sort((a, b) => a - b);
+  }, [maxAbsDelta]);
 
   const maxSpend =
     rows.reduce((m, r) => Math.max(m, r.planned, r.actual), 0) || 0;
@@ -285,6 +292,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
               <XAxis
                 type="number"
                 domain={deltaDomain}
+                ticks={deltaTicks}
                 tickFormatter={(v) =>
                   v === 0 ? "$0" : `$${Math.abs(Number(v)).toLocaleString()}`
                 }
@@ -308,6 +316,18 @@ export default function DevTypeSpendChart({ steps }: Props) {
                 verticalAlign="bottom"
                 align="center"
                 content={() => <DeltaLegend />}
+              />
+              <ReferenceLine
+                x={0}
+                stroke="var(--muted)"
+                strokeWidth={1}
+                strokeDasharray="4 3"
+                label={{
+                  value: "$0",
+                  position: "top",
+                  fill: "var(--muted)",
+                  fontSize: 12,
+                }}
               />
               <Bar
                 dataKey="delta"
