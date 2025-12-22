@@ -9,12 +9,13 @@ import type {
 } from "./types";
 
 const API = (() => {
-  const fromEnv = import.meta.env.VITE_API_URL;
+  const fromEnv = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE;
   if (fromEnv) return fromEnv;
 
   const fallback = "http://127.0.0.1:8010/api";
   console.warn(
-    `VITE_API_URL is not set; falling back to ${fallback}. Set VITE_API_URL in your env for deployments.`,
+    `VITE_API_URL (preferred) or VITE_API_BASE is not set; falling back to ${fallback}. ` +
+      `Set VITE_API_URL in your env for deployments.`,
   );
   return fallback;
 })();
@@ -90,17 +91,23 @@ async function fetchWithAuth(
     headers,
   });
 
-  if (
-    response.status !== 401 ||
-    !attemptRefresh ||
-    !isApiRequest ||
-    !getRefreshToken()
-  ) {
+  const hasRefresh = !!getRefreshToken();
+
+  if (response.status === 401 && isApiRequest) {
+    console.warn(
+      `[auth] 401 for ${url || input}. attemptRefresh=${attemptRefresh} refreshPresent=${hasRefresh}`,
+    );
+  }
+
+  if (response.status !== 401 || !attemptRefresh || !isApiRequest || !hasRefresh) {
     return response;
   }
 
   const refreshed = await refreshAccessToken();
-  if (!refreshed) return response;
+  if (!refreshed) {
+    console.warn("[auth] refresh token failed or expired; keeping 401 response.");
+    return response;
+  }
 
   const retryHeaders = new Headers(init.headers || {});
   const newAccess = getAccessToken();
@@ -179,7 +186,12 @@ export async function logoutUser(): Promise<void> {
 
 export async function fetchCurrentUser(): Promise<CurrentUser | null> {
   const r = await fetchWithAuth(`${API}/me/`);
-  if (r.status === 401) return null;
+  if (r.status === 401) {
+    console.warn(
+      "Auth check failed with 401. Ensure you are logged in and that localStorage has fresh dt_access_token / dt_refresh_token values.",
+    );
+    return null;
+  }
   return jsonOrThrow(r, "me fetch failed");
 }
 

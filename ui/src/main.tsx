@@ -14,7 +14,7 @@ import Requirements from "./Requirements";
 import Lease from "./Lease";
 import Economics from "./Economics";
 import Permitting from "./Permitting";
-import { fetchCurrentUser, type CurrentUser } from "./api";
+import { fetchCurrentUser, logoutUser, type CurrentUser } from "./api";
 import "./index.css";
 import "./Layout.css";
 
@@ -26,6 +26,7 @@ function AppShell() {
   });
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [sessionMessage, setSessionMessage] = useState<string | null>(null);
 
   // Auto-collapse on small screens
   useEffect(() => {
@@ -50,18 +51,61 @@ function AppShell() {
   }, [theme]);
 
   useEffect(() => {
+    let cancelled = false;
+    const hadStoredToken = !!localStorage.getItem("dt_access_token");
+
     fetchCurrentUser()
-      .then((u) => setCurrentUser(u))
-      .catch(() => setCurrentUser(null))
-      .finally(() => setAuthChecked(true));
+      .then((u) => {
+        if (cancelled) return;
+        setCurrentUser(u);
+        if (!u && hadStoredToken) {
+          setSessionMessage("Your session expired or the token was rejected. Please sign in again.");
+        } else {
+          setSessionMessage(null);
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.warn("Failed to fetch current user:", err);
+        if (hadStoredToken) {
+          setSessionMessage("Could not validate your session. Please sign in again.");
+        }
+        setCurrentUser(null);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setAuthChecked(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  const handleResetAuth = async () => {
+    try {
+      await logoutUser();
+    } catch (e) {
+      console.warn("Logout failed (tokens still cleared locally)", e);
+    } finally {
+      setCurrentUser(null);
+      setSessionMessage("Session cleared. Please sign in.");
+      setAuthChecked(true);
+    }
+  };
 
   if (!authChecked) {
     return <div className="page-root">Checking session...</div>;
   }
 
   if (!currentUser) {
-    return <Login onLogin={(u) => setCurrentUser(u)} />;
+    return (
+      <Login
+        onLogin={(u) => setCurrentUser(u)}
+        sessionMessage={sessionMessage}
+        onResetAuth={handleResetAuth}
+      />
+    );
   }
 
   return (

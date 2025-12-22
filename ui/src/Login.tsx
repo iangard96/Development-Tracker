@@ -3,9 +3,11 @@ import { fetchCurrentUser, loginUser, type CurrentUser } from "./api";
 
 type Props = {
   onLogin: (user: CurrentUser | null) => void;
+  sessionMessage?: string | null;
+  onResetAuth?: () => void;
 };
 
-export default function Login({ onLogin }: Props) {
+export default function Login({ onLogin, sessionMessage, onResetAuth }: Props) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -49,6 +51,42 @@ export default function Login({ onLogin }: Props) {
           boxShadow: "0 18px 38px rgba(0,0,0,0.35)",
         }}
       >
+        {sessionMessage ? (
+          <div
+            style={{
+              border: "1px solid var(--border)",
+              background: "rgba(253, 224, 71, 0.12)",
+              color: "var(--text)",
+              padding: "8px 10px",
+              borderRadius: 10,
+              marginBottom: 12,
+              fontSize: 12,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <span>{sessionMessage}</span>
+            {onResetAuth && (
+              <button
+                type="button"
+                onClick={onResetAuth}
+                style={{
+                  border: "1px solid var(--border)",
+                  background: "var(--card)",
+                  color: "var(--text)",
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  fontWeight: 600,
+                }}
+              >
+                Reset session
+              </button>
+            )}
+          </div>
+        ) : null}
         <h2 style={{ margin: "0 0 12px 0", color: "var(--text)" }}>Sign in</h2>
         <p style={{ margin: "0 0 16px 0", color: "var(--muted)", fontSize: 13 }}>
           Enter your email or username to continue.
