@@ -10,6 +10,7 @@ import {
 import type { DevStep, DevType } from "./types";
 import {
   findRequirementsForActivity,
+  getAllTemplateActivityNames,
   getRequirementTemplateLookup,
   normalizeActivityName,
   type RequirementLabel,
@@ -788,6 +789,7 @@ export default function DevActivities() {
   const [searchTerm, setSearchTerm] = useState("");
   const [phaseFilter, setPhaseFilter] = useState<1 | 2 | 3 | "ALL">("ALL");
   const [customIds, setCustomIds] = useState<Set<number>>(new Set());
+  const [explicitCustomIds, setExplicitCustomIds] = useState<Set<number>>(new Set());
   const [customDevTypes, setCustomDevTypes] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<
     | "status"
@@ -821,10 +823,32 @@ export default function DevActivities() {
   const [newActivityPhase, setNewActivityPhase] = useState<"" | 1 | 2 | 3>("");
   const [addSaving, setAddSaving] = useState(false);
 
+  const allTemplateActivities = useMemo(() => getAllTemplateActivityNames(), []);
   const requirementTemplateLookup = useMemo(() => {
     if (!project?.project_type) return null;
     return getRequirementTemplateLookup(project.project_type);
   }, [project?.project_type]);
+
+  const isStandardActivity = useCallback(
+    (activityName: string | null | undefined) => {
+      const safeName = (activityName ?? "").trim();
+      if (!safeName) return false;
+
+      // First try the project-specific template
+      if (requirementTemplateLookup) {
+        const match = findRequirementsForActivity(
+          requirementTemplateLookup,
+          safeName,
+        );
+        if (match) return true;
+      }
+
+      // Fallback to any known template activity
+      const norm = normalizeActivityName(safeName);
+      return allTemplateActivities.has(norm);
+    },
+    [allTemplateActivities, requirementTemplateLookup],
+  );
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -839,15 +863,38 @@ export default function DevActivities() {
 
   useEffect(() => {
     if (!rows) return;
-    setCustomIds((prev) => {
+    // Drop explicit custom ids that no longer exist in the current dataset
+    setExplicitCustomIds((prev) => {
       const idsInRows = new Set(rows.map((r) => r.id));
-      const filtered = new Set(
-        Array.from(prev).filter((id) => idsInRows.has(id)),
-      );
-      if (filtered.size === prev.size) return prev;
-      return filtered;
+      const next = new Set<number>();
+      prev.forEach((id) => {
+        if (idsInRows.has(id)) next.add(id);
+      });
+      return next;
     });
-  }, [rows]);
+
+    // Recompute which rows should be treated as custom:
+    //  - explicit ids created via "+ Activity"
+    //  - any row that doesn't match a known template activity
+    setCustomIds(() => {
+      const idsInRows = new Set(rows.map((r) => r.id));
+      const next = new Set<number>();
+
+      rows.forEach((r) => {
+        if (!isStandardActivity(r.name)) {
+          next.add(r.id);
+        }
+      });
+
+      explicitCustomIds.forEach((id) => {
+        if (idsInRows.has(id)) {
+          next.add(id);
+        }
+      });
+
+      return next;
+    });
+  }, [rows, isStandardActivity, explicitCustomIds]);
 
   const applyFresh = useCallback(
     (fresh: DevStep) =>
@@ -916,11 +963,15 @@ export default function DevActivities() {
     if (!projectId) {
       setRows(null);
       setErr(null);
+      setCustomIds(new Set());
+      setExplicitCustomIds(new Set());
       return;
     }
 
     setRows(null);
     setErr(null);
+    setCustomIds(new Set());
+    setExplicitCustomIds(new Set());
     fetchStepsForProject(projectId)
       .then((data) => {
         setRows(data);
@@ -1238,23 +1289,10 @@ export default function DevActivities() {
 
   const isCustomRow = useCallback(
     (row: DevStep) => {
-      const name = (row.name || "").toLowerCase();
-      const explicitCustom = customIds.has(row.id) || name.includes("custom");
-
-      // If we don't know the template (missing project_type), fall back to explicit markers only
-      if (!requirementTemplateLookup) return explicitCustom;
-
-      // If the activity matches a template entry, treat as standard
-      const match = findRequirementsForActivity(
-        requirementTemplateLookup,
-        row.name ?? "",
-      );
-      if (match) return false;
-
-      // Otherwise it's not in the template, so consider it custom
-      return true;
+      if (customIds.has(row.id)) return true;
+      return !isStandardActivity(row.name);
     },
-    [customIds, requirementTemplateLookup],
+    [customIds, isStandardActivity],
   );
 
   const resetAddForm = useCallback(() => {
@@ -1280,6 +1318,11 @@ export default function DevActivities() {
         phase: phaseVal,
       });
       setRows((cur) => (cur ? [...cur, created] : [created]));
+      setExplicitCustomIds((prev) => {
+        const next = new Set(prev);
+        next.add(created.id);
+        return next;
+      });
       setCustomIds((prev) => {
         const next = new Set(prev);
         next.add(created.id);
@@ -1832,9 +1875,7 @@ export default function DevActivities() {
                 {/* Phase */}
                 <td style={td}>
                   {(() => {
-                    const isCustom =
-                      customIds.has(r.id) ||
-                      (r.name || "").toLowerCase().includes("custom");
+                    const isCustom = isCustomRow(r);
 
                     const phaseVal = (r as any).phase ?? null;
                     const phaseKey = (phaseVal === null ? "" : String(phaseVal)) as
@@ -1891,9 +1932,7 @@ export default function DevActivities() {
                 {/* Activity / Tasks */}
                 <td style={{ ...td, ...stickyActivity }}>
                   {(() => {
-                    const isCustom =
-                      customIds.has(r.id) ||
-                      (r.name || "").toLowerCase().includes("custom");
+                    const isCustom = isCustomRow(r);
                     if (!isCustom) return r.name;
                     return (
                       <input

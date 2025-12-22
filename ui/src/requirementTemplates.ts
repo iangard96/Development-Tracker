@@ -72,6 +72,21 @@ const REQUIREMENT_TEMPLATES: Record<TemplateKey, RequirementTemplateEntry[]> = {
   "FTM Rooftop Community Solar": toRequirementEntries(RAW_TEMPLATES["FTM Rooftop Community Solar"]),
 };
 
+const ALL_TEMPLATE_ACTIVITY_NAMES = (() => {
+  const names = new Set<string>();
+  Object.values(REQUIREMENT_TEMPLATES).forEach((rows) => {
+    rows.forEach((row) => {
+      names.add(normalizeActivityName(row.activity));
+    });
+  });
+  return names;
+})();
+
+export function getAllTemplateActivityNames(): Set<string> {
+  // Return a copy so callers don't accidentally mutate the shared Set
+  return new Set(ALL_TEMPLATE_ACTIVITY_NAMES);
+}
+
 export function getRequirementTemplateLookup(projectType: string | null | undefined) {
   const requestedRaw = (projectType ?? "").trim();
   const requested = requestedRaw.toLowerCase();
