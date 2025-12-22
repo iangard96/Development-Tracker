@@ -60,12 +60,12 @@ export default function DevTypeSpendChart({ steps }: Props) {
 
       const diff = planned - actual; // >0 = under, <0 = over
       let delta = 0;
-      let deltaLabel = "On budget";
+      let deltaLabel = "$0";
 
       if (planned !== 0 || actual !== 0) {
         if (Math.abs(diff) < 0.5) {
           delta = 0;
-          deltaLabel = "On budget";
+          deltaLabel = "$0";
         } else if (diff > 0) {
           delta = diff;
           deltaLabel = `under $${Math.abs(diff).toLocaleString()}`;
@@ -124,7 +124,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
     const label = (value ?? "") as string;
     const delta = rows[index]?.delta ?? 0;
 
-    if (!label || delta === 0) return null;
+    if (!label) return null;
 
     const barWidth = Math.abs(Number(width));
     const left = width < 0 ? x + width : x;
@@ -144,7 +144,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
           x={centerX}
           y={centerY}
           textAnchor="middle"
-          fill="var(--card)"
+          fill="var(--text)"
           style={{ fontSize: 12, fontWeight: 500 }}
         >
           {label}
@@ -212,7 +212,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
           x={centerX}
           y={centerY}
           textAnchor="middle"
-          fill="var(--card)"
+          fill="var(--text)"
           style={{ fontSize: 11, fontWeight: 500 }}
         >
           {label}
