@@ -365,7 +365,7 @@ const input: React.CSSProperties = {
   border: "1px solid var(--border)",
   fontSize: 13,
   boxSizing: "border-box",
-  background: "white",
+  background: "var(--table-row)",
   color: "var(--text)",
 };
 const expandedInput: React.CSSProperties = {
