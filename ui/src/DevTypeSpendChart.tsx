@@ -93,26 +93,34 @@ export default function DevTypeSpendChart({ steps }: Props) {
   const maxSpend =
     rows.reduce((m, r) => Math.max(m, r.planned, r.actual), 0) || 0;
 
-  const spendMaxWithPad = maxSpend * 1.1 || 1;
+  // Pad and snap the max to a "nice" value (nearest 1k) so ticks are readable
+  const spendMaxWithPad = useMemo(() => {
+    const padded = (maxSpend || 1) * 1.2;
+    const nice = Math.ceil(padded / 1000) * 1000;
+    return nice || 1000;
+  }, [maxSpend]);
 
-  // Ticks for the right-hand X-axis: always show at least 0, mid, max
+  // Ticks for the right-hand X-axis: generate ~5 nice ticks from 0 to max
   const spendTicks: number[] = useMemo(() => {
-    const max = spendMaxWithPad || 1;
-    const mid = max / 2;
-    const rawStep = max / 4 || 1;
+    const max = spendMaxWithPad || 1000;
+    const rawStep = max / 5;
+    // snap step to nearest 500/1000/5000 etc.
+    const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const candidates = [1, 2, 5, 10].map((m) => m * magnitude);
     const step =
-      rawStep <= 100
-        ? Math.max(10, Math.ceil(rawStep / 10) * 10)
-        : Math.ceil(rawStep / 100) * 100;
+      candidates.find((c) => c >= rawStep) ??
+      candidates[candidates.length - 1] * 2;
 
     const ticks: number[] = [];
     for (let v = 0; v <= max + 1e-6; v += step) {
-      ticks.push(v);
+      ticks.push(Math.round(v));
     }
-    ticks.push(mid, max, 0);
-    return Array.from(new Set(ticks.map((t) => Number(t.toFixed(2))))).sort(
-      (a, b) => a - b,
-    );
+    ticks.push(max);
+    ticks.push(0);
+
+    return Array.from(new Set(ticks))
+      .sort((a, b) => a - b)
+      .map((t) => Number(t.toFixed(0)));
   }, [spendMaxWithPad]);
 
   /* ----- Custom label renderers ----- */
