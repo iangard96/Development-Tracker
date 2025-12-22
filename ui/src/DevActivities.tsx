@@ -1,6 +1,5 @@
 ﻿// ui/src/DevActivities.tsx
 import {
-  Component,
   useCallback,
   useDeferredValue,
   useEffect,
@@ -11,14 +10,12 @@ import {
 import type { DevStep, DevType } from "./types";
 import {
   findRequirementsForActivity,
-  getAllTemplateActivityNames,
   getRequirementTemplateLookup,
   normalizeActivityName,
   type RequirementLabel,
 } from "./requirementTemplates";
 import {
   fetchStepsForProject,
-  bootstrapProjectSteps,
   updateStepDates,
   updateStepStatus,
   updateStepDevType,
@@ -134,6 +131,9 @@ const PHASE_OPTION_MAP: Record<"" | "1" | "2" | "3", string> = {
   "3": "Late",
 };
 
+const customStorageKey = (projectId: string | number) =>
+  `dev-activities-custom-${projectId}`;
+
 /** Convert whatever we have to what <input type="date"> expects (YYYY-MM-DD). */
 function normalizeForDateInput(value?: string | null): string {
   if (!value) return "";
@@ -232,61 +232,12 @@ function StatusCell({
 }
 
 /** Dev Type dropdown cell */
-// Core development types seeded from templates; treat these as standard, not "custom".
 const DEFAULT_DEV_TYPE_OPTIONS: DevType[] = [
   "",
   "Interconnection",
   "Permitting",
   "Due Diligence",
-  "Site Control",
-  "Engineering",
-  "Financing",
-  "Construction / Execution",
 ];
-
-class DevActivitiesErrorBoundary extends Component<
-  { children: React.ReactNode },
-  { hasError: boolean; message: string }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, message: "" };
-  }
-
-  static getDerivedStateFromError(error: unknown) {
-    return {
-      hasError: true,
-      message: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-
-  componentDidCatch(error: unknown, info: any) {
-    console.warn("DevActivities render error:", error, info);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div
-          style={{
-            padding: 16,
-            border: "1px solid var(--danger)",
-            background: "rgba(248, 113, 113, 0.12)",
-            color: "var(--danger)",
-            borderRadius: 10,
-            margin: 16,
-          }}
-        >
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>
-            Development Activities failed to load
-          </div>
-          <div style={{ fontSize: 13 }}>{this.state.message}</div>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
 
 function DevTypeCell({
   step,
@@ -830,7 +781,7 @@ function SpendCell({
   );
 }
 
-function DevActivitiesInner() {
+export default function DevActivities() {
   const { projectId, project } = useProject();
   const noProjectSelected = !projectId;
   const [rows, setRows] = useState<DevStep[] | null>(null);
@@ -840,7 +791,6 @@ function DevActivitiesInner() {
   const [searchTerm, setSearchTerm] = useState("");
   const [phaseFilter, setPhaseFilter] = useState<1 | 2 | 3 | "ALL">("ALL");
   const [customIds, setCustomIds] = useState<Set<number>>(new Set());
-  const [explicitCustomIds, setExplicitCustomIds] = useState<Set<number>>(new Set());
   const [customDevTypes, setCustomDevTypes] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<
     | "status"
@@ -874,33 +824,6 @@ function DevActivitiesInner() {
   const [newActivityPhase, setNewActivityPhase] = useState<"" | 1 | 2 | 3>("");
   const [addSaving, setAddSaving] = useState(false);
 
-  const allTemplateActivities = useMemo(() => getAllTemplateActivityNames(), []);
-  const requirementTemplateLookup = useMemo(() => {
-    if (!project?.project_type) return null;
-    return getRequirementTemplateLookup(project.project_type);
-  }, [project?.project_type]);
-
-  const isStandardActivity = useCallback(
-    (activityName: string | null | undefined) => {
-      const safeName = (activityName ?? "").trim();
-      if (!safeName) return false;
-
-      // First try the project-specific template
-      if (requirementTemplateLookup) {
-        const match = findRequirementsForActivity(
-          requirementTemplateLookup,
-          safeName,
-        );
-        if (match) return true;
-      }
-
-      // Fallback to any known template activity
-      const norm = normalizeActivityName(safeName);
-      return allTemplateActivities.has(norm);
-    },
-    [allTemplateActivities, requirementTemplateLookup],
-  );
-
   useEffect(() => {
     const handle = window.setTimeout(() => {
       setSearchTerm(searchInput.trim());
@@ -913,39 +836,48 @@ function DevActivitiesInner() {
   }, [projectId]);
 
   useEffect(() => {
+    if (!projectId) {
+      setCustomIds(new Set());
+      return;
+    }
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(customStorageKey(projectId));
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.filter((id) => typeof id === "number");
+        setCustomIds(new Set(cleaned as number[]));
+      }
+    } catch (err) {
+      console.warn("Failed to restore custom activities", err);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        customStorageKey(projectId),
+        JSON.stringify(Array.from(customIds)),
+      );
+    } catch (err) {
+      console.warn("Failed to persist custom activities", err);
+    }
+  }, [customIds, projectId]);
+
+  useEffect(() => {
     if (!rows) return;
-    // Drop explicit custom ids that no longer exist in the current dataset
-    setExplicitCustomIds((prev) => {
+    setCustomIds((prev) => {
       const idsInRows = new Set(rows.map((r) => r.id));
-      const next = new Set<number>();
-      prev.forEach((id) => {
-        if (idsInRows.has(id)) next.add(id);
-      });
-      return next;
+      const filtered = new Set(
+        Array.from(prev).filter((id) => idsInRows.has(id)),
+      );
+      if (filtered.size === prev.size) return prev;
+      return filtered;
     });
-
-    // Recompute which rows should be treated as custom:
-    //  - explicit ids created via "+ Activity"
-    //  - any row that doesn't match a known template activity
-    setCustomIds(() => {
-      const idsInRows = new Set(rows.map((r) => r.id));
-      const next = new Set<number>();
-
-      rows.forEach((r) => {
-        if (!isStandardActivity(r.name)) {
-          next.add(r.id);
-        }
-      });
-
-      explicitCustomIds.forEach((id) => {
-        if (idsInRows.has(id)) {
-          next.add(id);
-        }
-      });
-
-      return next;
-    });
-  }, [rows, isStandardActivity, explicitCustomIds]);
+  }, [rows]);
 
   const applyFresh = useCallback(
     (fresh: DevStep) =>
@@ -1014,25 +946,13 @@ function DevActivitiesInner() {
     if (!projectId) {
       setRows(null);
       setErr(null);
-      setCustomIds(new Set());
-      setExplicitCustomIds(new Set());
       return;
     }
 
     setRows(null);
     setErr(null);
-    setCustomIds(new Set());
-    setExplicitCustomIds(new Set());
     fetchStepsForProject(projectId)
-      .then(async (data) => {
-        if (data.length === 0) {
-          try {
-            await bootstrapProjectSteps(projectId);
-            data = await fetchStepsForProject(projectId);
-          } catch (e) {
-            console.warn("Bootstrap steps failed", e);
-          }
-        }
+      .then((data) => {
         setRows(data);
         // derive custom dev types from data
         const extras = Array.from(
@@ -1130,7 +1050,7 @@ function DevActivitiesInner() {
 
   useEffect(() => {
     if (!rows || !project?.project_type) return;
-    const templateLookup = requirementTemplateLookup;
+    const templateLookup = getRequirementTemplateLookup(project.project_type);
     if (!templateLookup) return;
 
     const setsEqual = (a: Set<string>, b: Set<string>) => {
@@ -1171,7 +1091,7 @@ function DevActivitiesInner() {
         }
       }
     })();
-  }, [applyFresh, project?.project_type, requirementSets, requirementTemplateLookup, rows]);
+  }, [applyFresh, project?.project_type, requirementSets, rows]);
 
   const sorted = useMemo(() => {
     const list = [...deferredFiltered];
@@ -1345,66 +1265,6 @@ function DevActivitiesInner() {
     },
     [canReorder, orderedBySequence, performReorder, projectId],
   );
-
-  const isCustomRow = useCallback(
-    (row: DevStep) => {
-      if (customIds.has(row.id)) return true;
-      return !isStandardActivity(row.name);
-    },
-    [customIds, isStandardActivity],
-  );
-
-  const resetAddForm = useCallback(() => {
-    setNewActivityName("");
-    setNewActivityPhase("");
-    setShowAddForm(false);
-    setAddSaving(false);
-  }, []);
-
-  const handleAddActivity = useCallback(async () => {
-    if (!projectId) return;
-    const trimmed = newActivityName.trim();
-    if (!trimmed) {
-      alert("Enter an activity name.");
-      return;
-    }
-    const phaseVal = newActivityPhase === "" ? null : newActivityPhase;
-    setAddSaving(true);
-    try {
-      const created = await createDevelopmentStep({
-        project: Number(projectId),
-        name: trimmed,
-        phase: phaseVal,
-      });
-      setRows((cur) => (cur ? [...cur, created] : [created]));
-      setExplicitCustomIds((prev) => {
-        const next = new Set(prev);
-        next.add(created.id);
-        return next;
-      });
-      setCustomIds((prev) => {
-        const next = new Set(prev);
-        next.add(created.id);
-        return next;
-      });
-      setNewActivityName("");
-      setNewActivityPhase("");
-      setShowAddForm(false);
-
-      window.setTimeout(() => {
-        const rowEl = rowRefs.current[created.id];
-        const container = tableContainerRef.current;
-        if (rowEl && container) {
-          rowEl.scrollIntoView({ block: "center" });
-        }
-      }, 50);
-    } catch (err: any) {
-      console.error(err);
-      alert(`Failed to add activity.\n${err?.message ?? ""}`);
-    } finally {
-      setAddSaving(false);
-    }
-  }, [newActivityName, newActivityPhase, projectId]);
 
   if (noProjectSelected) {
     return (
@@ -1580,6 +1440,53 @@ function DevActivitiesInner() {
       alert(`Failed to update duration.\n${err?.message ?? ""}`);
     }
   };
+
+  const resetAddForm = useCallback(() => {
+    setNewActivityName("");
+    setNewActivityPhase("");
+    setShowAddForm(false);
+    setAddSaving(false);
+  }, []);
+
+  const handleAddActivity = useCallback(async () => {
+    if (!projectId) return;
+    const trimmed = newActivityName.trim();
+    if (!trimmed) {
+      alert("Enter an activity name.");
+      return;
+    }
+    const phaseVal = newActivityPhase === "" ? null : newActivityPhase;
+    setAddSaving(true);
+    try {
+      const created = await createDevelopmentStep({
+        project: Number(projectId),
+        name: trimmed,
+        phase: phaseVal,
+      });
+      setRows((cur) => (cur ? [...cur, created] : [created]));
+      setCustomIds((prev) => {
+        const next = new Set(prev);
+        next.add(created.id);
+        return next;
+      });
+      setNewActivityName("");
+      setNewActivityPhase("");
+      setShowAddForm(false);
+
+      window.setTimeout(() => {
+        const rowEl = rowRefs.current[created.id];
+        const container = tableContainerRef.current;
+        if (rowEl && container) {
+          rowEl.scrollIntoView({ block: "center" });
+        }
+      }, 50);
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to add activity.\n${err?.message ?? ""}`);
+    } finally {
+      setAddSaving(false);
+    }
+  }, [newActivityName, newActivityPhase, projectId]);
 
   const jumpToId = (id: number) => {
     const target = sorted.find((p) => p.id === id);
@@ -1861,7 +1768,7 @@ function DevActivitiesInner() {
               <th style={{ ...th, ...requirementTh }}>Requirement</th>
               <th style={{ ...th, minWidth: 180 }}>Storage Hybrid Impact</th>
               <th style={{ ...th, minWidth: 140, textAlign: "center" }}>Milestones / NTP Gates</th>
-              <th style={{ ...th, width: 110 }}>Action</th>
+              <th style={{ ...th, width: 120, minWidth: 120, textAlign: "center" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -1934,7 +1841,9 @@ function DevActivitiesInner() {
                 {/* Phase */}
                 <td style={td}>
                   {(() => {
-                    const isCustom = isCustomRow(r);
+                    const isCustom =
+                      customIds.has(r.id) ||
+                      (r.name || "").toLowerCase().includes("custom");
 
                     const phaseVal = (r as any).phase ?? null;
                     const phaseKey = (phaseVal === null ? "" : String(phaseVal)) as
@@ -1991,7 +1900,9 @@ function DevActivitiesInner() {
                 {/* Activity / Tasks */}
                 <td style={{ ...td, ...stickyActivity }}>
                   {(() => {
-                    const isCustom = isCustomRow(r);
+                    const isCustom =
+                      customIds.has(r.id) ||
+                      (r.name || "").toLowerCase().includes("custom");
                     if (!isCustom) return r.name;
                     return (
                       <input
@@ -2469,53 +2380,54 @@ function DevActivitiesInner() {
                     );
                   })()}
                 </td>
-                <td
-                  style={{
-                    ...td,
-                    width: 110,
-                    textAlign: "center",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {(() => {
-                  if (!isCustomRow(r)) return null;
-                  return (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const ok = window.confirm("Delete this activity? This cannot be undone.");
-                          if (!ok) return;
-                          try {
-                            await deleteDevelopmentStep(r.id);
-                            setRows((cur) => (cur ? cur.filter((x) => x.id !== r.id) : cur));
-                            setCustomIds((prev) => {
-                              const next = new Set(prev);
-                              next.delete(r.id);
-                              return next;
-                            });
-                          } catch (err: any) {
-                            console.error(err);
-                            alert(`Failed to delete activity.\n${err?.message ?? ""}`);
-                          }
-                        }}
-                        style={{
-                          padding: "8px 14px",
-                          borderRadius: 8,
-                          border: "1px solid #d93434",
-                          background: "#ffecec",
-                          color: "#d93434",
-                          fontSize: 13,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-                        }}
-                      >
-                        Remove
-                      </button>
-                    );
-                  })()}
-                </td>
 
+              <td style={{ ...td, whiteSpace: "nowrap", width: 120, minWidth: 120, textAlign: "center" }}>
+                {customIds.has(r.id) || (r.name || "").toLowerCase().includes("custom") ? (
+                  <button
+                    type="button"
+                    className="btn-delete"
+                    onClick={async () => {
+                      const ok = window.confirm("Delete this activity? This cannot be undone.");
+                      if (!ok) return;
+                      try {
+                        await deleteDevelopmentStep(r.id);
+                        setRows((cur) => (cur ? cur.filter((x) => x.id !== r.id) : cur));
+                        setCustomIds((prev) => {
+                          const next = new Set(prev);
+                          next.delete(r.id);
+                          return next;
+                        });
+                      } catch (err: any) {
+                        console.error(err);
+                        alert(`Failed to delete activity.\n${err?.message ?? ""}`);
+                      }
+                    }}
+                    style={{
+                      padding: "6px 12px",
+                      background: "var(--card)",
+                      color: "var(--muted)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.background = "var(--surface)";
+                      e.currentTarget.style.borderColor = "var(--muted)";
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = "var(--card)";
+                      e.currentTarget.style.borderColor = "var(--border)";
+                    }}
+                  >
+                    Remove
+                  </button>
+                ) : (
+                  <span style={{ color: "var(--muted)", fontSize: 12 }}>--</span>
+                )}
+              </td>
             </tr>
           ))}
           </tbody>
@@ -2653,13 +2565,5 @@ function DevActivitiesInner() {
         ))}
       </datalist>
     </div>
-  );
-}
-
-export default function DevActivities() {
-  return (
-    <DevActivitiesErrorBoundary>
-      <DevActivitiesInner />
-    </DevActivitiesErrorBoundary>
   );
 }
