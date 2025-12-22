@@ -493,6 +493,16 @@ export async function reorderSteps(projectId: number, order: number[]): Promise<
   await jsonOrThrow(r, "reorder failed");
 }
 
+export async function bootstrapProjectSteps(projectId: number): Promise<void> {
+  const r = await fetch(`${API}/projects/${projectId}/bootstrap_steps/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!r.ok && r.status !== 404) {
+    await jsonOrThrow(r, "bootstrap steps failed");
+  }
+}
+
 /* ---------- Finance Runs ---------- */
 
 export async function runProjectFinanceModel(

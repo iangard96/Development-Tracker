@@ -1,5 +1,6 @@
 ﻿// ui/src/DevActivities.tsx
 import {
+  Component,
   useCallback,
   useDeferredValue,
   useEffect,
@@ -17,6 +18,7 @@ import {
 } from "./requirementTemplates";
 import {
   fetchStepsForProject,
+  bootstrapProjectSteps,
   updateStepDates,
   updateStepStatus,
   updateStepDevType,
@@ -236,6 +238,50 @@ const DEFAULT_DEV_TYPE_OPTIONS: DevType[] = [
   "Permitting",
   "Due Diligence",
 ];
+
+class DevActivitiesErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean; message: string }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, message: "" };
+  }
+
+  static getDerivedStateFromError(error: unknown) {
+    return {
+      hasError: true,
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+
+  componentDidCatch(error: unknown, info: any) {
+    console.warn("DevActivities render error:", error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          style={{
+            padding: 16,
+            border: "1px solid var(--danger)",
+            background: "rgba(248, 113, 113, 0.12)",
+            color: "var(--danger)",
+            borderRadius: 10,
+            margin: 16,
+          }}
+        >
+          <div style={{ fontWeight: 700, marginBottom: 6 }}>
+            Development Activities failed to load
+          </div>
+          <div style={{ fontSize: 13 }}>{this.state.message}</div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function DevTypeCell({
   step,
@@ -779,7 +825,7 @@ function SpendCell({
   );
 }
 
-export default function DevActivities() {
+function DevActivitiesInner() {
   const { projectId, project } = useProject();
   const noProjectSelected = !projectId;
   const [rows, setRows] = useState<DevStep[] | null>(null);
@@ -973,7 +1019,15 @@ export default function DevActivities() {
     setCustomIds(new Set());
     setExplicitCustomIds(new Set());
     fetchStepsForProject(projectId)
-      .then((data) => {
+      .then(async (data) => {
+        if (data.length === 0) {
+          try {
+            await bootstrapProjectSteps(projectId);
+            data = await fetchStepsForProject(projectId);
+          } catch (e) {
+            console.warn("Bootstrap steps failed", e);
+          }
+        }
         setRows(data);
         // derive custom dev types from data
         const extras = Array.from(
@@ -2594,5 +2648,13 @@ export default function DevActivities() {
         ))}
       </datalist>
     </div>
+  );
+}
+
+export default function DevActivities() {
+  return (
+    <DevActivitiesErrorBoundary>
+      <DevActivitiesInner />
+    </DevActivitiesErrorBoundary>
   );
 }

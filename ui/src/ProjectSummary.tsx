@@ -2,7 +2,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Project } from "./types";
-import { fetchProjects, createProject, deleteProject, updateProject } from "./api";
+import {
+  fetchProjects,
+  createProject,
+  deleteProject,
+  updateProject,
+  bootstrapProjectSteps,
+} from "./api";
 import { useProject } from "./ProjectContext";
 import SaveAsPdfButton from "./SaveAsPdfButton";
 import logo from "../public/landcharge-logo.png";
@@ -72,22 +78,10 @@ export default function ProjectSummaryPage() {
     try {
       const fresh = await createProject({});
       
-      // Bootstrap development steps for the new project
-      try {
-        const apiBase = import.meta.env.VITE_API_URL;
-        if (!apiBase) {
-          throw new Error("VITE_API_URL is not set.");
-        }
-        const bootstrapRes = await fetch(`${apiBase}/projects/${fresh.id}/bootstrap_steps/`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
-        if (!bootstrapRes.ok) {
-          console.warn("Bootstrap steps failed, but project was created");
-        }
-      } catch (e) {
+      // Bootstrap development steps for the new project (auth-aware)
+      bootstrapProjectSteps(fresh.id).catch((e) => {
         console.warn("Could not bootstrap steps:", e);
-      }
+      });
       
       setProjects((prev) => [...prev, fresh]);
     } catch (e: any) {
