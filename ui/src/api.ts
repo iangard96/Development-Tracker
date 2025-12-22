@@ -82,6 +82,9 @@ async function fetchWithAuth(
 
   const headers = new Headers(init.headers || {});
   const token = getAccessToken();
+  if (isApiRequest && !token) {
+    console.warn("[auth] API request without access token in storage:", url);
+  }
   if (isApiRequest && token) {
     headers.set("Authorization", `Bearer ${token}`);
   }

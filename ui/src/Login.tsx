@@ -99,6 +99,7 @@ export default function Login({ onLogin, sessionMessage, onResetAuth }: Props) {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
+            autoComplete="username email"
             style={{
               width: "100%",
             marginTop: 6,
@@ -119,6 +120,7 @@ export default function Login({ onLogin, sessionMessage, onResetAuth }: Props) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            autoComplete="current-password"
             style={{
               width: "100%",
             marginTop: 6,
