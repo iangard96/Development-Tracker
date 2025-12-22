@@ -153,7 +153,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
           x={centerX}
           y={centerY}
           textAnchor="middle"
-          fill="var(--card)"
+          fill="var(--text)"
           style={{ fontSize: 12, fontWeight: 500 }}
         >
           {label}
@@ -221,7 +221,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
           x={centerX}
           y={centerY}
           textAnchor="middle"
-          fill="var(--card)"
+          fill="var(--text)"
           style={{ fontSize: 11, fontWeight: 500 }}
         >
           {label}
@@ -388,13 +388,12 @@ export default function DevTypeSpendChart({ steps }: Props) {
                 ticks={spendTicks}
                 tickFormatter={(v) => `$${Number(v).toLocaleString()}`}
               />
-
-              {/* Y axis: categorical but HIDDEN, so no vertical $0 labels */}
+              {/* Y axis: categorical labels visible */}
               <YAxis
                 type="category"
                 dataKey="devTypeLabel"
-                axisLine={false}
-                width={0}
+                width={110}
+                tick={{ fontSize: 14 }}
               />
 
               <Tooltip
