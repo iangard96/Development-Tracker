@@ -95,16 +95,25 @@ export default function DevTypeSpendChart({ steps }: Props) {
 
   const spendMaxWithPad = maxSpend * 1.1 || 1;
 
-  // Ticks for the right-hand X-axis: start explicitly at 0
-  const spendTicks: number[] = [];
-  const rawStep = spendMaxWithPad / 4 || 1;
-  const step =
-    rawStep <= 100 ? Math.ceil(rawStep / 10) * 10 : Math.ceil(rawStep / 100) * 100;
+  // Ticks for the right-hand X-axis: always show at least 0, mid, max
+  const spendTicks: number[] = useMemo(() => {
+    const max = spendMaxWithPad || 1;
+    const mid = max / 2;
+    const rawStep = max / 4 || 1;
+    const step =
+      rawStep <= 100
+        ? Math.max(10, Math.ceil(rawStep / 10) * 10)
+        : Math.ceil(rawStep / 100) * 100;
 
-  for (let v = 0; v <= spendMaxWithPad + 1e-6; v += step) {
-    spendTicks.push(v);
-  }
-  if (!spendTicks.includes(0)) spendTicks.unshift(0);
+    const ticks: number[] = [];
+    for (let v = 0; v <= max + 1e-6; v += step) {
+      ticks.push(v);
+    }
+    ticks.push(mid, max, 0);
+    return Array.from(new Set(ticks.map((t) => Number(t.toFixed(2))))).sort(
+      (a, b) => a - b,
+    );
+  }, [spendMaxWithPad]);
 
   /* ----- Custom label renderers ----- */
 
