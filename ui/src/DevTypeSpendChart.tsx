@@ -324,9 +324,10 @@ export default function DevTypeSpendChart({ steps }: Props) {
                 strokeDasharray="4 3"
                 label={{
                   value: "$0",
-                  position: "top",
+                  position: "insideTop",
                   fill: "var(--muted)",
                   fontSize: 12,
+                  offset: 10,
                 }}
               />
               <Bar
