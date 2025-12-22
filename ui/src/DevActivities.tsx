@@ -1266,6 +1266,53 @@ export default function DevActivities() {
     [canReorder, orderedBySequence, performReorder, projectId],
   );
 
+  const resetAddForm = useCallback(() => {
+    setNewActivityName("");
+    setNewActivityPhase("");
+    setShowAddForm(false);
+    setAddSaving(false);
+  }, []);
+
+  const handleAddActivity = useCallback(async () => {
+    if (!projectId) return;
+    const trimmed = newActivityName.trim();
+    if (!trimmed) {
+      alert("Enter an activity name.");
+      return;
+    }
+    const phaseVal = newActivityPhase === "" ? null : newActivityPhase;
+    setAddSaving(true);
+    try {
+      const created = await createDevelopmentStep({
+        project: Number(projectId),
+        name: trimmed,
+        phase: phaseVal,
+      });
+      setRows((cur) => (cur ? [...cur, created] : [created]));
+      setCustomIds((prev) => {
+        const next = new Set(prev);
+        next.add(created.id);
+        return next;
+      });
+      setNewActivityName("");
+      setNewActivityPhase("");
+      setShowAddForm(false);
+
+      window.setTimeout(() => {
+        const rowEl = rowRefs.current[created.id];
+        const container = tableContainerRef.current;
+        if (rowEl && container) {
+          rowEl.scrollIntoView({ block: "center" });
+        }
+      }, 50);
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to add activity.\n${err?.message ?? ""}`);
+    } finally {
+      setAddSaving(false);
+    }
+  }, [newActivityName, newActivityPhase, projectId]);
+
   if (noProjectSelected) {
     return (
       <div style={{ padding: 16, color: "var(--muted)", fontSize: 14 }}>
@@ -1440,53 +1487,6 @@ export default function DevActivities() {
       alert(`Failed to update duration.\n${err?.message ?? ""}`);
     }
   };
-
-  const resetAddForm = useCallback(() => {
-    setNewActivityName("");
-    setNewActivityPhase("");
-    setShowAddForm(false);
-    setAddSaving(false);
-  }, []);
-
-  const handleAddActivity = useCallback(async () => {
-    if (!projectId) return;
-    const trimmed = newActivityName.trim();
-    if (!trimmed) {
-      alert("Enter an activity name.");
-      return;
-    }
-    const phaseVal = newActivityPhase === "" ? null : newActivityPhase;
-    setAddSaving(true);
-    try {
-      const created = await createDevelopmentStep({
-        project: Number(projectId),
-        name: trimmed,
-        phase: phaseVal,
-      });
-      setRows((cur) => (cur ? [...cur, created] : [created]));
-      setCustomIds((prev) => {
-        const next = new Set(prev);
-        next.add(created.id);
-        return next;
-      });
-      setNewActivityName("");
-      setNewActivityPhase("");
-      setShowAddForm(false);
-
-      window.setTimeout(() => {
-        const rowEl = rowRefs.current[created.id];
-        const container = tableContainerRef.current;
-        if (rowEl && container) {
-          rowEl.scrollIntoView({ block: "center" });
-        }
-      }, 50);
-    } catch (err: any) {
-      console.error(err);
-      alert(`Failed to add activity.\n${err?.message ?? ""}`);
-    } finally {
-      setAddSaving(false);
-    }
-  }, [newActivityName, newActivityPhase, projectId]);
 
   const jumpToId = (id: number) => {
     const target = sorted.find((p) => p.id === id);
@@ -1768,7 +1768,7 @@ export default function DevActivities() {
               <th style={{ ...th, ...requirementTh }}>Requirement</th>
               <th style={{ ...th, minWidth: 180 }}>Storage Hybrid Impact</th>
               <th style={{ ...th, minWidth: 140, textAlign: "center" }}>Milestones / NTP Gates</th>
-              <th style={{ ...th, width: 120, minWidth: 120, textAlign: "center" }}>Actions</th>
+              <th style={{ ...th, width: 100, minWidth: 100 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -2381,7 +2381,7 @@ export default function DevActivities() {
                   })()}
                 </td>
 
-              <td style={{ ...td, whiteSpace: "nowrap", width: 120, minWidth: 120, textAlign: "center" }}>
+              <td style={{ ...td, whiteSpace: "nowrap", width: 100, minWidth: 100, textAlign: "center" }}>
                 {customIds.has(r.id) || (r.name || "").toLowerCase().includes("custom") ? (
                   <button
                     type="button"
@@ -2402,31 +2402,10 @@ export default function DevActivities() {
                         alert(`Failed to delete activity.\n${err?.message ?? ""}`);
                       }
                     }}
-                    style={{
-                      padding: "6px 12px",
-                      background: "var(--card)",
-                      color: "var(--muted)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 6,
-                      cursor: "pointer",
-                      fontSize: 12,
-                      fontWeight: 600,
-                      transition: "all 0.15s ease",
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.background = "var(--surface)";
-                      e.currentTarget.style.borderColor = "var(--muted)";
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.background = "var(--card)";
-                      e.currentTarget.style.borderColor = "var(--border)";
-                    }}
                   >
                     Remove
                   </button>
-                ) : (
-                  <span style={{ color: "var(--muted)", fontSize: 12 }}>--</span>
-                )}
+                ) : null}
               </td>
             </tr>
           ))}
