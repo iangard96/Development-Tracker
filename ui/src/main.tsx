@@ -54,6 +54,16 @@ function AppShell() {
     let cancelled = false;
     const hadStoredToken = !!localStorage.getItem("dt_access_token");
 
+    // If there are no tokens yet, skip the initial /me call to avoid noisy 401s.
+    if (!hadStoredToken) {
+      setAuthChecked(true);
+      setCurrentUser(null);
+      setSessionMessage(null);
+      return () => {
+        cancelled = true;
+      };
+    }
+
     fetchCurrentUser()
       .then((u) => {
         if (cancelled) return;

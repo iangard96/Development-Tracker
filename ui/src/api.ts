@@ -92,8 +92,9 @@ async function fetchWithAuth(
   });
 
   const hasRefresh = !!getRefreshToken();
+  const hasAccess = !!getAccessToken();
 
-  if (response.status === 401 && isApiRequest) {
+  if (response.status === 401 && isApiRequest && (hasRefresh || hasAccess)) {
     console.warn(
       `[auth] 401 for ${url || input}. attemptRefresh=${attemptRefresh} refreshPresent=${hasRefresh}`,
     );
