@@ -136,7 +136,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
 
     const isUnder = delta > 0;
     const outsideColor = isUnder ? UNDER_AMBER : OVER_AMBER;
-    const MIN_INSIDE_WIDTH = 60;
+    const MIN_INSIDE_WIDTH = 40;
 
     if (barWidth >= MIN_INSIDE_WIDTH) {
       return (
@@ -144,7 +144,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
           x={centerX}
           y={centerY}
           textAnchor="middle"
-          fill="var(--text)"
+          fill="var(--card)"
           style={{ fontSize: 12, fontWeight: 500 }}
         >
           {label}
@@ -204,7 +204,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
     
     const label = `$${numValue.toLocaleString()}`;
 
-    const MIN_INSIDE_WIDTH = 60;
+    const MIN_INSIDE_WIDTH = 40;
 
     if (Math.abs(barWidth) >= MIN_INSIDE_WIDTH) {
       return (
@@ -212,7 +212,7 @@ export default function DevTypeSpendChart({ steps }: Props) {
           x={centerX}
           y={centerY}
           textAnchor="middle"
-          fill="var(--text)"
+          fill="var(--card)"
           style={{ fontSize: 11, fontWeight: 500 }}
         >
           {label}
